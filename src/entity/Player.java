@@ -19,6 +19,7 @@ public class Player extends Entity{
 	public final int screenY;
 	
 	int hasKey = 0;
+	boolean hasBoots = false;
 	
 	public Player(GamePanel gp, KeyHandler keyH) {
 		
@@ -89,6 +90,14 @@ public class Player extends Entity{
 				
 			}
 			
+			
+			// Shift run
+			if (keyH.shiftPressed == true && hasBoots == true) {
+				speed = 10;
+			} else if (keyH.shiftPressed == false && hasBoots == true) {
+				speed = 6;
+			}
+			
 			// CHECK TILE COLLISION
 			collisionOn = false;
 			gp.cChecker.checkTile(this);
@@ -138,15 +147,26 @@ public class Player extends Entity{
 			
 			switch(objectName) {
 			case "Key":
+				gp.playSE(1);
 				hasKey++;
 				gp.obj[i] = null;
 				System.out.println("Key:"+hasKey );
 				break;
 			case "Door":
 				if(hasKey > 0) {
-					gp.obj[i] = null;
+					gp.playSE(3);
 					hasKey--;
-				}
+					gp.obj[i] = null;
+					System.out.println("Key:"+hasKey );
+					}
+				break;
+			case "Boots":
+				gp.playSE(2);
+				hasBoots = true;
+				gp.obj[i] = null;
+				System.out.println("boots:"+hasBoots );
+				break;
+				
 			}
 		}
 		
