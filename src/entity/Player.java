@@ -18,7 +18,7 @@ public class Player extends Entity{
 	public final int screenX;
 	public final int screenY;
 	
-	int hasKey = 0;
+	public int hasKey = 0;
 	boolean hasBoots = false;
 	
 	public Player(GamePanel gp, KeyHandler keyH) {
@@ -44,7 +44,7 @@ public class Player extends Entity{
 	
 	public void setDefaultValues() {
 	
-	worldX = gp.tileSize * 22;
+	worldX = gp.tileSize * 21;
 	worldY = gp.tileSize * 24;
 	speed = 4;
 	direction = "down";
@@ -150,21 +150,29 @@ public class Player extends Entity{
 				gp.playSE(1);
 				hasKey++;
 				gp.obj[i] = null;
-				System.out.println("Key:"+hasKey );
+				gp.ui.showMessage("Katsu boy picked up a key!");
 				break;
 			case "Door":
 				if(hasKey > 0) {
 					gp.playSE(3);
 					hasKey--;
 					gp.obj[i] = null;
-					System.out.println("Key:"+hasKey );
+					gp.ui.showMessage("Katsu boy used a key!");
 					}
+				else {
+					gp.ui.showMessage("This door seems secure...");
+				}
 				break;
 			case "Boots":
 				gp.playSE(2);
 				hasBoots = true;
 				gp.obj[i] = null;
-				System.out.println("boots:"+hasBoots );
+				gp.ui.showMessage("Katsu boy picked up running shoes!");
+				break;
+			case "Chest":
+				gp.ui.gameFinished = true;
+				gp.stopMusic();
+				gp.playSE(4);
 				break;
 				
 			}
