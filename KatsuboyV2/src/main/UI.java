@@ -6,8 +6,12 @@ import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+
+import object.OBJ_Heart;
+import object.SuperObject;
 //import java.awt.image.BufferedImage;
 
 //import object.OBJ_Key;
@@ -17,7 +21,7 @@ public class UI {
 	GamePanel gp;
 	Graphics2D g2;
 	Font maruMonica, amari;
-
+	BufferedImage heart_full, heart_half, heart_empty;
 	public boolean messageOn = false;
 	public String message = "";
 	int messageCounter = 0;
@@ -46,6 +50,12 @@ public class UI {
 			e.printStackTrace();
 		}
 		
+		
+		// CREATE HUD OBJECTS
+		SuperObject heart = new OBJ_Heart(gp);
+		heart_full = heart.image;
+		heart_half = heart.image2;
+		heart_empty = heart.image3;
 	}
 	
 	public void showMessage(String text) {
@@ -67,16 +77,50 @@ public class UI {
 		}
 		// PLAY STATE
 		if(gp.gameState == gp.playState) {
-			// Do platState stuff later
+			drawPlayerLife();
 		}
 		//PAUSE STATE
 		if(gp.gameState == gp.pauseState) {
+			drawPlayerLife();
 			drawPauseScreen();
 		}
 		//DIALOGUE STATE
 		if (gp.gameState == gp.dialogueState) {
+			drawPlayerLife();
 			drawDialogueScreen();
 		}
+	}
+	
+	public void drawPlayerLife() {
+		
+		int x = gp.tileSize/2;
+		int y = gp.tileSize/2;
+		int i = 0;
+		
+		// DRAW MAX LIFE
+		while(i < gp.player.maxLife/2) {
+			g2.drawImage(heart_empty, x, y, null);
+			i++;
+			x += gp.tileSize;
+		}
+		
+		// RESET
+		x = gp.tileSize/2;
+		y = gp.tileSize/2;
+		i = 0;
+		
+		// DRAW CURRENT LIFE
+		while(i < gp.player.life) {
+			g2.drawImage(heart_half, x, y, null);
+			i++;
+			if(i < gp.player.life) {
+				g2.drawImage(heart_full, x, y, null);
+			}
+			i++;
+			x += gp.tileSize;
+		}
+		
+		
 	}
 	public void drawTitleScreen() {
 		//TITLE NAME
@@ -157,6 +201,7 @@ public class UI {
 			g2.drawString(text, x, y);
 			if(commandNum == 1) {
 				g2.drawString(">", x-gp.tileSize, y);
+				
 			}
 			
 			text = "Zilla";

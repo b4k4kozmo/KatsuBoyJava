@@ -89,10 +89,11 @@ public class KeyHandler implements KeyListener{
 						System.out.println("Do some Ninja specific stuff");
 						gp.playSE(1);
 						gp.gameState = gp.playState;
+						gp.player.speed = 10;
 						
 					}
 					if(gp.ui.commandNum == 2) {
-						System.out.println("Do some Classic specific stuff");
+						System.out.println("Do some Zilla specific stuff");
 						gp.playSE(1);
 						gp.gameState = gp.playState;
 						
@@ -183,6 +184,9 @@ public class KeyHandler implements KeyListener{
 		}
 		if (code == KeyEvent.VK_SHIFT) {
 			shiftPressed = false;
+		}
+		if (code == KeyEvent.VK_ENTER) {
+			enterPressed = false;
 		}
 		
 	}

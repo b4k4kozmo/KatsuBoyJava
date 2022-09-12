@@ -25,6 +25,7 @@ public class Player extends Entity{
 	public Player(GamePanel gp, KeyHandler keyH) {
 		
 		super (gp);
+		
 		this.keyH = keyH;
 		
 		screenX = gp.screenWidth/2 - (gp.tileSize/2);
@@ -32,7 +33,7 @@ public class Player extends Entity{
 		
 		solidArea = new Rectangle();
 		solidArea.x = 18;
-		solidArea.y = 24;
+		solidArea.y = 32;
 		solidAreaDefaultX = solidArea.x;
 		solidAreaDefaultY = solidArea.y;
 		solidArea.width = 12;
@@ -45,10 +46,14 @@ public class Player extends Entity{
 	
 	public void setDefaultValues() {
 	
-	worldX = gp.tileSize * 94;
-	worldY = gp.tileSize * 94;
-	speed = 4;
-	direction = "down";
+		worldX = gp.tileSize * 94;
+		worldY = gp.tileSize * 94;
+		speed = 4;
+		direction = "down";
+	
+	// PLAYER STATUS
+		maxLife= 6;
+		life = maxLife;
 	}
 	
 	public void getPlayerImage() {
@@ -105,6 +110,12 @@ public class Player extends Entity{
 			//CHECK NPC COLLISION
 			int npcIndex = gp.cChecker.checkEntity(this, gp.npc);
 			interactNPC(npcIndex);
+			
+			//CHECK EVENT
+			gp.eHandler.checkEvent();
+			
+			gp.keyH.enterPressed = false;
+			
 			
 			// IF COLLISION IS FALSE, PLAYER CAN MOVE
 			if(collisionOn == false) {
@@ -172,7 +183,7 @@ public class Player extends Entity{
 			}
 			
 		}
-		gp.keyH.enterPressed = false;
+		
 	}
 	
 	public void draw(Graphics2D g2) {
@@ -217,7 +228,7 @@ public class Player extends Entity{
 			
 		}
 		g2.drawImage(image,  screenX, screenY, null);
-		
+		System.out.println(direction);
 	}
 
 }
