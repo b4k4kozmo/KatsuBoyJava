@@ -10,8 +10,9 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 
+import entity.Entity;
 import object.OBJ_Heart;
-import object.SuperObject;
+
 //import java.awt.image.BufferedImage;
 
 //import object.OBJ_Key;
@@ -52,7 +53,7 @@ public class UI {
 		
 		
 		// CREATE HUD OBJECTS
-		SuperObject heart = new OBJ_Heart(gp);
+		Entity heart = new OBJ_Heart(gp);
 		heart_full = heart.image;
 		heart_half = heart.image2;
 		heart_empty = heart.image3;
@@ -179,7 +180,10 @@ public class UI {
 			}
 		}
 		else if (titleScreenState == 1) {
-			g2.setColor(new Color(240,242,239));
+			g2.setColor(kamiblack);
+			g2.fillRect(0,0,gp.screenWidth,gp.screenHeight);
+			
+			g2.setColor(kamigreen);
 			g2.setFont(g2.getFont().deriveFont(42F));
 			
 			String text = "Select your class";
