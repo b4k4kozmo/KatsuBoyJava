@@ -1,11 +1,12 @@
 package main;
 
+import entity.NPC_NanaMan;
 import entity.NPC_OldMan;
 import monster.MON_Slime;
+import monster.MON_Snome;
 import object.OBJ_Boots;
-import object.OBJ_Chest;
-import object.OBJ_Door;
-import object.OBJ_Key;
+import object.OBJ_Carbo;
+
 
 public class AssetSetter {
 	
@@ -22,6 +23,10 @@ public class AssetSetter {
 		gp.obj[0].worldX = 50 * gp.tileSize;
 		gp.obj[0].worldY = 97 * gp.tileSize;
 		
+		
+		gp.obj[1] = new OBJ_Carbo(gp);
+		gp.obj[1].worldX = 52 * gp.tileSize;
+		gp.obj[1].worldY = 98 * gp.tileSize;
 	}
 	public void setNPC() {
 		
@@ -34,11 +39,15 @@ public class AssetSetter {
 		gp.npc[2] = new NPC_OldMan (gp);
 		gp.npc[2].worldX = gp.tileSize*96;
 		gp.npc[2].worldY = gp.tileSize*95;
+		
+		gp.npc[3] = new NPC_NanaMan (gp);
+		gp.npc[3].worldX = gp.tileSize*93;
+		gp.npc[3].worldY = gp.tileSize*80;
 	}
 	
 	public void setMonster() {
 		
-		gp.monster[0] = new MON_Slime(gp);
+		gp.monster[0] = new MON_Snome(gp);
 		gp.monster[0].worldX = gp.tileSize*82;
 		gp.monster[0].worldY = gp.tileSize*95;
 		

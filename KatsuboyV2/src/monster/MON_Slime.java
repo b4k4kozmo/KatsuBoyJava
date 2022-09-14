@@ -7,8 +7,12 @@ import main.GamePanel;
 
 public class MON_Slime extends Entity{
 
+	GamePanel gp;
+	
 	public MON_Slime(GamePanel gp) {
 		super(gp);
+		
+		this.gp = gp;
 		
 		type = 2;
 		name = "Slime";
@@ -28,14 +32,14 @@ public class MON_Slime extends Entity{
 	
 	public void getImage() {
 		
-		up1 = setup("/monster/slime_down01");
-		up2 = setup("/monster/slime_down02");
-		down1 = setup("/monster/slime_down01");
-		down2 = setup("/monster/slime_down02");
-		left1 = setup("/monster/slime_down01");
-		left2 = setup("/monster/slime_down02");
-		right1 = setup("/monster/slime_down01");
-		right2 = setup("/monster/slime_down02");
+		up1 = setup("/monster/slime_down01",gp.tileSize,gp.tileSize);
+		up2 = setup("/monster/slime_down02",gp.tileSize,gp.tileSize);
+		down1 = setup("/monster/slime_down01",gp.tileSize,gp.tileSize);
+		down2 = setup("/monster/slime_down02",gp.tileSize,gp.tileSize);
+		left1 = setup("/monster/slime_down01",gp.tileSize,gp.tileSize);
+		left2 = setup("/monster/slime_down02",gp.tileSize,gp.tileSize);
+		right1 = setup("/monster/slime_down01",gp.tileSize,gp.tileSize);
+		right2 = setup("/monster/slime_down02",gp.tileSize,gp.tileSize);
 	}
 	
 	public void setAction () {

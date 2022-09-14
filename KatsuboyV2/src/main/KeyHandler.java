@@ -85,19 +85,24 @@ public class KeyHandler implements KeyListener{
 						System.out.println("Do some samurai specific stuff");
 						gp.playSE(1);
 						gp.gameState = gp.playState;
-						
+						gp.player.hasSword = true;
 					}
 					if(gp.ui.commandNum == 1) {
 						System.out.println("Do some Ninja specific stuff");
 						gp.playSE(1);
 						gp.gameState = gp.playState;
-						gp.player.speed = 10;
+						gp.player.hasBoots = true;
+						
 						
 					}
 					if(gp.ui.commandNum == 2) {
 						System.out.println("Do some Zilla specific stuff");
 						gp.playSE(1);
+						gp.stopMusic();
+						gp.playMusic(5);
 						gp.gameState = gp.playState;
+						gp.player.hasBoots = true;
+						gp.player.hasSword = true;
 						
 					}
 					if(gp.ui.commandNum == 3) {
@@ -118,7 +123,7 @@ public class KeyHandler implements KeyListener{
 		
 		
 		//PLAYSTATE
-		if (gp.gameState == gp.playState) {
+		else if (gp.gameState == gp.playState) {
 			if (code == KeyEvent.VK_W) {
 				upPressed = true;
 			}
