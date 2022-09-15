@@ -11,6 +11,8 @@ import java.awt.image.BufferedImage;
 
 import main.GamePanel;
 import main.KeyHandler;
+import object.OBJ_Shield_Puffa;
+import object.OBJ_Sword_Normal;
 
 
 public class Player extends Entity{
@@ -25,6 +27,7 @@ public class Player extends Entity{
 	public boolean hasBoots = false;
 	public boolean onCarbo = false;
 	public boolean hasSword = false;
+	public boolean attackCanceled = false;
 	
 	public Player(GamePanel gp, KeyHandler keyH) {
 		
@@ -60,8 +63,24 @@ public class Player extends Entity{
 		direction = "down";
 	
 	// PLAYER STATUS
+		level = 1;
 		maxLife= 6;
 		life = maxLife;
+		strength = 1; // the more strength he has the more damage he gives
+		dexterity = 1; // the more dexterity he has, the less damage he receives.
+		exp = 0;
+		nextLevelExp = 5;
+		coin = 0;
+		currentWeapon = new OBJ_Sword_Normal(gp);
+		currentShield = new OBJ_Shield_Puffa(gp);
+		attack = getAttack(); // the total attack value is decided by strength and weapon
+		defense = getDefense();	// the total defense value is decided by dexterity and shield
+	}
+	public int getAttack () {
+		return attack = strength * currentWeapon.attackValue;
+	}
+	public int getDefense() {
+		return defense = dexterity * currentShield.defenseValue;
 	}
 	
 	public void getPlayerImage() {
@@ -163,6 +182,13 @@ public class Player extends Entity{
 				}
 			}
 			
+			if(keyH.enterPressed == true && attackCanceled == false && hasSword == true) {
+				gp.playSE(8);
+				attacking = true;
+				spriteCounter = 0;
+			}
+			
+			attackCanceled = false;
 			gp.keyH.enterPressed = false;
 			
 			
@@ -268,14 +294,14 @@ public class Player extends Entity{
 		if (gp.keyH.enterPressed == true) {
 			
 			if(i != 999) {
-
+					attackCanceled = true;
+					gp.stopSE();
+					gp.playSE(10);
 					gp.gameState = gp.dialogueState;
 					gp.npc[i].speak();
 					gp.keyH.enterPressed = false;	
 			}
-			else if (hasSword == true) {
-				attacking = true;	
-			}
+			
 		}
 	}
 	public void contactMonster(int i) {
@@ -283,8 +309,12 @@ public class Player extends Entity{
 		if(i != 999) {
 			
 			if(invincible == false) {
-				life -= 1;
-				invincible = true;
+				if(gp.monster[i].life != 0) {
+					gp.playSE(7);
+					life -= 1;
+					invincible = true;
+				}
+				
 			}
 			
 		}
@@ -295,12 +325,15 @@ public class Player extends Entity{
 			
 			if(gp.monster[i].invincible ==false) {
 				
+				gp.playSE(6);
 				gp.monster[i].life -= 1;
 				gp.monster[i].invincible = true;
+				gp.monster[i].damageReaction();
 				
 				if(gp.monster[i].life <= 0) {
-					gp.monster[i] = null;
-					gp.playSE(1);
+					gp.monster[i].dying = true;
+					gp.stopSE();
+					gp.playSE(9);
 					if(life < maxLife) {
 						life +=1;
 					}

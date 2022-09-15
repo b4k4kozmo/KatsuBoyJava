@@ -83,6 +83,7 @@ public class EventHandler {
 	public void teleport(int col, int row, int gameState) {
 		
 		gp.gameState = gameState;
+		gp.playSE(4);
 		gp.ui.currentDialogue = "Surprise!";
 		gp.player.worldX = gp.tileSize*5;
 		gp.player.worldY = gp.tileSize*70;
@@ -91,6 +92,7 @@ public class EventHandler {
 	}
 	public void damagePit(int col, int row, int gameState) {
 		gp.gameState = gameState;
+		gp.playSE(7);
 		gp.ui.currentDialogue = "Ouch! You fell down";
 		gp.player.life -= 1;
 //		eventRect[col][row].eventDone = true;
@@ -100,6 +102,9 @@ public class EventHandler {
 		
 		if(gp.keyH.enterPressed == true) {
 			gp.gameState = gameState;
+			gp.player.attackCanceled = true;
+			gp.stopSE();
+			gp.playSE(2);
 			gp.ui.currentDialogue = "Mmmmm... that was tasty. \nYou feel refreshed.";
 			gp.player.life = gp.player.maxLife;
 			

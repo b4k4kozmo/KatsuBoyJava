@@ -2,6 +2,7 @@ package main;
 
 import entity.NPC_NanaMan;
 import entity.NPC_OldMan;
+import monster.MON_KamiJack;
 import monster.MON_Slime;
 import monster.MON_Snome;
 import object.OBJ_Boots;
@@ -23,7 +24,6 @@ public class AssetSetter {
 		gp.obj[0].worldX = 50 * gp.tileSize;
 		gp.obj[0].worldY = 97 * gp.tileSize;
 		
-		
 		gp.obj[1] = new OBJ_Carbo(gp);
 		gp.obj[1].worldX = 52 * gp.tileSize;
 		gp.obj[1].worldY = 98 * gp.tileSize;
@@ -34,8 +34,6 @@ public class AssetSetter {
 		gp.npc[0].worldX = gp.tileSize*82;
 		gp.npc[0].worldY = gp.tileSize*20;
 	
-	
-		
 		gp.npc[2] = new NPC_OldMan (gp);
 		gp.npc[2].worldX = gp.tileSize*96;
 		gp.npc[2].worldY = gp.tileSize*95;
@@ -70,6 +68,14 @@ public class AssetSetter {
 		gp.monster[5] = new MON_Slime(gp);
 		gp.monster[5].worldX = gp.tileSize*8;
 		gp.monster[5].worldY = gp.tileSize*35;
+		
+		gp.monster[6] = new MON_KamiJack(gp);
+		gp.monster[6].worldX = gp.tileSize*90;
+		gp.monster[6].worldY = gp.tileSize*79;
+		
+		gp.monster[7] = new MON_Slime(gp);
+		gp.monster[7].worldX = gp.tileSize*84;
+		gp.monster[7].worldY = gp.tileSize*93;
 		
 	}
 }
