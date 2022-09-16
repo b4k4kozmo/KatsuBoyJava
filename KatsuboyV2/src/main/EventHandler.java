@@ -107,6 +107,7 @@ public class EventHandler {
 			gp.playSE(2);
 			gp.ui.currentDialogue = "Mmmmm... that was tasty. \nYou feel refreshed.";
 			gp.player.life = gp.player.maxLife;
+			gp.aSetter.setMonster();
 			
 		}
 		

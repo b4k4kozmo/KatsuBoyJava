@@ -19,6 +19,9 @@ public class MON_KamiJack extends Entity{
 		speed = 1;
 		maxLife = 12;
 		life = maxLife;
+		attack = 20;
+		defense = 9;
+		exp = 25;
 		
 		solidArea.x = 6;
 		solidArea.y = 24;
@@ -70,7 +73,7 @@ public class MON_KamiJack extends Entity{
 	
 	public void damageReaction() {
 		
-		actionLockCounter = 0;
+		
 		
 		
 	}

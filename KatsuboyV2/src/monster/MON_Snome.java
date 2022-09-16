@@ -19,6 +19,9 @@ public class MON_Snome extends Entity{
 		speed = 1;
 		maxLife = 5;
 		life = maxLife;
+		attack = 3;
+		defense = 1;
+		exp = 5;
 		
 		solidArea.x = 6;
 		solidArea.y = 24;
@@ -68,7 +71,7 @@ public class MON_Snome extends Entity{
 		}
 	}
 	public void damageReaction() {
-		actionLockCounter= 0;
+		
 	}
 
 }

@@ -122,6 +122,8 @@ public class KeyHandler implements KeyListener{
 					gp.playSE(1);
 					gp.stopMusic();
 					gp.playMusic(5);
+					gp.ui.kamiwhite = gp.ui.kamigreen;
+					gp.ui.kamipink = gp.ui.kamigreen;
 					gp.gameState = gp.playState;
 					gp.player.hasBoots = true;
 					gp.player.hasSword = true;

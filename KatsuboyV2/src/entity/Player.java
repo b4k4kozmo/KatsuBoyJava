@@ -22,8 +22,7 @@ public class Player extends Entity{
 	
 	public final int screenX;
 	public final int screenY;
-	
-	int standCounter;
+	int standCounter = 0;
 	public boolean hasBoots = false;
 	public boolean onCarbo = false;
 	public boolean hasSword = false;
@@ -273,7 +272,7 @@ public class Player extends Entity{
 				gp.playSE(2);
 				hasBoots = true;
 				gp.obj[i] = null;
-				gp.ui.showMessage("Katsu boy picked up running shoes!");
+				gp.ui.addMessage("Katsu boy picked up running shoes!");
 				break;
 			case "Chest":
 				gp.ui.gameFinished = true;
@@ -311,7 +310,13 @@ public class Player extends Entity{
 			if(invincible == false) {
 				if(gp.monster[i].life != 0) {
 					gp.playSE(7);
-					life -= 1;
+					
+					int damage = gp.monster[i].attack - defense;
+					if (damage < 0) {
+						damage = 0;
+					}
+					
+					life -= damage;
 					invincible = true;
 				}
 				
@@ -326,7 +331,15 @@ public class Player extends Entity{
 			if(gp.monster[i].invincible ==false) {
 				
 				gp.playSE(6);
-				gp.monster[i].life -= 1;
+				
+				int damage = attack - gp.monster[i].defense;
+				if (damage < 0) {
+					damage = 0;
+				}
+				
+				gp.monster[i].life -= damage;
+				gp.ui.addMessage(damage + " damage!");
+				
 				gp.monster[i].invincible = true;
 				gp.monster[i].damageReaction();
 				
@@ -334,12 +347,36 @@ public class Player extends Entity{
 					gp.monster[i].dying = true;
 					gp.stopSE();
 					gp.playSE(9);
+					gp.ui.addMessage("Killed the " + gp.monster[i].name + "!");
+					gp.ui.addMessage("Gained " + gp.monster[i].exp + " exp!");
+					exp += gp.monster[i].exp;
+					checkLevelUp();
 					if(life < maxLife) {
 						life +=1;
 					}
 					
 				}
 			}
+		}
+	}
+	
+	
+	public void checkLevelUp() {
+		
+		if(exp >= nextLevelExp) {
+			gp.ui.addMessage("Level up!");
+			level++;
+			nextLevelExp *= 2;
+			maxLife += 2;
+			strength++;
+			dexterity++;
+			attack = getAttack();
+			defense = getAttack();
+			
+			gp.playSE(4);
+			gp.gameState = gp.dialogueState;
+			gp.ui.currentDialogue = "You are now " + level + "!\n"
+					+ "You can feel the power!";
 		}
 	}
 	

@@ -12,7 +12,7 @@ public class NPC_NanaMan extends Entity{
 		super(gp);
 		
 		direction = "down";
-		speed = 9;
+		speed = 25;
 		
 		getImage();
 		setDialogue();
@@ -43,7 +43,7 @@ public class NPC_NanaMan extends Entity{
 	public void setAction () {
 		
 		actionLockCounter ++;
-		if(actionLockCounter == 30) {
+		if(actionLockCounter == 45) {
 			Random random = new Random();
 			int i = random.nextInt(100)+1; // pick a number between 1 and 100
 			
