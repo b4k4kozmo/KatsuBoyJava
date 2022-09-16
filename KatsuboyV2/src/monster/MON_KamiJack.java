@@ -16,12 +16,12 @@ public class MON_KamiJack extends Entity{
 		
 		type = 2;
 		name = "Kamijack";
-		speed = 1;
+		speed = 7;
 		maxLife = 12;
 		life = maxLife;
 		attack = 20;
 		defense = 9;
-		exp = 25;
+		exp = 50;
 		
 		solidArea.x = 6;
 		solidArea.y = 24;
@@ -48,8 +48,9 @@ public class MON_KamiJack extends Entity{
 	public void setAction () {
 		
 		actionLockCounter++;
+		int slowDown = 60;
 		
-		if(actionLockCounter == 120) {
+		if(actionLockCounter == slowDown) {
 			
 			Random random = new Random();
 			int i = random.nextInt(100)+1; // pick a number between 1 and 100
@@ -72,7 +73,10 @@ public class MON_KamiJack extends Entity{
 	}
 	
 	public void damageReaction() {
-		
+		actionLockCounter= 0;
+		speed = 3;
+		slowDown = 120;
+				
 		
 		
 		

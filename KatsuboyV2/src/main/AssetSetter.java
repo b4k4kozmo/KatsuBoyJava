@@ -123,6 +123,18 @@ public class AssetSetter {
 		gp.monster[i].worldX = gp.tileSize*76;
 		gp.monster[i].worldY = gp.tileSize*87;
 		i++;
+		gp.monster[i] = new MON_KamiJack(gp);
+		gp.monster[i].worldX = gp.tileSize*88;
+		gp.monster[i].worldY = gp.tileSize*79;
+		i++;
+		gp.monster[i] = new MON_KamiJack(gp);
+		gp.monster[i].worldX = gp.tileSize*89;
+		gp.monster[i].worldY = gp.tileSize*79;
+		i++;
+		gp.monster[i] = new MON_KamiJack(gp);
+		gp.monster[i].worldX = gp.tileSize*90;
+		gp.monster[i].worldY = gp.tileSize*78;
+		i++;
 	}
 	
 }

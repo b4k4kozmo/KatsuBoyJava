@@ -37,6 +37,8 @@ public class UI {
 	public String currentDialogue = "";
 	public int commandNum = 0;
 	public int titleScreenState = 0; // 0: the first screen
+	public int slotCol = 0;
+	public int slotRow = 0;
 
 	
 	
@@ -99,6 +101,7 @@ public class UI {
 		// CHARACTER STATE
 		if (gp.gameState == gp.characterState) {
 			drawCharacterScreen();
+			drawInventory();
 		}
 	}
 	
@@ -394,6 +397,31 @@ public class UI {
 		
 		
 		
+	}
+	public void drawInventory() {
+		//FRAME
+		
+		int frameX = gp.tileSize*9;
+		int frameY = gp.tileSize;
+		int frameWidth = gp.tileSize*6;
+		int frameHeight = gp.tileSize*5;
+		drawSubWindow(frameX,frameY,frameWidth,frameHeight);
+		
+		//SLOT
+		final int slotXstart = frameX + 20;
+		final int slotYstart = frameY + 20;
+		int slotX = slotXstart;
+		int slotY = slotYstart;
+		
+		// CURSOR
+		int cursorX = slotXstart + (gp.tileSize * slotCol);
+		int cursorY = slotYstart + (gp.tileSize * slotRow);
+		int cursorWidth = gp.tileSize;
+		int cursorHeight = gp.tileSize;
+		// DRAW CURSOR
+		g2.setColor(kamipink);
+		g2.setStroke(new BasicStroke(3));
+		g2.drawRoundRect(cursorX, cursorY, cursorWidth, cursorHeight, 10, 10);
 	}
 	public void drawSubWindow(int x, int y, int width, int height) {
 		

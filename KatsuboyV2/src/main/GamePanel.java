@@ -49,7 +49,7 @@ public class GamePanel extends JPanel implements Runnable{
 	public Player player = new Player(this,keyH);
 	public Entity obj[] = new Entity[10];
 	public Entity npc[] = new Entity[10];
-	public Entity monster[] = new Entity[20];
+	public Entity monster[] = new Entity[30];
 	ArrayList<Entity> entityList = new ArrayList<>();
 	
 	// GAME STATE
@@ -171,6 +171,7 @@ public class GamePanel extends JPanel implements Runnable{
 		long drawStart = 0;
 		if(keyH.checkDrawTime == true) {
 			drawStart = System.nanoTime();
+			
 		}
 		
 		
@@ -238,9 +239,27 @@ public class GamePanel extends JPanel implements Runnable{
 		if(keyH.checkDrawTime == true) {
 			long drawEnd = System.nanoTime();
 			long passed = drawEnd - drawStart;
-			g2.setColor(Color.white);
+			
+			g2.setColor(ui.kamiblack);
+			g2.drawString("Draw Time: "+passed, 10 +2, 400+2);
+			g2.drawString("Col: "+ player.worldX/48, 10+2, 432+2);
+			g2.drawString("Row: "+ player.worldY/48, 10+2, 464+2);
+			g2.drawString("WorldX: "+ player.worldX, 10+2, 496+2);
+			g2.drawString("WorldY: "+ player.worldY, 10+2, 528+2);
+			
+			g2.setColor(ui.kamiwhite);
 			g2.drawString("Draw Time: "+passed, 10, 400);
+			g2.drawString("Col: "+ player.worldX/48, 10, 432);
+			g2.drawString("Row: "+ player.worldY/48, 10, 464);
+			g2.drawString("WorldX: "+ player.worldX, 10, 496);
+			g2.drawString("WorldY: "+ player.worldY, 10, 528);
+			
 			System.out.println("Draw Time: "+passed);
+			System.out.println("Col: "+ player.worldX/48);
+			System.out.println("Row: "+ player.worldY/48);
+			System.out.println("WorldX: "+ player.worldX);
+			System.out.println("WorldY: "+ player.worldY);
+			
 		}
 		
 		

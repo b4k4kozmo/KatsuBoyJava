@@ -44,6 +44,7 @@ public class Entity {
 	public int invincibleCounter = 0;
 	int dyingCounter =  0;
 	int hpBarCounter = 0;
+	public int slowDown = 0;
 	
 	// CHARACTER STATUS
 	public int type; // 0 = player, 1 = npc, 2 = monster
@@ -217,6 +218,7 @@ public class Entity {
 			}
 			if(dying == true) {
 				dyingAnimation(g2);
+				hpBarOn = false;
 			}
 			
 			g2.drawImage(image, screenX, screenY, gp.tileSize, gp.tileSize, null);
