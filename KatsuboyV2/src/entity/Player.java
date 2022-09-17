@@ -5,12 +5,12 @@ import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-
-
-
+import java.util.ArrayList;
 
 import main.GamePanel;
 import main.KeyHandler;
+import object.OBJ_Boots;
+import object.OBJ_Key;
 import object.OBJ_Shield_Puffa;
 import object.OBJ_Sword_Normal;
 
@@ -27,6 +27,8 @@ public class Player extends Entity{
 	public boolean onCarbo = false;
 	public boolean hasSword = false;
 	public boolean attackCanceled = false;
+	public ArrayList<Entity> inventory = new ArrayList<>();
+	public final int maxInventorySize = 20;
 	
 	public Player(GamePanel gp, KeyHandler keyH) {
 		
@@ -52,6 +54,7 @@ public class Player extends Entity{
 		setDefaultValues();
 		getPlayerImage();
 		getPlayerAttackImage();
+		setItems();
 	}
 	
 	public void setDefaultValues() {
@@ -74,6 +77,14 @@ public class Player extends Entity{
 		currentShield = new OBJ_Shield_Puffa(gp);
 		attack = getAttack(); // the total attack value is decided by strength and weapon
 		defense = getDefense();	// the total defense value is decided by dexterity and shield
+	}
+	public void setItems() {
+		
+		inventory.add(currentWeapon);
+		inventory.add(currentShield);
+		inventory.add(new OBJ_Key(gp));
+		inventory.add(new OBJ_Boots(gp));
+		
 	}
 	public int getAttack () {
 		return attack = strength * currentWeapon.attackValue;
@@ -298,7 +309,22 @@ public class Player extends Entity{
 					gp.playSE(10);
 					gp.gameState = gp.dialogueState;
 					gp.npc[i].speak();
-					gp.keyH.enterPressed = false;	
+					if(gp.npc[i].name == "Nanaman" && level <= 7) {
+						exp += 444;
+						if(hasBoots == false) {
+							exp += 777;
+							hasBoots = true;
+						}
+						if(level == 1) {
+							exp += 111;
+						}
+							checkLevelUp();
+						
+						
+						System.out.println("it's him!");
+					}
+					gp.keyH.enterPressed = false;
+					
 			}
 			
 		}
@@ -308,7 +334,7 @@ public class Player extends Entity{
 		if(i != 999) {
 			
 			if(invincible == false) {
-				if(gp.monster[i].life != 0) {
+				if(gp.monster[i].life > 0) {
 					gp.playSE(7);
 					
 					int damage = gp.monster[i].attack - defense;
@@ -363,16 +389,17 @@ public class Player extends Entity{
 	
 	public void checkLevelUp() {
 		
-		if(exp >= nextLevelExp) {
+		while(exp >= nextLevelExp) {
 			gp.ui.addMessage("Level up!");
 			level++;
 			nextLevelExp *= 2;
 			maxLife += 2;
+			life = maxLife;
 			strength++;
 			dexterity++;
 			attack = getAttack();
 			defense = getAttack();
-			
+			gp.stopSE();
 			gp.playSE(4);
 			gp.gameState = gp.dialogueState;
 			gp.ui.currentDialogue = "You are now " + level + "!\n"

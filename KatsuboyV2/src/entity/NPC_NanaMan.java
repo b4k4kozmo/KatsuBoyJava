@@ -11,6 +11,7 @@ public class NPC_NanaMan extends Entity{
 	public NPC_NanaMan(GamePanel gp) {
 		super(gp);
 		
+		name = "Nanaman";
 		direction = "down";
 		speed = 25;
 		

@@ -11,6 +11,7 @@ public class OBJ_Sword_Normal extends Entity{
 		name = "Normal Sword";
 		down1 = setup("/objects/sword",gp.tileSize,gp.tileSize);
 		attackValue = 2;
+		description = "[" + name + "]\nKatsu boy's sword.";
 	}
 
 }

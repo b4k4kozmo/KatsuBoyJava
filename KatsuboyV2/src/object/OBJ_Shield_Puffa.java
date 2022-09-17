@@ -11,6 +11,7 @@ public class OBJ_Shield_Puffa extends Entity{
 		name = "Puffa Shield";
 		down1 = setup("/objects/puffa",gp.tileSize,gp.tileSize);
 		defenseValue = 2;
+		description = "[" + name + "]\nPuffa....J?";
 	}
 
 }
