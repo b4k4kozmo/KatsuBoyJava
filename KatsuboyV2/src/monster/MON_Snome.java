@@ -14,19 +14,19 @@ public class MON_Snome extends Entity{
 		
 		this.gp = gp;
 		
-		type = 2;
+		type = type_monster;
 		name = "Snome";
 		speed = 1;
 		maxLife = 5;
 		life = maxLife;
 		attack = 3;
 		defense = 1;
-		exp = 5;
+		exp = 3;
 		
-		solidArea.x = 6;
-		solidArea.y = 24;
-		solidArea.width = 36;
-		solidArea.height = 24;
+		solidArea.x = 3;
+		solidArea.y = 18;
+		solidArea.width = 42;
+		solidArea.height = 30;
 		solidAreaDefaultX = solidArea.x;
 		solidAreaDefaultY = solidArea.y;
 		

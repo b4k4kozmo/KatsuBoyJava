@@ -14,19 +14,19 @@ public class MON_Slime extends Entity{
 		
 		this.gp = gp;
 		
-		type = 2;
+		type = type_monster;
 		name = "Slime";
 		speed = 1;
 		maxLife = 3;
 		life = maxLife;
 		attack = 5;
 		defense = 0;
-		exp = 2;
+		exp = 1;
 				
-		solidArea.x = 6;
-		solidArea.y = 24;
-		solidArea.width = 36;
-		solidArea.height = 24;
+		solidArea.x = 3;
+		solidArea.y = 18;
+		solidArea.width = 42;
+		solidArea.height = 30;
 		solidAreaDefaultX = solidArea.x;
 		solidAreaDefaultY = solidArea.y;
 		

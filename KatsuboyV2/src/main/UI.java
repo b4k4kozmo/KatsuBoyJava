@@ -29,7 +29,7 @@ public class UI {
 //	int messageCounter = 0;
 	ArrayList<String> message = new ArrayList<>();
 	ArrayList<Integer> messageCounter = new ArrayList<>();
-	public Color kamigreen = new Color(130, 217, 122);
+	public Color kamigreen = new Color(134, 186, 134);
 	public Color kamiblack = new Color(26, 2, 43);
 	public Color kamipink = new Color(194,92,177);
 	public Color kamiwhite = new Color(240,242,239);
@@ -417,6 +417,14 @@ public class UI {
 		// DRAW PLAYER'S ITEMS
 		for(int i = 0; i < gp.player.inventory.size(); i++) {
 			
+			//EQUIP CURSOR
+			if (gp.player.inventory.get(i) == gp.player.currentWeapon ||
+					gp.player.inventory.get(i) == gp.player.currentShield) {
+				g2.setColor(new Color(194,92,177,200)); //transparent version of "kamipink" 
+				g2.fillRoundRect(slotX, slotY, gp.tileSize, gp.tileSize, 10,10);
+			}
+			
+			
 			g2.drawImage(gp.player.inventory.get(i).down1, slotX, slotY, null);
 			
 			slotX += slotSize;
@@ -442,7 +450,7 @@ public class UI {
 		int dFrameY = frameY +frameHeight;
 		int dFrameWidth = frameWidth;
 		int dFrameHeight = gp.tileSize*3;
-		drawSubWindow(dFrameX, dFrameY, dFrameWidth, dFrameHeight);
+		
 		// DRAW DESCRIPTION TEXT
 		int textX = dFrameX + 20;
 		int textY = dFrameY + gp.tileSize;
@@ -451,6 +459,8 @@ public class UI {
 		int itemIndex = getItemIndexOnSlot();
 		
 		if(itemIndex < gp.player.inventory.size()) {
+			
+			drawSubWindow(dFrameX, dFrameY, dFrameWidth, dFrameHeight);
 			
 			for(String line: gp.player.inventory.get(itemIndex).description.split("\n")) {
 				

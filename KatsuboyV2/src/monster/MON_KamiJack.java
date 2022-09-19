@@ -14,7 +14,7 @@ public class MON_KamiJack extends Entity{
 		
 		this.gp = gp;
 		
-		type = 2;
+		type = type_monster;
 		name = "Kamijack";
 		speed = 7;
 		maxLife = 12;
@@ -23,10 +23,10 @@ public class MON_KamiJack extends Entity{
 		defense = 9;
 		exp = 50;
 		
-		solidArea.x = 6;
-		solidArea.y = 24;
-		solidArea.width = 36;
-		solidArea.height = 24;
+		solidArea.x = 3;
+		solidArea.y = 18;
+		solidArea.width = 42;
+		solidArea.height = 30;
 		solidAreaDefaultX = solidArea.x;
 		solidAreaDefaultY = solidArea.y;
 		

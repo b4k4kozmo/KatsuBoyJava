@@ -253,7 +253,7 @@ public class GamePanel extends JPanel implements Runnable{
 			g2.drawString("Row: "+ player.worldY/48, 10, 464);
 			g2.drawString("WorldX: "+ player.worldX, 10, 496);
 			g2.drawString("WorldY: "+ player.worldY, 10, 528);
-			
+								
 			System.out.println("Draw Time: "+passed);
 			System.out.println("Col: "+ player.worldX/48);
 			System.out.println("Row: "+ player.worldY/48);

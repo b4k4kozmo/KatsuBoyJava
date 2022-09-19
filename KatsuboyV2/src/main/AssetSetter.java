@@ -7,6 +7,9 @@ import monster.MON_Slime;
 import monster.MON_Snome;
 import object.OBJ_Boots;
 import object.OBJ_Carbo;
+import object.OBJ_Kami_Shield;
+import object.OBJ_Kamibokken;
+import object.OBJ_Key;
 
 
 public class AssetSetter {
@@ -19,14 +22,35 @@ public class AssetSetter {
 	
 	public void setObject() {
 		
-	
-		gp.obj[0] = new OBJ_Boots(gp);
-		gp.obj[0].worldX = 50 * gp.tileSize;
-		gp.obj[0].worldY = 97 * gp.tileSize;
-		
-		gp.obj[1] = new OBJ_Carbo(gp);
-		gp.obj[1].worldX = 52 * gp.tileSize;
-		gp.obj[1].worldY = 98 * gp.tileSize;
+		int i = 0;
+		gp.obj[i] = new OBJ_Boots(gp);
+		gp.obj[i].worldX = 50 * gp.tileSize;
+		gp.obj[i].worldY = 97 * gp.tileSize;
+		i++;
+		gp.obj[i] = new OBJ_Carbo(gp);
+		gp.obj[i].worldX = 52 * gp.tileSize;
+		gp.obj[i].worldY = 98 * gp.tileSize;
+		i++;
+		gp.obj[i] = new OBJ_Key(gp);
+		gp.obj[i].worldX = 96 * gp.tileSize;
+		gp.obj[i].worldY = 96 * gp.tileSize;
+		i++;
+		gp.obj[i] = new OBJ_Key(gp);
+		gp.obj[i].worldX = 96 * gp.tileSize;
+		gp.obj[i].worldY = 97 * gp.tileSize;
+		i++;
+		gp.obj[i] = new OBJ_Key(gp);
+		gp.obj[i].worldX = 97 * gp.tileSize;
+		gp.obj[i].worldY = 90 * gp.tileSize;
+		i++;
+		gp.obj[i] = new OBJ_Kamibokken(gp);
+		gp.obj[i].worldX = 98 * gp.tileSize;
+		gp.obj[i].worldY = 98 * gp.tileSize;
+		i++;
+		gp.obj[i] = new OBJ_Kami_Shield(gp);
+		gp.obj[i].worldX = 97 * gp.tileSize;
+		gp.obj[i].worldY = 98 * gp.tileSize;
+		i++;
 	}
 	public void setNPC() {
 		
