@@ -12,6 +12,8 @@ import main.KeyHandler;
 import object.OBJ_Boots;
 import object.OBJ_Key;
 import object.OBJ_Shield_Puffa;
+import object.OBJ_Shuriken;
+import object.OBJ_Snowball;
 import object.OBJ_Sword_Normal;
 
 
@@ -68,6 +70,9 @@ public class Player extends Entity{
 		level = 1;
 		maxLife= 6;
 		life = maxLife;
+		maxMana = 4;
+		mana = maxMana;
+		ammo = 10;
 		strength = 1; // the more strength he has the more damage he gives
 		dexterity = 1; // the more dexterity he has, the less damage he receives.
 		exp = 0;
@@ -75,6 +80,10 @@ public class Player extends Entity{
 		coin = 0;
 		currentWeapon = new OBJ_Sword_Normal(gp);
 		currentShield = new OBJ_Shield_Puffa(gp);
+		//runs on mana
+		projectile = new OBJ_Shuriken(gp);
+		// runs on ammo
+//		projectile = new OBJ_Snowball(gp);
 		attack = getAttack(); // the total attack value is decided by strength and weapon
 		defense = getDefense();	// the total defense value is decided by dexterity and shield
 	}
@@ -229,6 +238,22 @@ public class Player extends Entity{
 			}
 			
 		}
+		if(gp.keyH.shotKeyPressed == true && projectile.alive == false && shotAvailableCounter == 30 &&
+				projectile.haveResource(this) == true) {
+			
+			// SET DEFAULT COORDINATES, DIRECTION AND USER
+			projectile.set(worldX, worldY, direction, true, this);
+			
+			// SUBTRACT THE COST (MANA, AMMO)
+			projectile.subtractResource(this);
+			
+			// ADD IT TO THE LIST
+			gp.projectileList.add(projectile);
+			
+			shotAvailableCounter = 0;
+			
+			gp.playSE(8);
+		}
 		
 		// This needs to be outside key if statement!
 		if(invincible == true) {
@@ -238,6 +263,15 @@ public class Player extends Entity{
 				invincibleCounter = 0;
 				
 			}
+		}
+		if(shotAvailableCounter < 30) {
+			shotAvailableCounter++;
+		}
+		if(life > maxLife) {
+			life = maxLife;
+		}
+		if(mana > maxMana) {
+			mana = maxMana;
 		}
 	}
 	public void attacking() {
@@ -272,7 +306,7 @@ public class Player extends Entity{
 			solidArea.height = attackArea.height;
 			// Check monster collision with the updated worldX, worldY, and solidArea
 			int monsterIndex = gp.cChecker.checkEntity(this, gp.monster);
-			damageMonster(monsterIndex);
+			damageMonster(monsterIndex, attack);
 			
 			// Restore values to the saved values prior to collision 
 			worldX = currentWorldX;
@@ -293,19 +327,32 @@ public class Player extends Entity{
 		
 		if(i != 999) {
 			
-			String text;
-			
-			if(inventory.size() != maxInventorySize) {
+			// PICKUP ONLY ITEMS
+			if(gp.obj[i].type == type_pickupOnly) {
 				
-				inventory.add(gp.obj[i]);
-				gp.playSE(1);
-				text = "Got a " + gp.obj[i].name + "!";
+				gp.obj[i].use(this);
+				gp.obj[i] = null;
 			}
+			
+			// INVENTORY ITEMS
 			else {
-				text = "Your inventory is full!";
+				String text;
+				
+				if(inventory.size() != maxInventorySize) {
+					
+					inventory.add(gp.obj[i]);
+					gp.playSE(1);
+					text = "Got a " + gp.obj[i].name + "!";
+				}
+				else {
+					text = "Your inventory is full!";
+				}
+				gp.ui.addMessage(text);
+				gp.obj[i] = null;
 			}
-			gp.ui.addMessage(text);
-			gp.obj[i] = null;
+			
+			
+			
 			
 		}
 		
@@ -365,7 +412,7 @@ public class Player extends Entity{
 			
 		}
 	}
-	public void damageMonster(int i) {
+	public void damageMonster(int i, int attack) {
 		
 		if(i != 999) {
 			
@@ -409,7 +456,11 @@ public class Player extends Entity{
 			level++;
 			nextLevelExp *= 2;
 			maxLife += 2;
+			if(level%2 == 0) {
+				maxMana += 1;
+			}
 			life = maxLife;
+			mana = maxMana;
 			strength++;
 			dexterity++;
 			attack = getAttack();
@@ -441,7 +492,9 @@ public class Player extends Entity{
 				defense = getDefense();
 			}
 			if(selectedItem.type == type_consumable) {
-				// later
+
+				selectedItem.use(this);
+				inventory.remove(itemIndex);
 			}
 			
 		}

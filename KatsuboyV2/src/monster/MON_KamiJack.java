@@ -4,6 +4,9 @@ import java.util.Random;
 
 import entity.Entity;
 import main.GamePanel;
+import object.OBJ_Coin;
+import object.OBJ_Heart;
+import object.OBJ_Potion_Green;
 
 public class MON_KamiJack extends Entity{
 
@@ -16,12 +19,12 @@ public class MON_KamiJack extends Entity{
 		
 		type = type_monster;
 		name = "Kamijack";
-		speed = 7;
-		maxLife = 12;
+		speed = 12;
+		maxLife = 111;
 		life = maxLife;
 		attack = 20;
-		defense = 9;
-		exp = 50;
+		defense = 6;
+		exp = 250;
 		
 		solidArea.x = 3;
 		solidArea.y = 18;
@@ -80,6 +83,22 @@ public class MON_KamiJack extends Entity{
 		
 		
 		
+	}
+public void checkDrop() {
+		
+		// CAST A DIE
+		int i = new Random().nextInt(100)+1;
+		
+		//SET THE MONSTER DROP
+		if(i< 50) {
+			dropItem(new OBJ_Coin(gp));
+		}
+		if (i >= 50 && 1 < 75) {
+			dropItem(new OBJ_Potion_Green(gp));
+		}
+		if (i >= 74 && i < 100) {
+			dropItem(new OBJ_Heart(gp));
+		}
 	}
 
 }

@@ -7,7 +7,7 @@ import java.awt.event.KeyListener;
 public class KeyHandler implements KeyListener{
 	
 	GamePanel gp;
-	public boolean upPressed, downPressed, leftPressed, rightPressed, shiftPressed, enterPressed;
+	public boolean upPressed, downPressed, leftPressed, rightPressed, shiftPressed, enterPressed, shotKeyPressed;
 	// DEBUG
 	boolean checkDrawTime = false;
 	
@@ -148,20 +148,23 @@ public class KeyHandler implements KeyListener{
 	
 	}
 	public void playState(int code) {
-		if (code == KeyEvent.VK_W) {
+		if(code == KeyEvent.VK_W) {
 			upPressed = true;
 		}
-		if (code == KeyEvent.VK_S) {
+		if(code == KeyEvent.VK_S) {
 			downPressed = true;
 		}
-		if (code == KeyEvent.VK_A) {
+		if(code == KeyEvent.VK_A) {
 			leftPressed = true;
 		}
-		if (code == KeyEvent.VK_D) {
+		if(code == KeyEvent.VK_D) {
 			rightPressed = true;
 		}
-		if (code == KeyEvent.VK_SHIFT) {
+		if(code == KeyEvent.VK_SHIFT) {
 			shiftPressed = true;
+		}
+		if(code == KeyEvent.VK_SPACE) {
+			shotKeyPressed = true;
 		}
 		
 		// PAUSE
@@ -179,7 +182,7 @@ public class KeyHandler implements KeyListener{
 		
 		
 		// DEBUG
-		if (code == KeyEvent.VK_T) {
+		if(code == KeyEvent.VK_T) {
 			if(checkDrawTime == false) {
 				checkDrawTime = true;
 			}
@@ -256,6 +259,9 @@ public class KeyHandler implements KeyListener{
 		}
 		if (code == KeyEvent.VK_D) {
 			rightPressed = false;
+		}
+		if(code == KeyEvent.VK_SPACE) {
+			shotKeyPressed = false;
 		}
 		if (code == KeyEvent.VK_SHIFT) {
 			shiftPressed = false;
