@@ -138,6 +138,16 @@ public class Player extends Entity{
 			attackRight2 = setup("/player/boy_right_bokken_2",gp.tileSize*2,gp.tileSize);
 			
 		}
+		if(currentWeapon.type == type_axe) {
+			attackUp1 = setup("/player/boy_up_axe_1",gp.tileSize,gp.tileSize*2);
+			attackUp2 = setup("/player/boy_up_axe_2",gp.tileSize,gp.tileSize*2);
+			attackDown1 = setup("/player/boy_down_axe_1",gp.tileSize,gp.tileSize*2);
+			attackDown2 = setup("/player/boy_down_axe_2",gp.tileSize,gp.tileSize*2);
+			attackLeft1 = setup("/player/boy_left_axe_1",gp.tileSize*2,gp.tileSize);
+			attackLeft2 = setup("/player/boy_left_axe_2",gp.tileSize*2,gp.tileSize);
+			attackRight1 = setup("/player/boy_right_axe_1",gp.tileSize*2,gp.tileSize);
+			attackRight2 = setup("/player/boy_right_axe_2",gp.tileSize*2,gp.tileSize);
+		}
 		
 		System.out.println(currentWeapon);
 	}
@@ -198,6 +208,10 @@ public class Player extends Entity{
 			//CHECK MONSTER COLLISION
 			int monsterIndex = gp.cChecker.checkEntity(this, gp.monster);
 			contactMonster(monsterIndex);
+			
+			//CHECK INTERACTIVE TILE COLLISION
+			int iTileIndex = gp.cChecker.checkEntity(this, gp.iTile);
+			
 			
 			//CHECK EVENT
 			gp.eHandler.checkEvent();
@@ -307,6 +321,9 @@ public class Player extends Entity{
 			// Check monster collision with the updated worldX, worldY, and solidArea
 			int monsterIndex = gp.cChecker.checkEntity(this, gp.monster);
 			damageMonster(monsterIndex, attack);
+			
+			int iTileIndex = gp.cChecker.checkEntity(this, gp.iTile);
+			damageInteractiveTile(iTileIndex);
 			
 			// Restore values to the saved values prior to collision 
 			worldX = currentWorldX;
@@ -448,13 +465,28 @@ public class Player extends Entity{
 		}
 	}
 	
-	
+	public void damageInteractiveTile(int i) {
+		if(i != 999 && gp.iTile[i].destructable == true 
+				&& gp.iTile[i].isCorrectItem(this) == true && gp.iTile[i].invincible == false) {
+			
+			gp.iTile[i].playSE();
+			gp.iTile[i].life--;
+			gp.iTile[i].invincible = true;
+			
+			if(gp.iTile[i].life == 0) {
+				gp.iTile[i] = gp.iTile[i].getDestroyedForm();
+			}
+			
+			
+		}
+		
+	}
 	public void checkLevelUp() {
 		
 		while(exp >= nextLevelExp) {
 			gp.ui.addMessage("Level up!");
 			level++;
-			nextLevelExp *= 2;
+			nextLevelExp *= 3;
 			maxLife += 2;
 			if(level%2 == 0) {
 				maxMana += 1;

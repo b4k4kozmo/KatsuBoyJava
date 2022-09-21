@@ -17,7 +17,7 @@ public class OBJ_Shuriken extends Projectile{
 		speed = 12;
 		maxLife = 80;
 		life = maxLife;
-		attack = 5;
+		attack = 3;
 		useCost = 1;
 		alive = false;
 		getImage();

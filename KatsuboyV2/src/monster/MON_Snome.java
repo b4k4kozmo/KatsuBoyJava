@@ -21,7 +21,7 @@ public class MON_Snome extends Entity{
 		type = type_monster;
 		name = "Snome";
 		speed = 1;
-		maxLife = 5;
+		maxLife = 21;
 		life = maxLife;
 		attack = 3;
 		defense = 1;

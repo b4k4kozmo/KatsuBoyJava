@@ -10,10 +10,12 @@ import object.OBJ_Carbo;
 import object.OBJ_Coin;
 import object.OBJ_Heart;
 import object.OBJ_Kami_Shield;
+import object.OBJ_Kamiaxe;
 import object.OBJ_Kamibokken;
 import object.OBJ_Key;
 import object.OBJ_ManaCrystal;
 import object.OBJ_Potion_Green;
+import tile_interactive.IT_DryTree;
 
 
 public class AssetSetter {
@@ -63,7 +65,7 @@ public class AssetSetter {
 		gp.obj[i].worldX = 95 * gp.tileSize;
 		gp.obj[i].worldY = 91 * gp.tileSize;
 		i++;
-		gp.obj[i] = new OBJ_ManaCrystal(gp);
+		gp.obj[i] = new OBJ_Kamiaxe(gp);
 		gp.obj[i].worldX = 94 * gp.tileSize;
 		gp.obj[i].worldY = 91 * gp.tileSize;
 		i++;
@@ -181,6 +183,13 @@ public class AssetSetter {
 		i++;
 	
 	
+	}
+	public void setInteractiveTile() {
+		
+		int i = 0;
+		gp.iTile[i] = new IT_DryTree(gp,86,97);i++;
+		
+		
 	}
 	
 }
