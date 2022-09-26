@@ -1,5 +1,7 @@
 package object;
 
+import java.awt.Color;
+
 import entity.Entity;
 import entity.Projectile;
 import main.GamePanel;
@@ -45,5 +47,21 @@ public class OBJ_Snowball extends Projectile {
 	public void subtractResource(Entity user) {
 	user.ammo -= useCost;
 	
+	}
+	public Color getParticleColor() {
+		Color color = gp.ui.kamiwhite;
+		return color;
+	}
+	public int getParticleSize() {
+		int size = 10; // pixel size
+		return size;
+	}
+	public int getParticleSpeed() {
+		int speed = 1;
+		return speed;
+	}
+	public int getParticleMaxLife() {
+		int maxLife = 20;
+		return maxLife;
 	}
 }

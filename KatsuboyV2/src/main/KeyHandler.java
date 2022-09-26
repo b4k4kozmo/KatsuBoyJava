@@ -3,6 +3,8 @@ package main;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
+import object.OBJ_Kamibokken;
+
 
 public class KeyHandler implements KeyListener{
 	
@@ -115,7 +117,8 @@ public class KeyHandler implements KeyListener{
 					System.out.println("Do some samurai specific stuff");
 					gp.playSE(1);
 					gp.gameState = gp.playState;
-					gp.player.hasSword = true;
+					gp.player.inventory.add(new OBJ_Kamibokken(gp));
+					
 				}
 				if(gp.ui.commandNum == 1) {
 					System.out.println("Do some Ninja specific stuff");
@@ -134,7 +137,7 @@ public class KeyHandler implements KeyListener{
 					gp.ui.kamipink = gp.ui.kamigreen;
 					gp.gameState = gp.playState;
 					gp.player.hasBoots = true;
-					gp.player.hasSword = true;
+					
 					
 				}
 				if(gp.ui.commandNum == 3) {

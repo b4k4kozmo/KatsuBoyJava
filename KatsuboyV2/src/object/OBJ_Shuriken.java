@@ -1,5 +1,7 @@
 package object;
 
+import java.awt.Color;
+
 import entity.Entity;
 import entity.Projectile;
 import main.GamePanel;
@@ -43,6 +45,22 @@ public class OBJ_Shuriken extends Projectile{
 	}
 	public void subtractResource(Entity user) {
 		user.mana -= useCost;
+	}
+	public Color getParticleColor() {
+		Color color = gp.ui.kamipink;
+		return color;
+	}
+	public int getParticleSize() {
+		int size = 10; // pixel size
+		return size;
+	}
+	public int getParticleSpeed() {
+		int speed = 1;
+		return speed;
+	}
+	public int getParticleMaxLife() {
+		int maxLife = 20;
+		return maxLife;
 	}
 
 }

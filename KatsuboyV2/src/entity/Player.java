@@ -27,7 +27,7 @@ public class Player extends Entity{
 	int standCounter = 0;
 	public boolean hasBoots = false;
 	public boolean onCarbo = false;
-	public boolean hasSword = false;
+	
 	public boolean attackCanceled = false;
 	public ArrayList<Entity> inventory = new ArrayList<>();
 	public final int maxInventorySize = 20;
@@ -230,7 +230,7 @@ public class Player extends Entity{
 				}
 			}
 			
-			if(keyH.enterPressed == true && attackCanceled == false && hasSword == true) {
+			if(keyH.enterPressed == true && attackCanceled == false) {
 				gp.playSE(8);
 				attacking = true;
 				spriteCounter = 0;
@@ -472,6 +472,9 @@ public class Player extends Entity{
 			gp.iTile[i].playSE();
 			gp.iTile[i].life--;
 			gp.iTile[i].invincible = true;
+			
+			// Generate particle
+			generateParticle(gp.iTile[i],gp.iTile[i]);
 			
 			if(gp.iTile[i].life == 0) {
 				gp.iTile[i] = gp.iTile[i].getDestroyedForm();
