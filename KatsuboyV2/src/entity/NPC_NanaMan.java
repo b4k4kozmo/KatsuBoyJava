@@ -15,6 +15,13 @@ public class NPC_NanaMan extends Entity{
 		direction = "down";
 		speed = 25;
 		
+		solidArea.x = 3;
+		solidArea.y = 18;
+		solidArea.width = 42;
+		solidArea.height = 30;
+		solidAreaDefaultX = solidArea.x;
+		solidAreaDefaultY = solidArea.y;
+		
 		getImage();
 		setDialogue();
 		
@@ -63,7 +70,6 @@ public class NPC_NanaMan extends Entity{
 			
 			actionLockCounter= 0;
 		}
-		
 		
 	}
 	public void speak() {

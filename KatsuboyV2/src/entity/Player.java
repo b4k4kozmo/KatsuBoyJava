@@ -63,6 +63,8 @@ public class Player extends Entity{
 	
 		worldX = gp.tileSize * 94;
 		worldY = gp.tileSize * 94;
+//		worldX = gp.tileSize * 26;
+//		worldY = gp.tileSize * 32;
 		speed = 4;
 		direction = "down";
 	
@@ -87,13 +89,24 @@ public class Player extends Entity{
 		attack = getAttack(); // the total attack value is decided by strength and weapon
 		defense = getDefense();	// the total defense value is decided by dexterity and shield
 	}
+	public void setDefaultPositions() {
+		
+		worldX = gp.tileSize * 94;
+		worldY = gp.tileSize * 94;
+		direction = "down";
+	}
+	public void restoreLifeAndMana() {
+		
+		life = maxLife;
+		mana = maxMana;
+		invincible = false;
+	}
+	
 	public void setItems() {
 		
+		inventory.clear();
 		inventory.add(currentWeapon);
 		inventory.add(currentShield);
-		inventory.add(new OBJ_Key(gp));
-		inventory.add(new OBJ_Boots(gp));
-		
 	}
 	public int getAttack () {
 		attackArea = currentWeapon.attackArea;
@@ -187,10 +200,10 @@ public class Player extends Entity{
 			}
 			
 			// Carbo controls
-			if(onCarbo == true) {
-				gp.obj[1].down1 = setup("/objects/carbuncle_green_2",gp.tileSize,gp.tileSize);
-			
-			}
+//			if(onCarbo == true) {
+//				gp.obj[1].down1 = setup("/objects/carbuncle_green_2",gp.tileSize,gp.tileSize);
+//			
+//			}
 			
 			
 			// CHECK TILE COLLISION
@@ -287,6 +300,13 @@ public class Player extends Entity{
 		if(mana > maxMana) {
 			mana = maxMana;
 		}
+		if(life <= 0) {
+			gp.gameState = gp.gameOverState;
+			gp.ui.commandNum = -1;
+			gp.stopSE();
+			gp.stopMusic();
+			gp.playSE(12);
+		}
 	}
 	public void attacking() {
 		
@@ -345,10 +365,10 @@ public class Player extends Entity{
 		if(i != 999) {
 			
 			// PICKUP ONLY ITEMS
-			if(gp.obj[i].type == type_pickupOnly) {
+			if(gp.obj[gp.currentMap][i].type == type_pickupOnly) {
 				
-				gp.obj[i].use(this);
-				gp.obj[i] = null;
+				gp.obj[gp.currentMap][i].use(this);
+				gp.obj[gp.currentMap][i] = null;
 			}
 			
 			// INVENTORY ITEMS
@@ -357,15 +377,15 @@ public class Player extends Entity{
 				
 				if(inventory.size() != maxInventorySize) {
 					
-					inventory.add(gp.obj[i]);
+					inventory.add(gp.obj[gp.currentMap][i]);
 					gp.playSE(1);
-					text = "Got a " + gp.obj[i].name + "!";
+					text = "Got a " + gp.obj[gp.currentMap][i].name + "!";
 				}
 				else {
 					text = "Your inventory is full!";
 				}
 				gp.ui.addMessage(text);
-				gp.obj[i] = null;
+				gp.obj[gp.currentMap][i] = null;
 			}
 			
 			
@@ -381,7 +401,7 @@ public class Player extends Entity{
 					attackCanceled = true;
 					
 					
-					if(gp.npc[i].name == "Nanaman" && level <= 7) {
+					if(gp.npc[gp.currentMap][i].name == "Nanaman" && level <= 7) {
 						exp += 444;
 						if(hasBoots == false) {
 							exp += 777;
@@ -399,7 +419,7 @@ public class Player extends Entity{
 					gp.stopSE();
 					gp.playSE(10);
 					gp.gameState = gp.dialogueState;
-					gp.npc[i].speak();
+					gp.npc[gp.currentMap][i].speak();
 					gp.keyH.enterPressed = false;
 					
 			}
@@ -413,10 +433,10 @@ public class Player extends Entity{
 		if(i != 999) {
 			
 			if(invincible == false) {
-				if(gp.monster[i].life > 0) {
+				if(gp.monster[gp.currentMap][i].life > 0) {
 					gp.playSE(7);
 					
-					int damage = gp.monster[i].attack - defense;
+					int damage = gp.monster[gp.currentMap][i].attack - defense;
 					if (damage < 0) {
 						damage = 0;
 					}
@@ -433,56 +453,49 @@ public class Player extends Entity{
 		
 		if(i != 999) {
 			
-			if(gp.monster[i].invincible ==false) {
+			if(gp.monster[gp.currentMap][i].invincible ==false) {
 				
 				gp.playSE(6);
 				
-				int damage = attack - gp.monster[i].defense;
+				int damage = attack - gp.monster[gp.currentMap][i].defense;
 				if (damage < 0) {
 					damage = 0;
 				}
 				
-				gp.monster[i].life -= damage;
+				gp.monster[gp.currentMap][i].life -= damage;
 				gp.ui.addMessage(damage + " damage!");
 				
-				gp.monster[i].invincible = true;
-				gp.monster[i].damageReaction();
+				gp.monster[gp.currentMap][i].invincible = true;
+				gp.monster[gp.currentMap][i].damageReaction();
 				
-				if(gp.monster[i].life <= 0) {
-					gp.monster[i].dying = true;
+				if(gp.monster[gp.currentMap][i].life <= 0) {
+					gp.monster[gp.currentMap][i].dying = true;
 					gp.stopSE();
 					gp.playSE(9);
-					gp.ui.addMessage("Killed the " + gp.monster[i].name + "!");
-					gp.ui.addMessage("Gained " + gp.monster[i].exp + " exp!");
-					exp += gp.monster[i].exp;
+					gp.ui.addMessage("Killed the " + gp.monster[gp.currentMap][i].name + "!");
+					gp.ui.addMessage("Gained " + gp.monster[gp.currentMap][i].exp + " exp!");
+					exp += gp.monster[gp.currentMap][i].exp;
 					checkLevelUp();
-					if(life < maxLife) {
-						life +=1;
-					}
-					
 				}
 			}
 		}
 	}
 	
 	public void damageInteractiveTile(int i) {
-		if(i != 999 && gp.iTile[i].destructable == true 
-				&& gp.iTile[i].isCorrectItem(this) == true && gp.iTile[i].invincible == false) {
+		if(i != 999 && gp.iTile[gp.currentMap][i].destructable == true 
+				&& gp.iTile[gp.currentMap][i].isCorrectItem(this) == true && gp.iTile[gp.currentMap][i].invincible == false) {
 			
-			gp.iTile[i].playSE();
-			gp.iTile[i].life--;
-			gp.iTile[i].invincible = true;
+			gp.iTile[gp.currentMap][i].playSE();
+			gp.iTile[gp.currentMap][i].life--;
+			gp.iTile[gp.currentMap][i].invincible = true;
 			
 			// Generate particle
-			generateParticle(gp.iTile[i],gp.iTile[i]);
+			generateParticle(gp.iTile[gp.currentMap][i],gp.iTile[gp.currentMap][i]);
 			
-			if(gp.iTile[i].life == 0) {
-				gp.iTile[i] = gp.iTile[i].getDestroyedForm();
-			}
-			
-			
-		}
-		
+			if(gp.iTile[gp.currentMap][i].life == 0) {
+				gp.iTile[gp.currentMap][i] = gp.iTile[gp.currentMap][i].getDestroyedForm();
+			}	
+		}	
 	}
 	public void checkLevelUp() {
 		

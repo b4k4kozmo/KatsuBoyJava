@@ -79,7 +79,7 @@ public class MON_Slime extends Entity{
 		direction = gp.player.direction;
 		
 	}
-public void checkDrop() {
+	public void checkDrop() {
 		
 		// CAST A DIE
 		int i = new Random().nextInt(100)+1;
