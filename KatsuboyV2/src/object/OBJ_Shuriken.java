@@ -22,6 +22,7 @@ public class OBJ_Shuriken extends Projectile{
 		attack = 3;
 		useCost = 1;
 		alive = false;
+		price = 10;
 		getImage();
 	}
 	

@@ -77,6 +77,8 @@ public class GamePanel extends JPanel implements Runnable{
 	public final int characterState = 4;
 	public final int optionState = 5;
 	public final int gameOverState = 6;
+	public final int transitionState = 7;
+	public final int tradeState = 8;
 	
 	
 	public GamePanel () {
@@ -114,8 +116,10 @@ public class GamePanel extends JPanel implements Runnable{
 	}
 	public void restart() {
 		player.setDefaultValues();
+		player.setItems();
 		player.setDefaultPositions();
 		player.restoreLifeAndMana();
+		aSetter.setObject();
 		aSetter.setNPC();
 		aSetter.setMonster();
 		aSetter.setInteractiveTile();

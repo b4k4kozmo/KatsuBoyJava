@@ -22,6 +22,7 @@ public class OBJ_Snowball extends Projectile {
 		attack = 3;
 		useCost = 1;
 		alive = false;
+		price = 10;
 		getImage();
 	}
 	

@@ -13,7 +13,7 @@ public class OBJ_Carbo extends Entity{
 		
 		name = "Carbuncle";
 		down1 = setup("/objects/carbuncle_green_1",gp.tileSize,gp.tileSize);
-		
+		price = 10;
 		
 		
 		

@@ -1,5 +1,6 @@
 package main;
 
+import entity.NPC_Merchant;
 import entity.NPC_NanaMan;
 import entity.NPC_OldMan;
 import monster.MON_KamiJack;
@@ -84,9 +85,14 @@ public class AssetSetter {
 		i++;
 		
 		mapNum=1;
+		i = 0;
 		gp.npc[mapNum][i] = new NPC_NanaMan (gp);
 		gp.npc[mapNum][i].worldX = gp.tileSize*11;
 		gp.npc[mapNum][i].worldY = gp.tileSize*23;
+		i++;
+		gp.npc[mapNum][i] = new NPC_Merchant (gp);
+		gp.npc[mapNum][i].worldX = gp.tileSize*26;
+		gp.npc[mapNum][i].worldY = gp.tileSize*18;
 		i++;
 		
 	}

@@ -1,6 +1,7 @@
 package entity;
 
 
+import java.awt.Rectangle;
 import java.util.Random;
 
 import main.GamePanel;
@@ -15,6 +16,7 @@ public class NPC_NanaMan extends Entity{
 		direction = "down";
 		speed = 25;
 		
+		solidArea = new Rectangle();
 		solidArea.x = 3;
 		solidArea.y = 18;
 		solidArea.width = 42;

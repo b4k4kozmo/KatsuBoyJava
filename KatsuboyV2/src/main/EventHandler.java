@@ -1,5 +1,7 @@
 package main;
 
+import entity.Entity;
+
 public class EventHandler {
 
 	GamePanel gp;
@@ -7,6 +9,7 @@ public class EventHandler {
 	
 	int prevEventX, prevEventY;
 	boolean canTouchEvent = true;
+	int tempMap, tempCol, tempRow;
 	
 	
 	public EventHandler(GamePanel gp) {
@@ -57,8 +60,10 @@ public class EventHandler {
 			if(hit(0,95,95, "any") == true) { damagePit(gp.dialogueState); }
 			else if(hit(0,5,71, "down") == true) { healingPool(gp.dialogueState); }
 			else if(hit(0,97,97, "any") == true) { teleport(gp.dialogueState, 5, 70); }
-			else if(hit(0,8,46, "any") == true) { changeMap(1,26,31); }
-			else if(hit(1,26,32, "any") == true) { changeMap(0,8,47); }
+			else if(hit(0,8,46, "any") == true) { changeMap(1,26,32); }
+			else if(hit(1,26,32, "any") == true) { changeMap(0,8,46); }
+			else if(hit(1,26,20, "up") == true) { speak(gp.npc[1][1]); }
+			
 		}
 		
 	}
@@ -120,14 +125,21 @@ public class EventHandler {
 		}	
 	}
 	public void changeMap(int currentMap, int x, int y) {
-		gp.currentMap = currentMap;
-		gp.player.worldX = gp.tileSize*x;
-		gp.player.worldY = gp.tileSize*y;
-		prevEventX = gp.player.worldX;
-		prevEventY = gp.player.worldX;
-		canTouchEvent = false;
 		
+		gp.gameState = gp.transitionState;
+		tempMap = currentMap;
+		tempCol = x;
+		tempRow = y;
+		canTouchEvent = false;
 		gp.playSE(13);
+	}
+	public void speak(Entity entity) {
+		
+		if(gp.keyH.enterPressed == true) {
+			gp.gameState = gp.dialogueState;
+			gp.player.attackCanceled = true;
+			entity.speak();
+		}
 	}
 		
 }

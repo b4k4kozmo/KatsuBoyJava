@@ -13,6 +13,7 @@ public class OBJ_Shield_Puffa extends Entity{
 		down1 = setup("/objects/puffa",gp.tileSize,gp.tileSize);
 		defenseValue = 1;
 		description = "[" + name + "]\nPuffa....J?";
+		price = 10;
 	}
 
 }
