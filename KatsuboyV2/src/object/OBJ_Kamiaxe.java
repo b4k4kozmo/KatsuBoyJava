@@ -16,6 +16,7 @@ public class OBJ_Kamiaxe extends Entity {
 		attackArea.height = 24;
 		description = "[" + name + "]\nA strong axe forged\nby dreams.";
 		price = 10;
+		knockBackPower = 12;
 	}
 	
 }

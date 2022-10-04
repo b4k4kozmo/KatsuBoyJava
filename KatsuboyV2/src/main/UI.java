@@ -100,6 +100,7 @@ public class UI {
 		if(gp.gameState == gp.playState) {
 			drawPlayerLife();
 			drawMessage();
+			commandNum=0;
 		}
 		//PAUSE STATE
 		if(gp.gameState == gp.pauseState) {
@@ -909,26 +910,30 @@ public class UI {
 			if(gp.keyH.enterPressed == true) {
 				
 				if(npc.inventory.get(itemIndex).price > gp.player.coin) {
+					commandNum = 0;
 					subState = 0;
 					gp.gameState = gp.dialogueState;
 					currentDialogue = "No... that's too low!";
 					gp.playSE(7);
-					drawDialogueScreen();
 				}
 				else if(gp.player.inventory.size() == gp.player.maxInventorySize) {
+					commandNum = 0;
 					subState = 0;
 					gp.gameState = gp.dialogueState;
 					currentDialogue = "Your pockets are full!";
 					gp.playSE(7);
-					drawDialogueScreen();
 				}
 				else {
+					commandNum = 0;
 					subState = 0;
 					gp.player.coin -= npc.inventory.get(itemIndex).price;
-					gp.gameState = gp.dialogueState;
+//					gp.gameState = gp.dialogueState;
 					currentDialogue = "Thank you for your purchase!";
 					gp.player.inventory.add(npc.inventory.get(itemIndex));
 					gp.playSE(1);
+					if(npc.inventory.get(itemIndex).type != npc.type_consumable) {
+						npc.inventory.remove(itemIndex);
+					}
 				}
 				
 			}
@@ -984,16 +989,13 @@ public class UI {
 					gp.gameState = gp.dialogueState;
 					currentDialogue = "I don't got time for jokes!";
 					gp.playSE(7);
-					drawDialogueScreen();
 				}
 				else {
-					commandNum = 0;
 					subState = 0;
 					gp.player.inventory.remove(itemIndex);
-					gp.player.coin += (price/2);
+					gp.player.coin += price;
 					currentDialogue = "Sure.. I'll take that off your hands..";
 					gp.playSE(1);
-					drawDialogueScreen();
 				}
 			}
 		}

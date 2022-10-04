@@ -11,11 +11,12 @@ public class OBJ_Kamibokken extends Entity {
 		type = type_sword;
 		name = "Kami no Bokken";
 		down1 = setup("/objects/kamibokken", gp.tileSize,gp.tileSize);
-		attackValue = 2;
+		attackValue = 3;
 		attackArea.width = 48;
 		attackArea.height = 52;
 		description = "[" + name + "]\nWooden training sword.\nStronger than it looks.";
-		price = 10;
+		price = 21;
+		knockBackPower = 9;
 	}
 
 }

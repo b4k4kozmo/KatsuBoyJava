@@ -24,6 +24,7 @@ public class OBJ_Shuriken extends Projectile{
 		alive = false;
 		price = 10;
 		getImage();
+		knockBackPower = 3;
 	}
 	
 	public void getImage() {

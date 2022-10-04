@@ -204,9 +204,11 @@ public class KeyHandler implements KeyListener{
 		if(code == KeyEvent.VK_T) {
 			if(checkDrawTime == false) {
 				checkDrawTime = true;
+				gp.tileM.drawPath = true;
 			}
 			else if(checkDrawTime == true) {
 				checkDrawTime = false;
+				gp.tileM.drawPath = false;
 			}
 		}
 	}
@@ -323,6 +325,7 @@ public class KeyHandler implements KeyListener{
 			else if(gp.ui.commandNum == 1) {
 				gp.gameState = gp.titleState;
 				gp.ui.titleScreenState = 0;
+				gp.ui.commandNum = 0;
 				gp.restart();
 			}
 		}

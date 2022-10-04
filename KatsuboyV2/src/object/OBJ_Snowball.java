@@ -17,13 +17,14 @@ public class OBJ_Snowball extends Projectile {
 		
 		name = "Snow-ball";
 		speed = 4;
-		maxLife = 40;
+		maxLife = 100;
 		life = maxLife;
 		attack = 3;
 		useCost = 1;
 		alive = false;
 		price = 10;
 		getImage();
+		knockBackPower = 1;
 	}
 	
 	public void getImage() {
