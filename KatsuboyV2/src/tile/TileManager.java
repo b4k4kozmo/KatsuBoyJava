@@ -30,6 +30,7 @@ public class TileManager {
 		getTileImage();
 		loadMap("/maps/worldmap.txt",0);
 		loadMap("/maps/mushroomhut.txt",1);
+		loadMap("/maps/testmap.txt",2);
 	}	
 	
 	public void getTileImage() {
@@ -66,6 +67,18 @@ public class TileManager {
 		setup(29, "water12", true);
 		setup(30, "water13", true);
 		setup(31, "wildmushroom", false);
+		setup(32, "wunderboat1", true);
+		setup(33, "wunderboat10", true);
+		setup(34, "wunderboat11", true);
+		setup(35, "wunderboat12", false);
+		setup(36, "wunderboat2", true);
+		setup(37, "wunderboat3", true);
+		setup(38, "wunderboat4", true);
+		setup(39, "wunderboat5", true);
+		setup(40, "wunderboat6", true);
+		setup(41, "wunderboat7", true);
+		setup(42, "wunderboat8", true);
+		setup(43, "wunderboat9", true);
 	}
 	public void setup(int index, String imageName, boolean collision) {
 		

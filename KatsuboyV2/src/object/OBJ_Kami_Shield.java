@@ -12,6 +12,6 @@ public class OBJ_Kami_Shield extends Entity{
 		down1 = setup("/objects/kamishield",gp.tileSize,gp.tileSize);
 		defenseValue = 2;
 		description = "[" + name + "]\nHeavy shield crafted\nby Kami-mon.";
-		price = 10;
+		price = 100;
 	}
 }

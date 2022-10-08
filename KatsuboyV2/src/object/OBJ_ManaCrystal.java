@@ -17,10 +17,11 @@ public class OBJ_ManaCrystal extends Entity{
 		image = setup("/objects/gem",gp.tileSize,gp.tileSize);
 		image2 = setup("/objects/gem_empty",gp.tileSize,gp.tileSize);
 	}
-	public void use(Entity entity) {
+	public boolean use(Entity entity) {
 		
 		gp.playSE(2);
 		gp.ui.addMessage("Mana +" + value);
 		gp.player.mana += value;
+		return true;
 	}
 }

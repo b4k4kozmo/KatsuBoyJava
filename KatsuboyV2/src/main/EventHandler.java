@@ -64,6 +64,9 @@ public class EventHandler {
 			else if(hit(1,26,32, "any") == true) { changeMap(0,8,46); }
 			else if(hit(1,26,20, "up") == true) { speak(gp.npc[1][1]); }
 			
+			else if(hit(0,10,9, "up") == true) { changeMap(2,82,67); }
+			else if(hit(2,82,67, "any") == true) { changeMap(0,10,9); }
+			
 		}
 		
 	}

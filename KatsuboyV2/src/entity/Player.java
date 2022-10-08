@@ -76,7 +76,7 @@ public class Player extends Entity{
 		dexterity = 1; // the more dexterity he has, the less damage he receives.
 		exp = 0;
 		nextLevelExp = 5;
-		coin = 0;
+		coin = 999;
 		currentWeapon = new OBJ_Sword_Normal(gp);
 		currentShield = new OBJ_Shield_Puffa(gp);
 		//runs on mana
@@ -380,14 +380,18 @@ public class Player extends Entity{
 				gp.obj[gp.currentMap][i].use(this);
 				gp.obj[gp.currentMap][i] = null;
 			}
-			
+			// OBSTACLE
+			else if(gp.obj[gp.currentMap][i].type == type_obstacle) {
+				if(keyH.enterPressed == true) {
+					attackCanceled = true;
+					gp.obj[gp.currentMap][i].interact();
+				}
+			}
 			// INVENTORY ITEMS
 			else {
 				String text;
 				
-				if(inventory.size() != maxInventorySize) {
-					
-					inventory.add(gp.obj[gp.currentMap][i]);
+				if(canObtainItem(gp.obj[gp.currentMap][i]) == true) {
 					gp.playSE(1);
 					text = "Got a " + gp.obj[gp.currentMap][i].name + "!";
 				}
@@ -569,11 +573,56 @@ public class Player extends Entity{
 			}
 			if(selectedItem.type == type_consumable) {
 
-				selectedItem.use(this);
-				inventory.remove(itemIndex);
-			}
-			
+				if(selectedItem.use(this) == true) {
+					if(selectedItem.amount > 1) {
+						selectedItem.amount--;
+					}
+					else {
+						inventory.remove(itemIndex);
+					}
+				}
+			}	
 		}
+	}
+	public int searchItemInInventory(String itemName) {
+		
+		int itemIndex = 999;
+		
+		for(int i = 0; i < inventory.size(); i++) {
+			if(inventory.get(i).name.equals(itemName)) {
+				itemIndex = i;
+				break;
+			}
+		}
+		return itemIndex;
+	}
+	public boolean canObtainItem(Entity item) {
+		
+		boolean canObtain = false;
+		
+		// CHECK IF STACKABLE
+		if(item.stackable == true) {
+			
+			int index = searchItemInInventory(item.name);
+			
+			if(index != 999) {
+				inventory.get(index).amount++;
+				canObtain = true;
+			}
+			else { // New item need to check vacancy
+				if(inventory.size() != maxInventorySize) {
+					inventory.add(item);
+					canObtain = true;
+				}
+			}
+		}
+		else { // Not stackable check vacancy
+			if(inventory.size() != maxInventorySize) {
+				inventory.add(item);
+				canObtain = true;
+			}
+		}
+		return canObtain;	
 	}
 	public void draw(Graphics2D g2) {
 		

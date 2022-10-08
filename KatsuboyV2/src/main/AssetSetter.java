@@ -8,7 +8,9 @@ import monster.MON_Slime;
 import monster.MON_Snome;
 import object.OBJ_Boots;
 import object.OBJ_Carbo;
+import object.OBJ_Chest;
 import object.OBJ_Coin;
+import object.OBJ_Door;
 import object.OBJ_Heart;
 import object.OBJ_Kami_Shield;
 import object.OBJ_Kamiaxe;
@@ -70,6 +72,14 @@ public class AssetSetter {
 		gp.obj[mapNum][i] = new OBJ_Kamiaxe(gp);
 		gp.obj[mapNum][i].worldX = 94 * gp.tileSize;
 		gp.obj[mapNum][i].worldY = 91 * gp.tileSize;
+		i++;
+		gp.obj[mapNum][i] = new OBJ_Door(gp);
+		gp.obj[mapNum][i].worldX = 85 * gp.tileSize;
+		gp.obj[mapNum][i].worldY = 97 * gp.tileSize;
+		i++;
+		gp.obj[mapNum][i] = new OBJ_Chest(gp, new OBJ_Key(gp));
+		gp.obj[mapNum][i].worldX = 91 * gp.tileSize;
+		gp.obj[mapNum][i].worldY = 92 * gp.tileSize;
 		i++;
 	}
 	public void setNPC() {

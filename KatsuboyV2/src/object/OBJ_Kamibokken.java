@@ -15,8 +15,8 @@ public class OBJ_Kamibokken extends Entity {
 		attackArea.width = 48;
 		attackArea.height = 52;
 		description = "[" + name + "]\nWooden training sword.\nStronger than it looks.";
-		price = 21;
-		knockBackPower = 9;
+		price = 210;
+		knockBackPower = 6;
 	}
 
 }

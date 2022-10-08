@@ -16,12 +16,12 @@ public class OBJ_Coin extends Entity{
 		down1 = setup("/objects/coin", gp.tileSize, gp.tileSize);
 	}
 	
-	public void use(Entity entity) {
+	public boolean use(Entity entity) {
 		
 		gp.playSE(1);
 		gp.ui.addMessage("You found "+value+" shiny "+name+"!");
 		gp.player.coin += value;
-		
+		return true;
 	}
 
 }
