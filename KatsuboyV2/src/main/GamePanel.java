@@ -16,7 +16,7 @@ import javax.swing.JPanel;
 import ai.PathFinder;
 import entity.Entity;
 import entity.Player;
-
+import environment.EnvironmentManager;
 import tile.TileManager;
 import tile_interactive.InteractiveTile;
 
@@ -58,6 +58,7 @@ public class GamePanel extends JPanel implements Runnable{
 	public EventHandler eHandler = new EventHandler(this);
 	Config config = new Config(this);
 	public PathFinder pFinder = new PathFinder(this);
+	EnvironmentManager eManager = new EnvironmentManager(this);
 	Thread gameThread;
 	
 	//ENTITY AND OBJECT
@@ -82,6 +83,7 @@ public class GamePanel extends JPanel implements Runnable{
 	public final int gameOverState = 6;
 	public final int transitionState = 7;
 	public final int tradeState = 8;
+	public final int sleepState = 9;
 	
 	
 	public GamePanel () {
@@ -100,6 +102,7 @@ public class GamePanel extends JPanel implements Runnable{
 		aSetter.setNPC();
 		aSetter.setMonster();
 		aSetter.setInteractiveTile();
+		eManager.setup();
 //		playMusic(0);
 		gameState = titleState;
 		
@@ -228,32 +231,21 @@ public class GamePanel extends JPanel implements Runnable{
 					}
 					if(particleList.get(i).alive == false) {
 						particleList.remove(i);
-					}
-					
+					}	
 				}
 			}
-//			if(player.life <= 0) {
-//				playSE(3);
-//				setupGame();
-//				ui.titleScreenState = 0;
-//				player.hasBoots = false;
-//				
-//				player.setDefaultValues();
-//				stopMusic();
-//				
-//				player.invincible = false;
-//				ui.commandNum = 0;
-//			}
+			for(int i = 0; i < iTile[1].length; i++) {
+				if(iTile[currentMap][i] != null) {
+					iTile[currentMap][i].update();
+				}
+			}
+			eManager.update();
 		}
 		if (gameState == pauseState) {
 			// DO NOTHING
 			
 		}
-		for(int i = 0; i < iTile[1].length; i++) {
-			if(iTile[currentMap][i] != null) {
-				iTile[currentMap][i].update();
-			}
-		}
+
 		
 		
 	}
@@ -277,6 +269,7 @@ public class GamePanel extends JPanel implements Runnable{
 			
 			//TILE
 			tileM.draw(g2);
+			
 			
 			for(int i = 0; i < iTile[1].length; i++) {
 				if(iTile[currentMap][i] != null) {
@@ -333,6 +326,8 @@ public class GamePanel extends JPanel implements Runnable{
 			//EMPTY ENTITY LIST
 			entityList.clear();
 			
+			// ENVIRONMENT
+			eManager.draw(g2);
 			
 			//UI
 			ui.draw(g2);
@@ -375,6 +370,7 @@ public class GamePanel extends JPanel implements Runnable{
 		Graphics g = getGraphics();
 		g.drawImage(tempScreen, 0, 0, screenWidth2, screenHeight2, null);
 		g.dispose();
+		
 	}
 	public void playMusic(int i) {
 		

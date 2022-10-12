@@ -7,6 +7,7 @@ import monster.MON_KamiJack;
 import monster.MON_Slime;
 import monster.MON_Snome;
 import object.OBJ_Boots;
+import object.OBJ_Candle;
 import object.OBJ_Carbo;
 import object.OBJ_Chest;
 import object.OBJ_Coin;
@@ -18,6 +19,7 @@ import object.OBJ_Kamibokken;
 import object.OBJ_Key;
 import object.OBJ_ManaCrystal;
 import object.OBJ_Potion_Green;
+import object.OBJ_Tent;
 import tile_interactive.IT_DryTree;
 
 
@@ -80,6 +82,14 @@ public class AssetSetter {
 		gp.obj[mapNum][i] = new OBJ_Chest(gp, new OBJ_Key(gp));
 		gp.obj[mapNum][i].worldX = 91 * gp.tileSize;
 		gp.obj[mapNum][i].worldY = 92 * gp.tileSize;
+		i++;
+		gp.obj[mapNum][i] = new OBJ_Candle(gp);
+		gp.obj[mapNum][i].worldX = 92 * gp.tileSize;
+		gp.obj[mapNum][i].worldY = 92 * gp.tileSize;
+		i++;
+		gp.obj[mapNum][i] = new OBJ_Tent(gp);
+		gp.obj[mapNum][i].worldX = 92 * gp.tileSize;
+		gp.obj[mapNum][i].worldY = 93 * gp.tileSize;
 		i++;
 	}
 	public void setNPC() {
