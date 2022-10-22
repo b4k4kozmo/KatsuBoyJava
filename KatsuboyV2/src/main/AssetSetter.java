@@ -4,6 +4,7 @@ import entity.NPC_Merchant;
 import entity.NPC_NanaMan;
 import entity.NPC_OldMan;
 import monster.MON_KamiJack;
+import monster.MON_ShadowKatsu;
 import monster.MON_Slime;
 import monster.MON_Snome;
 import object.OBJ_Boots;
@@ -209,6 +210,10 @@ public class AssetSetter {
 		gp.monster[mapNum][i] = new MON_KamiJack(gp);
 		gp.monster[mapNum][i].worldX = gp.tileSize*66;
 		gp.monster[mapNum][i].worldY = gp.tileSize*45;
+		i++;
+		gp.monster[mapNum][i] = new MON_ShadowKatsu(gp);
+		gp.monster[mapNum][i].worldX = gp.tileSize*7;
+		gp.monster[mapNum][i].worldY = gp.tileSize*59;
 		i++;
 		
 	

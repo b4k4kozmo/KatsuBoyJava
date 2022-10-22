@@ -17,6 +17,8 @@ public class OBJ_Kamibokken extends Entity {
 		description = "[" + name + "]\nWooden training sword.\nStronger than it looks.";
 		price = 210;
 		knockBackPower = 6;
+		motion1_duration = 3;
+		motion2_duration = 11;
 	}
 
 }

@@ -6,6 +6,7 @@ import main.GamePanel;
 import object.OBJ_Kami_Shield;
 import object.OBJ_Kamibokken;
 import object.OBJ_Potion_Green;
+import object.OBJ_Tent;
 
 public class NPC_Merchant extends Entity {
 
@@ -41,14 +42,17 @@ public class NPC_Merchant extends Entity {
 	
 	}
 	public void setDialogue () {
+		
 		dialogues[0] = "Welcome to Kami Mart! \nWhat'll it be?";
 		dialogues[1] = "Welcome to the bargain jungle!";
+		
 	}
 	public void setItems() {
 		
 		inventory.add(new OBJ_Potion_Green(gp));
 		inventory.add(new OBJ_Kamibokken(gp));
 		inventory.add(new OBJ_Kami_Shield(gp));
+		inventory.add(new OBJ_Tent(gp));
 	}
 	public void speak() {
 		

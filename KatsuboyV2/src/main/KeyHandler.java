@@ -9,7 +9,8 @@ import object.OBJ_Kamibokken;
 public class KeyHandler implements KeyListener{
 	
 	GamePanel gp;
-	public boolean upPressed, downPressed, leftPressed, rightPressed, shiftPressed, enterPressed, shotKeyPressed;
+	public boolean upPressed, downPressed, leftPressed, rightPressed, shiftPressed,
+	enterPressed, shotKeyPressed, controlPressed;
 	// DEBUG
 	boolean checkDrawTime = false;
 	
@@ -63,9 +64,13 @@ public class KeyHandler implements KeyListener{
 		else if (gp.gameState == gp.gameOverState) {
 			gameOverState(code);
 		}
-		// GAME OVER STATE
+		// TRADE STATE
 		else if (gp.gameState == gp.tradeState) {
 			tradeState(code);
+		}
+		// MAP STATE
+		else if (gp.gameState == gp.mapState) {
+			mapState(code);
 		}
 	}
 	public void titleState(int code) {
@@ -185,8 +190,6 @@ public class KeyHandler implements KeyListener{
 		if(code == KeyEvent.VK_ESCAPE) {
 			gp.gameState = gp.optionState;
 		}
-		
-		// PAUSE
 		if (code == KeyEvent.VK_P) {
 			gp.gameState = gp.pauseState;
 			gp.playSE(1);
@@ -197,6 +200,21 @@ public class KeyHandler implements KeyListener{
 		}
 		if(code == KeyEvent.VK_ENTER) {
 			enterPressed = true;
+		}
+		if (code == KeyEvent.VK_M) {
+			gp.gameState = gp.mapState;
+			gp.playSE(1);
+		}
+		if (code == KeyEvent.VK_X) {
+			if(gp.map.miniMapOn == false) {
+				gp.map.miniMapOn = true;
+			}
+			else {
+				gp.map.miniMapOn = false;
+			}
+		}
+		if(code == KeyEvent.VK_CONTROL) {
+			controlPressed = true;
 		}
 		
 		
@@ -331,6 +349,7 @@ public class KeyHandler implements KeyListener{
 		}
 	}
 	public void tradeState(int code) {
+
 		
 		if(code == KeyEvent.VK_ENTER) {
 			enterPressed = true;
@@ -367,7 +386,13 @@ public class KeyHandler implements KeyListener{
 			}
 		}
 	}
-	public void playerInventory(int code) {
+public void mapState(int code) {
+	
+	if(code == KeyEvent.VK_M) {
+		gp.gameState = gp.playState;
+	} 
+}	
+public void playerInventory(int code) {
 		
 		if(code == KeyEvent.VK_W) {
 			if(gp.ui.playerSlotRow != 0) {
@@ -435,26 +460,29 @@ public class KeyHandler implements KeyListener{
 		
 		int code = e.getKeyCode();
 		
-		if (code == KeyEvent.VK_W) {
+		if(code == KeyEvent.VK_W) {
 			upPressed = false;
 		}
-		if (code == KeyEvent.VK_S) {
+		if(code == KeyEvent.VK_S) {
 			downPressed = false;
 		}
-		if (code == KeyEvent.VK_A) {
+		if(code == KeyEvent.VK_A) {
 			leftPressed = false;
 		}
-		if (code == KeyEvent.VK_D) {
+		if(code == KeyEvent.VK_D) {
 			rightPressed = false;
 		}
 		if(code == KeyEvent.VK_SPACE) {
 			shotKeyPressed = false;
 		}
-		if (code == KeyEvent.VK_SHIFT) {
+		if(code == KeyEvent.VK_SHIFT) {
 			shiftPressed = false;
 		}
-		if (code == KeyEvent.VK_ENTER) {
+		if(code == KeyEvent.VK_ENTER) {
 			enterPressed = false;
+		}
+		if(code == KeyEvent.VK_CONTROL) {
+			controlPressed = false;
 		}
 		
 	}

@@ -24,7 +24,8 @@ public class UI {
 	
 	GamePanel gp;
 	Graphics2D g2;
-	Font maruMonica, amari;
+	public Font maruMonica;
+	Font amari;
 	BufferedImage heart_full, heart_half, heart_empty, crystal_full, crystal_blank, coin;
 	public boolean messageOn = false;
 //	public String message = "";
@@ -932,34 +933,41 @@ public class UI {
 			
 			// BUY AN ITEM
 			if(gp.keyH.enterPressed == true) {
-				
-				if(npc.inventory.get(itemIndex).price > gp.player.coin) {
+				if(gp.player.isCursed == true) {
 					commandNum = 0;
-					subState = 0;
 					gp.gameState = gp.dialogueState;
-					currentDialogue = "No... that's too low!";
-					gp.playSE(7);
+					currentDialogue = "I dont sell to the likes of you";
 				}
 				else {
-					if(gp.player.canObtainItem(npc.inventory.get(itemIndex)) == true) {
-						commandNum = 0;
-						subState = 0;
-						gp.player.coin -= npc.inventory.get(itemIndex).price;
-						currentDialogue = "Thank you for your purchase!";
-						gp.playSE(1);
-						if(npc.inventory.get(itemIndex).type != npc.type_consumable) {
-							npc.inventory.remove(itemIndex);
-						}
-					}
-					else {
+					if(npc.inventory.get(itemIndex).price > gp.player.coin) {
 						commandNum = 0;
 						subState = 0;
 						gp.gameState = gp.dialogueState;
-						currentDialogue = "Your pockets are full!";
+						currentDialogue = "No... that's too low!";
 						gp.playSE(7);
 					}
+					else {
+						if(gp.player.canObtainItem(npc.inventory.get(itemIndex)) == true) {
+							commandNum = 0;
+							subState = 0;
+							gp.player.coin -= npc.inventory.get(itemIndex).price;
+							currentDialogue = "Thank you for your purchase!";
+							gp.playSE(1);
+//							if(npc.inventory.get(itemIndex).type != npc.type_consumable) {
+//								npc.inventory.remove(itemIndex);
+//							}
+						}
+						else {
+							commandNum = 0;
+							subState = 0;
+							gp.gameState = gp.dialogueState;
+							currentDialogue = "Your pockets are full!";
+							gp.playSE(7);
+						}
+					}
+					
 				}
-				
+			
 				
 				
 //				else if(gp.player.inventory.size() == gp.player.maxInventorySize) {
@@ -1044,9 +1052,18 @@ public class UI {
 					else {
 						gp.player.inventory.remove(itemIndex);
 					}
-					gp.player.coin += price;
-					currentDialogue = "Sure.. I'll take that off your hands..";
-					gp.playSE(1);
+					if (gp.eManager.lighting.dayState == gp.eManager.lighting.night &&
+							gp.player.isCursed == false) {
+						gp.player.coin += (price*10);
+						currentDialogue = "Ohhhhh baby!";
+						gp.playSE(1);
+					}
+					else {
+						gp.player.coin += price;
+						currentDialogue = "Sure.. I'll take that off your hands..";
+						gp.playSE(1);
+					}
+					
 				}
 			}
 		}
@@ -1070,7 +1087,7 @@ public class UI {
 				gp.eManager.lighting.dayState = gp.eManager.lighting.day;
 				gp.eManager.lighting.dayCounter = 0;
 				gp.gameState = gp.playState;
-				gp.player.getPlayerImage();
+				gp.player.getImage();
 			}
 		}
 	}

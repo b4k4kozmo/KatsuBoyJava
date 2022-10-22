@@ -17,6 +17,8 @@ public class OBJ_Kamiaxe extends Entity {
 		description = "[" + name + "]\nA strong axe forged\nby dreams.";
 		price = 10;
 		knockBackPower = 12;
+		motion1_duration = 30;
+		motion2_duration = 50;
 	}
 	
 }

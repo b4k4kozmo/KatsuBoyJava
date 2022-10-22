@@ -25,8 +25,8 @@ public class OBJ_Potion_Green extends Entity{
 	
 	public boolean use(Entity entity) {
 		gp.gameState = gp.dialogueState;
-		gp.ui.currentDialogue = "You down the "+name+" and recover "+value+" MP.";
-		entity.mana += value;
+		gp.ui.currentDialogue = "You down the "+name+" and recover "+entity.maxMana+" MP.";
+		entity.mana += entity.maxMana;
 		gp.playSE(2);
 		return true;
 	}
