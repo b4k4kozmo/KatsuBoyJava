@@ -25,9 +25,12 @@ public class NPC_Merchant extends Entity {
 		solidAreaDefaultY = solidArea.y;
 		
 		
+		soundNumber = 20;
+		
 		getImage();
 		setDialogue();
 		setItems();
+		setSound();
 	}
 	public void getImage() {
 		
@@ -43,8 +46,16 @@ public class NPC_Merchant extends Entity {
 	}
 	public void setDialogue () {
 		
-		dialogues[0] = "Welcome to Kami Mart! \nWhat'll it be?";
-		dialogues[1] = "Welcome to the bargain jungle!";
+		dialogues[0][0] = "Welcome to Kami Mart! \nWhat'll it be?";
+		dialogues[0][1] = "Welcome to the bargain jungle!";
+		dialogues[1][0] = "See ya next time!";
+		dialogues[2][0] = "No... that's too low!";
+		dialogues[3][0] = "Thank you for your purchase!";
+		dialogues[4][0] = "Your pockets are full!";
+		dialogues[5][0] = "I don't got time for jokes!";
+		dialogues[6][0] = "Ohhhhh baby!";
+		dialogues[7][0] = "Sure.. I'll take that off your hands..";
+		dialogues[8][0] = "I dont sell to the likes of you";
 		
 	}
 	public void setItems() {
@@ -56,7 +67,7 @@ public class NPC_Merchant extends Entity {
 	}
 	public void speak() {
 		
-		super.speak();
+		startDialogue(this,dialogueSet);
 		gp.gameState = gp.tradeState;
 		gp.ui.npc = this;
 	}

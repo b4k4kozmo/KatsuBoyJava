@@ -27,14 +27,15 @@ public class Entity {
 	public Rectangle attackArea = new Rectangle(0, 0, 0, 0);
 	public int solidAreaDefaultX, solidAreaDefaultY;
 	public boolean collisionOn = false;
-	String dialogues[] = new String[20];
+	public String dialogues[][] = new String[20][20];
 	public Entity attacker;
 	
 	// STATE
 	public int worldX, worldY;
 	public String direction = "down";
 	public int spriteNum = 1;
-	int dialogueIndex = 0;
+	public int dialogueSet = 0;
+	public int dialogueIndex = 0;
 	public boolean collision = false;
 	public boolean invincible = false;
 	public boolean attacking = false;
@@ -47,6 +48,8 @@ public class Entity {
 	public boolean guarding = false;
 	public boolean transparent = false;
 	public boolean offBalance = false;
+	public Entity loot;
+	public boolean opened = false;
 	
 	// COUNTER
 	public int spriteCounter = 0;
@@ -79,6 +82,8 @@ public class Entity {
 	public int coin;
 	public int motion1_duration;
 	public int motion2_duration;
+	public int soundNumber;
+	public int prevSoundNum;
 	public Entity currentWeapon;
 	public Entity currentShield;
 	public Entity currentLight;
@@ -155,29 +160,39 @@ public class Entity {
 		int goalRow = (target.worldY + target.solidArea.y)/gp.tileSize;
 		return goalRow;
 	}
+	public void resetCounter() {
+		spriteCounter = 0;
+		actionLockCounter = 0;
+		invincibleCounter = 0;
+		shotAvailableCounter = 0;
+		slowDown = 0;
+		dyingCounter =  0;
+		hpBarCounter = 0;
+		knockBackCounter = 0;
+		guardCounter = 0;
+		offBalanceCounter = 0;	
+	}
+	public void setLoot(Entity loot) {}
 	public void setAction() { }
 	public void damageReaction() { }
-	public void speak() {
-		if(dialogues[dialogueIndex] == null) {
-			dialogueIndex = 0;
-		}
-		gp.ui.currentDialogue = dialogues[dialogueIndex];
-		dialogueIndex++;
-		
+	public void setSound() {
+		prevSoundNum = gp.ui.soundNum;
+		gp.ui.soundNum = soundNumber;
+	}
+	public void speak() {}
+	public void facePlayer() {
 		switch (gp.player.direction) {
-		case "up":
-			direction = "down";
-			break;
-		case "down":
-			direction = "up";
-			break;
-		case "left": 
-			direction = "right";
-			break;
-		case "right":
-			direction = "left";
-			break;
+		case "up": direction = "down"; break;
+		case "down": direction = "up"; break;
+		case "left": direction = "right"; break;
+		case "right": direction = "left"; break;
 		}
+	}
+	public void startDialogue(Entity entity, int setNum) {
+		
+		gp.gameState = gp.dialogueState;
+		gp.ui.npc = entity;
+		dialogueSet = setNum;
 	}
 	public void interact() {}
 	public boolean use(Entity entity) {return false;}
@@ -500,10 +515,13 @@ public class Entity {
 					offBalance = true;
 					spriteCounter =- 60;
 				}
-				// Normal Guard
-				damage /= 3;
-				gp.playSE(15);
-				setKnockBack(gp.player, this, knockBackPower/5);
+				else {
+					// Normal Guard
+					damage /= 3;
+					gp.playSE(15);
+					setKnockBack(gp.player, this, knockBackPower/5);
+				}
+				
 			}
 			else {
 				// Not guarding
@@ -748,10 +766,10 @@ public class Entity {
 		int nextWorldY = user.getTopY();
 		
 		switch(user.direction) {
-		case "up": nextWorldY = user.getTopY()-1; break;
-		case "down": nextWorldY = user.getBottomY()+1; break;
-		case "left": nextWorldX = user.getLeftX()-1; break;
-		case "right": nextWorldX = user.getRightX()+1; break;
+		case "up": nextWorldY = user.getTopY()-gp.player.speed; break;
+		case "down": nextWorldY = user.getBottomY()+gp.player.speed; break;
+		case "left": nextWorldX = user.getLeftX()-gp.player.speed; break;
+		case "right": nextWorldX = user.getRightX()+gp.player.speed; break;
 		} 
 		int col = nextWorldX/gp.tileSize;
 		int row = nextWorldY/gp.tileSize;

@@ -44,10 +44,13 @@ public class UI {
 	public int playerSlotRow = 0;
 	public int npcSlotCol = 0;
 	public int npcSlotRow = 0;
+	public int soundNum = 17;
 	
 	int subState = 0;
 	int counter = 0;
 	public Entity npc;
+	int charIndex = 0;
+	String combinedText = "";
 
 	
 	
@@ -340,9 +343,44 @@ public class UI {
 		
 		drawSubWindow(x, y, width, height);
 		
-		g2.setFont(g2.getFont().deriveFont(Font.PLAIN,28F));
+		g2.setFont(g2.getFont().deriveFont(Font.PLAIN,28F)); //marumonica
 		x += gp.tileSize;
 		y += gp.tileSize;
+		
+		if(npc.dialogues[npc.dialogueSet][npc.dialogueIndex] != null) {
+			
+//			currentDialogue = npc.dialogues[npc.dialogueSet][npc.dialogueIndex];
+			
+			char characters[] = npc.dialogues[npc.dialogueSet][npc.dialogueIndex].toCharArray();
+			
+			if(charIndex < characters.length) {
+				
+				gp.playSE(soundNum);
+				String s = String.valueOf(characters[charIndex]);
+				combinedText = combinedText + s;
+				currentDialogue = combinedText;
+				charIndex++;
+			} 
+			
+			if(gp.keyH.enterPressed == true) {
+				
+				charIndex = 0;
+				combinedText = "";
+				
+				if(gp.gameState == gp.dialogueState) {
+					npc.dialogueIndex++;
+					gp.keyH.enterPressed = false;
+				}
+			}
+		}
+		else { // if there is no text in the array
+			npc.dialogueIndex = 0;
+			
+			if(gp.gameState == gp.dialogueState) {
+				gp.gameState = gp.playState;
+			}
+		}
+		
 		for(String line : currentDialogue.split("\n")) {
 			g2.drawString(line, x, y);
 			y += 40;
@@ -808,6 +846,7 @@ public class UI {
 				gp.gameState = gp.titleState;
 				titleScreenState = 0;
 				gp.stopMusic();
+				gp.resetGame(true);
 			}
 		}
 		
@@ -852,6 +891,7 @@ public class UI {
 	}
 	public void trade_select () {
 		
+		npc.dialogueSet = 0;
 		drawDialogueScreen();
 		
 		// DRAW WINDOW
@@ -886,8 +926,7 @@ public class UI {
 			g2.drawString(">", x-25, y);
 			if(gp.keyH.enterPressed == true) {
 				commandNum = 0;
-				gp.gameState = gp.dialogueState;
-				currentDialogue = "See ya next time!";
+				npc.startDialogue(npc,1);
 			}
 		}
 		gp.keyH.enterPressed = false;
@@ -934,24 +973,19 @@ public class UI {
 			// BUY AN ITEM
 			if(gp.keyH.enterPressed == true) {
 				if(gp.player.isCursed == true) {
-					commandNum = 0;
-					gp.gameState = gp.dialogueState;
-					currentDialogue = "I dont sell to the likes of you";
+					npc.startDialogue(npc,8);
 				}
 				else {
 					if(npc.inventory.get(itemIndex).price > gp.player.coin) {
-						commandNum = 0;
 						subState = 0;
-						gp.gameState = gp.dialogueState;
-						currentDialogue = "No... that's too low!";
+						npc.startDialogue(npc,2);
 						gp.playSE(7);
 					}
 					else {
 						if(gp.player.canObtainItem(npc.inventory.get(itemIndex)) == true) {
-							commandNum = 0;
 							subState = 0;
 							gp.player.coin -= npc.inventory.get(itemIndex).price;
-							currentDialogue = "Thank you for your purchase!";
+							npc.startDialogue(npc,3);
 							gp.playSE(1);
 //							if(npc.inventory.get(itemIndex).type != npc.type_consumable) {
 //								npc.inventory.remove(itemIndex);
@@ -960,8 +994,7 @@ public class UI {
 						else {
 							commandNum = 0;
 							subState = 0;
-							gp.gameState = gp.dialogueState;
-							currentDialogue = "Your pockets are full!";
+							npc.startDialogue(npc,4);
 							gp.playSE(7);
 						}
 					}
@@ -1040,8 +1073,7 @@ public class UI {
 						gp.player.inventory.get(itemIndex) == gp.player.currentShield) {
 					commandNum = 0;
 					subState = 0;
-					gp.gameState = gp.dialogueState;
-					currentDialogue = "I don't got time for jokes!";
+					npc.startDialogue(npc,5);
 					gp.playSE(7);
 				}
 				else {
@@ -1055,12 +1087,12 @@ public class UI {
 					if (gp.eManager.lighting.dayState == gp.eManager.lighting.night &&
 							gp.player.isCursed == false) {
 						gp.player.coin += (price*10);
-						currentDialogue = "Ohhhhh baby!";
+						npc.startDialogue(npc,6);
 						gp.playSE(1);
 					}
 					else {
 						gp.player.coin += price;
-						currentDialogue = "Sure.. I'll take that off your hands..";
+						npc.startDialogue(npc,7);
 						gp.playSE(1);
 					}
 					

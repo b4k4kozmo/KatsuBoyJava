@@ -9,13 +9,13 @@ import main.GamePanel;
 public class OBJ_Shuriken extends Projectile{
 
 	GamePanel gp;
-	
+	public static final String objName = "Shuriken";
 	public OBJ_Shuriken(GamePanel gp) {
 		super(gp);
 		
 		this.gp = gp;
 		
-		name = "Shuriken";
+		name = objName;
 		speed = 12;
 		maxLife = 80;
 		life = maxLife;

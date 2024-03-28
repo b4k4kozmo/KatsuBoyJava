@@ -52,10 +52,7 @@ public class Player extends Entity{
 		
 		
 		setDefaultValues();
-		getImage();
-		getAttackImage();
-		getGuardImage();
-		setItems();
+	
 	}
 	
 	public void setDefaultValues() {
@@ -82,12 +79,19 @@ public class Player extends Entity{
 		coin = 999;
 		currentWeapon = new OBJ_Sword_Normal(gp);
 		currentShield = new OBJ_Shield_Puffa(gp);
+		currentLight = null;
 		//runs on mana
 		projectile = new OBJ_Shuriken(gp);
 		// runs on ammo
 //		projectile = new OBJ_Snowball(gp);
 		attack = getAttack(); // the total attack value is decided by strength and weapon
 		defense = getDefense();	// the total defense value is decided by dexterity and shield
+		
+		getImage();
+		getAttackImage();
+		getGuardImage();
+		setItems();
+		
 	}
 	public void setDefaultPositions() {
 		
@@ -95,12 +99,20 @@ public class Player extends Entity{
 		worldY = gp.tileSize * 94;
 		direction = "down";
 	}
-	public void restoreLifeAndMana() {
+	public void setDialogue() {
+		dialogues[0][0] = "You are now " + level + "!\n"
+				+ "You can feel the power!";
+	}
+	public void restoreStatus() {
 		
 		life = maxLife;
 		mana = maxMana;
+		speed = defaultSpeed;
 		invincible = false;
 		transparent = false;
+		attacking = false;
+		knockBack = false;
+		lightUpdated = true;
 	}
 	
 	public void setItems() {
@@ -119,7 +131,24 @@ public class Player extends Entity{
 	public int getDefense() {
 		return defense = dexterity * currentShield.defenseValue;
 	}
-	
+	public int getCurrentWeaponSlot() {
+		int currentWeaponSlot = 0;
+		for(int i = 0; i < inventory.size(); i++) {
+			if(inventory.get(i) == currentWeapon) {
+				currentWeaponSlot = i;
+			}
+		}
+		return currentWeaponSlot;
+	}
+	public int getCurrentShieldSlot() {
+		int currentShieldSlot = 0;
+		for(int i = 0; i < inventory.size(); i++) {
+			if(inventory.get(i) == currentShield) {
+				currentShieldSlot = i;
+			}
+		}
+		return currentShieldSlot;
+	}
 	public void getImage() {
 		
 		up1 = setup("/player/boy_up_1",gp.tileSize,gp.tileSize);
@@ -421,40 +450,18 @@ public class Player extends Entity{
 		
 	}
 	public void interactNPC(int i) {
-		if (gp.keyH.enterPressed == true) {
+		if (i != 999) {
 			
-			if(i != 999) {
+			if (gp.keyH.enterPressed == true) {
 					attackCanceled = true;
-					
-					
-					if(gp.npc[gp.currentMap][i].name == "Nanaman" && level <= 7) {
-						exp += 444;
-						gp.player.isCursed = false;
-						if(hasBoots == false) {
-							exp += 777;
-							hasBoots = true;
-						}
-						if(level == 1) {
-							exp += 111;
-						}
-						checkLevelUp();
-							
-						
-						
-						System.out.println("it's him!");
-					}
 					gp.stopSE();
 					gp.playSE(10);
-					gp.gameState = gp.dialogueState;
 					gp.npc[gp.currentMap][i].speak();
-					gp.keyH.enterPressed = false;
-					
-			}
-			
-			
-		}
-		checkLevelUp();
+					gp.keyH.enterPressed = false;			
+			}	
+		}	
 	}
+		
 	public void contactMonster(int i) {
 		
 		if(i != 999) {
@@ -563,9 +570,9 @@ public class Player extends Entity{
 			defense = getAttack();
 			gp.stopSE();
 			gp.playSE(4);
-			gp.gameState = gp.dialogueState;
-			gp.ui.currentDialogue = "You are now " + level + "!\n"
-					+ "You can feel the power!";
+			
+			setDialogue();
+			startDialogue(this,0);
 		}
 	}
 	public void selectItem() {
@@ -625,10 +632,12 @@ public class Player extends Entity{
 		
 		boolean canObtain = false;
 		
+		Entity newItem = gp.eGenerator.getObject(item.name);
+		
 		// CHECK IF STACKABLE
-		if(item.stackable == true) {
+		if(newItem.stackable == true) {
 			
-			int index = searchItemInInventory(item.name);
+			int index = searchItemInInventory(newItem.name);
 			
 			if(index != 999) {
 				inventory.get(index).amount++;
@@ -636,14 +645,14 @@ public class Player extends Entity{
 			}
 			else { // New item need to check vacancy
 				if(inventory.size() != maxInventorySize) {
-					inventory.add(item);
+					inventory.add(newItem);
 					canObtain = true;
 				}
 			}
 		}
 		else { // Not stackable check vacancy
 			if(inventory.size() != maxInventorySize) {
-				inventory.add(item);
+				inventory.add(newItem);
 				canObtain = true;
 			}
 		}

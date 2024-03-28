@@ -6,16 +6,15 @@ import main.GamePanel;
 public class OBJ_Chest extends Entity{
 	
 	GamePanel gp;
-	Entity loot;
-	boolean opened = false;
 	
-	public OBJ_Chest(GamePanel gp, Entity loot) {
+	public static final String objName = "Chest";
+	
+	public OBJ_Chest(GamePanel gp) {
 		super(gp);
 		this.gp = gp;
-		this.loot = loot;
 		
 		type = type_obstacle;
-		name = "Chest";
+		name = objName;
 		image = setup("/objects/chest",gp.tileSize,gp.tileSize);
 		image2 = setup("/objects/chest_open",gp.tileSize,gp.tileSize);
 		down1 = image;
@@ -27,30 +26,37 @@ public class OBJ_Chest extends Entity{
 		solidArea.height = 32;
 		solidAreaDefaultX = solidArea.x;
 		solidAreaDefaultY = solidArea.y;
+			
+	}
+	public void setDialogue() {
+		dialogues[0][0] = "You find a " + loot.name + " in the chest!" + "\n...Let's empty our pockets first!";
+		dialogues[1][0] = "You find a " + loot.name + " in the chest!" + "\nAdded " + loot.name + " to the inventory!";
+		dialogues[2][0] = "You look, but to no avail..";
+		
+	}
+	public void setLoot(Entity loot) {
+		this.loot = loot;
+		setDialogue();
 	}
 	public void interact() {
 		
-		gp.gameState = gp.dialogueState;
-		
+		soundNumber = 20;
+		setSound();
 		if(opened == false) {
 			gp.playSE(3);
 			
-			StringBuilder sb = new StringBuilder();
-			sb.append("You find a " + loot.name + " in the chest!");
 			
 			if(gp.player.canObtainItem(loot) == false) {
-				sb.append("\n...Let's empty our pockets first!");
+				startDialogue(this,0);
 			}
 			else {
-				sb.append("\nAdded " + loot.name + " to the inventory!");
+				startDialogue(this,1);
 				down1 = image2;
 				opened = true;
 			}
-			gp.ui.currentDialogue = sb.toString();
 		}
 		else {
-			gp.ui.currentDialogue = "You look, but to no avail..";
+			startDialogue(this,2);
 		}
 	}
-
 }

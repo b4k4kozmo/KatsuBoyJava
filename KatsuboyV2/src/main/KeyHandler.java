@@ -100,8 +100,11 @@ public class KeyHandler implements KeyListener{
 					gp.playMusic(0);
 				}
 				if(gp.ui.commandNum == 1) {
-					// add later
 					gp.playSE(1);
+					gp.saveLoad.load();
+					gp.gameState = gp.playState;
+					gp.playMusic(0);
+					
 				}
 				if(gp.ui.commandNum == 2) {
 					gp.playSE(1);
@@ -240,7 +243,7 @@ public class KeyHandler implements KeyListener{
 	
 	public void dialogueState(int code) {
 		if (code == KeyEvent.VK_ENTER) {
-			gp.gameState = gp.playState;
+			enterPressed = true;
 		}
 	}
 	public void characterState(int code) {
@@ -337,14 +340,14 @@ public class KeyHandler implements KeyListener{
 		if(code == KeyEvent.VK_ENTER) {
 			if(gp.ui.commandNum == 0) {
 				gp.gameState = gp.playState;
-				gp.retry();
+				gp.resetGame(false);
 				gp.playMusic(0);
 			}
 			else if(gp.ui.commandNum == 1) {
 				gp.gameState = gp.titleState;
 				gp.ui.titleScreenState = 0;
 				gp.ui.commandNum = 0;
-				gp.restart();
+				gp.resetGame(true);
 			}
 		}
 	}

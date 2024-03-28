@@ -5,11 +5,13 @@ import main.GamePanel;
 
 public class OBJ_Kamiaxe extends Entity {
 
+	public static final String objName = "Kami Axe";
+	
 	public OBJ_Kamiaxe(GamePanel gp) {
 		super(gp);
 		
 		type = type_axe;
-		name = "Kami Axe";
+		name = objName;
 		down1 = setup("/objects/axe",gp.tileSize,gp.tileSize);
 		attackValue = 4;
 		attackArea.width = 24;

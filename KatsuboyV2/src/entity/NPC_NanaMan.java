@@ -15,6 +15,7 @@ public class NPC_NanaMan extends Entity{
 		name = "Nanaman";
 		direction = "down";
 		speed = 25;
+		soundNumber = 19;
 		
 		solidArea = new Rectangle();
 		solidArea.x = 3;
@@ -41,12 +42,12 @@ public class NPC_NanaMan extends Entity{
 	
 	}
 	public void setDialogue () {
-		dialogues[0] = "Dude, it's me!";
-		dialogues[1] = "Just call me Nanaman for now..";
-		dialogues[2] = "777";
-		dialogues[3] = "Hmmm... you don't remember?";
-		dialogues[4] = "You're faster than I imagined.";
-		dialogues[5] = "I can wall grab!";
+		dialogues[0][0] = "Dude, it's me!";
+		dialogues[0][1] = "Just call me Nanaman for now..";
+		dialogues[0][2] = "777";
+		dialogues[0][3] = "Hmmm... you don't remember?";
+		dialogues[0][4] = "You're faster than I imagined.";
+		dialogues[0][5] = "I can wall grab!";
 		
 		
 	}
@@ -74,13 +75,30 @@ public class NPC_NanaMan extends Entity{
 		}
 		
 	}
+	
 	public void speak() {
 		
 		// Character specific stuff
 		
-		super.speak();
+		setSound();
+		facePlayer();
+		startDialogue(this,dialogueSet);
+		
+		if(gp.player.level <= 7) {
+			gp.player.exp += 444;
+			gp.player.isCursed = false;
+			if(gp.player.hasBoots == false) {
+				gp.player.exp += 777;
+				gp.player.hasBoots = true;
+			}
+			if(gp.player.level == 1) {
+				gp.player.exp += 111;
+			}
+			
 		}
+		gp.player.checkLevelUp();
 	
+	}
 }
 
 

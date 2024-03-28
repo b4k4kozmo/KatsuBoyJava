@@ -2,10 +2,11 @@ package main;
 
 import entity.Entity;
 
-public class EventHandler {
+public class EventHandler{
 
 	GamePanel gp;
 	EventRect eventRect[][][];
+	Entity eventMaster;
 	
 	int prevEventX, prevEventY;
 	boolean canTouchEvent = true;
@@ -14,6 +15,8 @@ public class EventHandler {
 	
 	public EventHandler(GamePanel gp) {
 		this.gp = gp;
+		
+		eventMaster = new Entity(gp);
 		
 		eventRect = new EventRect[gp.maxMap][gp.maxWorldCol][gp.maxWorldRow];
 		
@@ -25,8 +28,8 @@ public class EventHandler {
 			eventRect[map][col][row] = new EventRect();
 			eventRect[map][col][row].x = 23;
 			eventRect[map][col][row].y = 23;
-			eventRect[map][col][row].width = 12;
-			eventRect[map][col][row].height = 12;
+			eventRect[map][col][row].width = 2;
+			eventRect[map][col][row].height = 2;
 			eventRect[map][col][row].eventRectDefaultX = eventRect[map][col][row].x;
 			eventRect[map][col][row].eventRectDefaultY = eventRect[map][col][row].y;
 			
@@ -40,9 +43,21 @@ public class EventHandler {
 					map++;
 				}
 			}
-		}	
+		}
+		setDialogue();
+		
 	}
-	
+	public void setDialogue() {
+		
+		eventMaster.dialogues[0][0] = "Surprise!";
+		
+		eventMaster.dialogues[1][0] = "Ouch! You fell down";
+		
+		eventMaster.dialogues[2][0] = "Mmmmm... that was tasty. \nYou feel refreshed.\n"
+				+ "The game has been saved!!";
+		
+		eventMaster.dialogues[2][1] = "I love this stuff!";
+	}
 	public void checkEvent() {
 		
 		// check if player character is more than 1 tile away from last event
@@ -52,11 +67,13 @@ public class EventHandler {
 		int distance = Math.max(xDistance, yDistance);
 		if(distance > gp.tileSize) {
 			canTouchEvent = true;
+			
 		}
 		
 		
 		
 		if(canTouchEvent == true) {
+			
 			if(hit(0,95,95, "any") == true) { damagePit(gp.dialogueState); }
 			else if(hit(0,5,71, "down") == true) { healingPool(gp.dialogueState); }
 			else if(hit(0,97,97, "any") == true) { teleport(gp.dialogueState, 5, 70); }
@@ -84,7 +101,8 @@ public class EventHandler {
 			if(gp.player.solidArea.intersects(eventRect[map][col][row]) && eventRect[map][col][row].eventDone == false) {
 				if(gp.player.direction.contentEquals(reqDirection) || reqDirection.contentEquals("any")) {
 					hit = true;
-					
+					eventMaster.soundNumber = 18;
+					eventMaster.setSound();
 					prevEventX = gp.player.worldX;
 					prevEventY = gp.player.worldY;
 			}
@@ -101,14 +119,14 @@ public class EventHandler {
 		
 		gp.gameState = gameState;
 		gp.playSE(4);
-		gp.ui.currentDialogue = "Surprise!";
+		eventMaster.startDialogue(eventMaster, 0);
 		gp.player.worldX = gp.tileSize*x;
 		gp.player.worldY = gp.tileSize*y;	
 	}
 	public void damagePit(int gameState) {
 		gp.gameState = gameState;
 		gp.playSE(7);
-		gp.ui.currentDialogue = "Ouch! You fell down";
+		eventMaster.startDialogue(eventMaster, 1);
 		gp.player.life -= 1;
 //		eventRect[col][row].eventDone = true;
 		canTouchEvent = false;
@@ -120,11 +138,12 @@ public class EventHandler {
 			gp.player.attackCanceled = true;
 			gp.stopSE();
 			gp.playSE(2);
-			gp.ui.currentDialogue = "Mmmmm... that was tasty. \nYou feel refreshed.";
+			eventMaster.startDialogue(eventMaster, 2);
 			gp.player.life = gp.player.maxLife;
 			gp.player.mana = gp.player.maxMana; 
 			gp.aSetter.setMonster();
 			gp.player.isCursed = false;
+			gp.saveLoad.save();
 			
 		}	
 	}
@@ -143,6 +162,9 @@ public class EventHandler {
 			gp.gameState = gp.dialogueState;
 			gp.player.attackCanceled = true;
 			entity.speak();
+			eventMaster.soundNumber = 20;
+			eventMaster.setSound();
+			
 		}
 	}
 		

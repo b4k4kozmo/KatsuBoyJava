@@ -23,6 +23,9 @@ public class NPC_OldMan extends Entity{
 		solidArea.width = 28;
 		solidArea.height = 28;
 		
+		dialogueSet = -1;
+		soundNumber = 17;
+		
 		getImage();
 		setDialogue();
 		
@@ -40,13 +43,22 @@ public class NPC_OldMan extends Entity{
 	
 	}
 	public void setDialogue () {
-		dialogues[0] = "Hello, Katsu boy!\nAre you ready for your adventure?";
-		dialogues[1] = "There's something useful in the\nforest.";
-		dialogues[2] = "Welcome to the lost hood.";
-		dialogues[3] = "Hmmm... you don't remember?";
-		dialogues[4] = "Try going up north.";
-		dialogues[5] = "I'm here as long as you need me..";
+		dialogues[0][0] = "Hello, Katsu boy!\nAre you ready for your adventure?";
+		dialogues[0][1] = "There's something useful in the\nforest.";
+		dialogues[0][2] = "Welcome to the lost hood.";
+		dialogues[0][3] = "Hmmm... you don't remember?";
+		dialogues[0][4] = "Try going up north.";
+		dialogues[0][5] = "I'm here as long as you need me..";
 		
+		dialogues[1][0] = "Between you and me theres \na secret teleporter nearby \nthat takes you to a save point!";
+		dialogues[1][1] = "Don't tell anyone i told you though...";
+		dialogues[1][2] = "Seriously.. DON'T";
+		dialogues[1][3] = "You can also reset that \nweird night curse at the KamiMart";
+		dialogues[1][4] = "I think I can trust you.";
+		dialogues[1][5] = "Sell your items at night. \nCatch that stinkin' gnome...";
+		
+		dialogues[2][0] = "Well, if it isn't the well known adventurer!";
+		dialogues[2][1] = "KATSU BOY!";
 		
 	}
 	public void setAction () {
@@ -89,8 +101,16 @@ public class NPC_OldMan extends Entity{
 	public void speak() {
 		
 		// Character specific stuff
+		setSound();
+		facePlayer();
+		startDialogue(this,dialogueSet);
 		
-		super.speak();
+		dialogueSet++;
+		if(dialogues[dialogueSet][0] == null) {
+			
+			dialogueSet = 0;
+		}
+		
 		
 		onPath = true;
 		}
