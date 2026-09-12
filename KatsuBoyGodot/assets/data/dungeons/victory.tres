@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DungeonInfo" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bpunq00tdah5f" path="res://scripts/data/DungeonInfo.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "victory"
+display_name = "Sail home"
+map_index = 0
+arrive_col = 94
+arrive_row = 94
+scale = 0
+sail_days = 127
+ticket_id = ""
+ticket_price = 0
+unlocked_by = ""
+hint = "When it is all done, the boat takes you home."
+is_victory = true
+is_home_port = false

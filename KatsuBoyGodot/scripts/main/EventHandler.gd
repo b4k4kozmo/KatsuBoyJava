@@ -111,6 +111,8 @@ func run_event(marker: EventMarker) -> void:
 			var entity := resolve_speak_target(marker)
 			if entity != null:
 				speak(entity)
+		"Boat":
+			board_boat(marker)
 
 
 ## Turn an EventMarker's "Speak Npc" NodePath into the live NPC entity that
@@ -186,6 +188,46 @@ func healing_pool(game_state: int) -> void:
 		# Saving also reports progress, so a player who never dies still shows
 		# up on the web high-score board.
 		WebScore.post_progress(gp.player.level, gp.player.coin)
+
+
+## Step onto a dock and the timetable opens. Needs a deliberate button press
+## rather than firing on contact, so walking past the dock does not hijack the
+## screen.
+func board_boat(marker: EventMarker) -> void:
+
+	if gp.key_h.enter_pressed != true:
+		return
+
+	gp.key_h.enter_pressed = false
+	gp.player.attack_canceled = true
+	gp.stop_se()
+	gp.play_se(SE.DOOR)
+	gp.ui.boat_dock_of = marker.dock_of
+	gp.ui.command_num = 0
+	gp.game_state = gp.BOAT_STATE
+	can_touch_event = false
+
+
+## Take the boat somewhere. Called by the boat menu once a destination is
+## chosen; the menu has already checked the route is sailing today.
+func sail_to(info: DungeonInfo) -> void:
+
+	if info == null:
+		return
+
+	if info.is_victory:
+		# Sailing home with everything cleared is the ending.
+		gp.ui.game_finished = true
+		gp.game_state = gp.ENDING_STATE
+		gp.stop_music()
+		gp.play_se(SE.FANFARE)
+		# Report the finished run to the web high-score board.
+		WebScore.post_progress(gp.player.level, gp.player.coin)
+		return
+
+	gp.current_dungeon_id = info.id
+	gp.play_se(SE.DOOR)
+	change_map(info.map_index, info.arrive_col, info.arrive_row)
 
 
 func change_map(current_map: int, x: int, y: int) -> void:

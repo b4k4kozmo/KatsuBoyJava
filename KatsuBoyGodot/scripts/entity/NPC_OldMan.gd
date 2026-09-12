@@ -1,6 +1,26 @@
 class_name NPC_OldMan
 extends Entity
 ## Java: entity/NPC_OldMan.java
+##
+## Doubles as the game's guide. Fill in "Guide Dungeon Id" on his NpcMarker and
+## he stops being scenery: he tells you about that dungeon, writes it into the
+## quest log as your objective, and then walks to "Guide Col"/"Guide Row" so you
+## can follow him - point that at the boat dock and he walks you to the boat.
+
+
+## The tile he heads for once you have spoken to him. Overridden per marker by
+## AssetSetter; this default is the shrine path from the original demo.
+const DEFAULT_GOAL_COL := 75
+const DEFAULT_GOAL_ROW := 95
+
+## Dialogue set reserved for the generated guide line, kept clear of the
+## hand-written sets 0-2.
+const GUIDE_SET := 9
+
+## Set from the NpcMarker. See NpcMarker for what each one does.
+var guide_dungeon_id: String = ""
+var guide_col: int = -1
+var guide_row: int = -1
 
 
 func _init(gp) -> void:
@@ -58,8 +78,16 @@ func set_dialogue() -> void:
 func set_action() -> void:
 
 	if on_path == true:
-		var goal_col := 75
-		var goal_row := 95
+		var goal_col: int = guide_col if guide_col >= 0 else DEFAULT_GOAL_COL
+		var goal_row: int = guide_row if guide_row >= 0 else DEFAULT_GOAL_ROW
+
+		# Stop once he is standing on the tile rather than shuffling on it
+		# forever, so a guide who has reached the dock stays at the dock.
+		if _on_tile(goal_col, goal_row):
+			on_path = false
+			direction = "down"
+			return
+
 		search_path(goal_col, goal_row)
 	else:
 		action_lock_counter += 1
@@ -80,10 +108,65 @@ func speak() -> void:
 	# Character specific stuff
 	set_sound()
 	face_player()
-	start_dialogue(self, dialogue_set)
 
-	dialogue_set += 1
-	if dialogues[dialogue_set][0] == null:
-		dialogue_set = 0
+	# A guide says the same useful thing every time instead of cycling through
+	# small talk - a signpost that only works once is not a signpost.
+	if _build_guide_dialogue():
+		start_dialogue(self, GUIDE_SET)
+	else:
+		start_dialogue(self, dialogue_set)
+
+		dialogue_set += 1
+		if dialogues[dialogue_set][0] == null:
+			dialogue_set = 0
 
 	on_path = true
+
+
+## Writes the hint for his dungeon into GUIDE_SET and points the quest log at
+## it. Returns false when he is not a guide, or when the dungeon he was pointed
+## at no longer exists, in which case he falls back to his normal dialogue.
+func _build_guide_dialogue() -> bool:
+
+	if guide_dungeon_id.is_empty() or gp.quest == null:
+		return false
+
+	var info: DungeonInfo = BoatService.by_id(gp.dungeons, guide_dungeon_id)
+	if info == null:
+		return false
+
+	for i in range(dialogues[GUIDE_SET].size()):
+		dialogues[GUIDE_SET][i] = null
+
+	if gp.quest.is_cleared(info.id):
+		dialogues[GUIDE_SET][0] = "%s is quiet now.\nThat was good work, Katsu boy." % info.display_name
+		return true
+
+	# Whatever the dungeon file says, in the author's own words.
+	var line: String = info.hint
+	if line.is_empty():
+		line = "You should take the boat to\n%s." % info.display_name
+	dialogues[GUIDE_SET][0] = line
+
+	var next := 1
+
+	if not gp.quest.has_ticket(info.ticket_id):
+		if info.ticket_price > 0:
+			dialogues[GUIDE_SET][next] = "You will need a ticket.\nKami Mart sells them, %d coins." % info.ticket_price
+		else:
+			dialogues[GUIDE_SET][next] = "You will need a ticket for that\nroute. They are not for sale."
+		next += 1
+
+	dialogues[GUIDE_SET][next] = "The boat runs that way %s.\nFollow me, I will show you the dock." % info.timetable_text()
+
+	# So the pause screen agrees with what he just said.
+	gp.quest.current_target = info.id
+	return true
+
+
+func _on_tile(col: int, row: int) -> bool:
+	@warning_ignore("integer_division")
+	var my_col: int = (world_x + solid_area.x) / gp.tile_size
+	@warning_ignore("integer_division")
+	var my_row: int = (world_y + solid_area.y) / gp.tile_size
+	return my_col == col and my_row == row

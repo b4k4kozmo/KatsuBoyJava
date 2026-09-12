@@ -31,6 +31,10 @@ var current_map: int = 0
 ## The maps, in order. Map 0 is where the player starts. Drop a new map scene
 ## in here from the Inspector and it becomes map 3, 4, ... - no code needed.
 @export var map_scenes: Array[PackedScene] = []
+## Every place the boat can sail to, as DungeonInfo resources from
+## assets/data/dungeons/. Order here is the order of the boat's menu.
+## See ROADMAP.md for how the boat, tickets and quest fit together.
+@export var dungeons: Array[DungeonInfo] = []
 ## The instantiated map scenes, one per index. Live in the scene tree so you
 ## can inspect them while the game runs (Debugger -> Remote tree).
 var map_node: Array[Node2D] = []
@@ -111,6 +115,13 @@ var p_finder: PathFinder
 var e_manager: EnvironmentManager
 var map: Map
 var save_load: SaveLoad
+## Tickets held, dungeons cleared, what to do next. Saved with the rest.
+var quest: QuestLog
+## Which dungeon the player is standing in, by DungeonInfo id. Empty on the
+## world map. Set when the boat drops them off, so a boss knows which dungeon
+## it belongs to without being told twice.
+var current_dungeon_id: String = ""
+
 var e_generator: EntityGenerator
 
 # ENTITY AND OBJECT
@@ -136,6 +147,10 @@ const TRANSITION_STATE := 7
 const TRADE_STATE := 8
 const SLEEP_STATE := 9
 const MAP_STATE := 10
+## Choosing where the boat takes you. See BoatService and UI.draw_boat_screen.
+const BOAT_STATE := 11
+## The ending, reached by sailing home once every dungeon is cleared.
+const ENDING_STATE := 12
 
 
 func _ready() -> void:
@@ -175,6 +190,7 @@ func _ready() -> void:
 	e_manager = EnvironmentManager.new(self)
 	map = Map.new(self)
 	save_load = SaveLoad.new(self)
+	quest = QuestLog.new()
 	e_generator = EntityGenerator.new(self)
 
 	player = Player.new(self, key_h)

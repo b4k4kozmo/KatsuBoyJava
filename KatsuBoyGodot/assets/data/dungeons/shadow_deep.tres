@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DungeonInfo" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bpunq00tdah5f" path="res://scripts/data/DungeonInfo.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "shadow_deep"
+display_name = "The Shadow Deep"
+map_index = 4
+arrive_col = 18
+arrive_row = 14
+scale = 1
+sail_days = 64
+ticket_id = "shadow_deep"
+ticket_price = 0
+unlocked_by = "mushroom_cave"
+hint = "Saturdays only, and only once the cave is dealt with. You hit harder on a Saturday - you will want that."
+is_victory = false
+is_home_port = false

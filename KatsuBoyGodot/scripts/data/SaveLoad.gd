@@ -36,6 +36,9 @@ func save() -> void:
 
 	ds.has_boots = gp.player.has_boots
 
+	ds.quest = gp.quest.to_dict()
+	ds.current_dungeon_id = gp.current_dungeon_id
+
 	# PLAYER INVENTORY
 	for i in range(gp.player.inventory.size()):
 		ds.item_names.append(gp.player.inventory[i].name)
@@ -116,6 +119,9 @@ func load_game() -> void:
 	gp.player.next_level_exp = ds.next_level_exp
 	gp.player.coin = ds.coin
 	gp.player.has_boots = ds.has_boots
+
+	gp.quest.apply_dict(ds.quest)
+	gp.current_dungeon_id = ds.current_dungeon_id
 
 	# PLAYER INVENTORY
 	gp.player.inventory.clear()

@@ -40,6 +40,18 @@ func get_object(item_name: String) -> Entity:
 		OBJ_ManaCrystal.OBJ_NAME: obj = OBJ_ManaCrystal.new(gp)
 		OBJ_Shuriken.OBJ_NAME: obj = OBJ_Shuriken.new(gp)
 		OBJ_Snowball.OBJ_NAME: obj = OBJ_Snowball.new(gp)
+		OBJ_BoatTicket.OBJ_NAME: obj = OBJ_BoatTicket.new(gp)
+
+	# Tickets are named after their route ("Mushroom Cave Ticket"), so they are
+	# matched against the dungeon list rather than listed above. Without this a
+	# ticket in the bag would not survive a save and load.
+	if obj == null and item_name.ends_with("Ticket"):
+		for d in gp.dungeons:
+			if d is DungeonInfo and "%s Ticket" % d.display_name == item_name:
+				var ticket := OBJ_BoatTicket.new(gp)
+				ticket.configure(d)
+				obj = ticket
+				break
 
 	return obj
 
@@ -53,6 +65,7 @@ func get_monster(monster_name: String) -> Entity:
 		"Snome": monster = MON_Snome.new(gp)
 		"Kamijack": monster = MON_KamiJack.new(gp)
 		"Shadow": monster = MON_ShadowKatsu.new(gp)
+		"Boss": monster = MON_Boss.new(gp)
 
 	return monster
 

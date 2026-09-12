@@ -27,6 +27,13 @@ var item_amounts: Array[int] = []
 var current_weapon_slot: int
 var current_shield_slot: int
 
+# QUEST / BOAT
+## Tickets held, dungeons cleared and the current objective, as written by
+## QuestLog.to_dict().
+var quest: Dictionary = {}
+## Which dungeon the player was standing in when they saved.
+var current_dungeon_id: String = ""
+
 # OBJECT ON MAP
 var map_object_names: Array = []      # [map][slot] String
 var map_object_world_x: Array = []    # [map][slot] int
@@ -57,6 +64,8 @@ func to_dict() -> Dictionary:
 		"map_object_world_y": map_object_world_y,
 		"map_object_loot_names": map_object_loot_names,
 		"map_object_opened": map_object_opened,
+		"quest": quest,
+		"current_dungeon_id": current_dungeon_id,
 	}
 
 
@@ -82,4 +91,8 @@ static func from_dict(d: Dictionary) -> DataStorage:
 	ds.map_object_world_y = d.get("map_object_world_y", [])
 	ds.map_object_loot_names = d.get("map_object_loot_names", [])
 	ds.map_object_opened = d.get("map_object_opened", [])
+	# Saves written before the boat existed simply have no quest data, and an
+	# empty dictionary loads as a fresh quest log rather than failing.
+	ds.quest = d.get("quest", {})
+	ds.current_dungeon_id = str(d.get("current_dungeon_id", ""))
 	return ds

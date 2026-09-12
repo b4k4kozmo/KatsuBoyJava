@@ -54,6 +54,10 @@ func action_pressed(action: StringName) -> void:
 	elif gp.game_state == gp.TRADE_STATE:
 		trade_state(action)
 	# MAP STATE
+	elif gp.game_state == gp.BOAT_STATE:
+		boat_state(action)
+	elif gp.game_state == gp.ENDING_STATE:
+		ending_state(action)
 	elif gp.game_state == gp.MAP_STATE:
 		map_state(action)
 
@@ -293,6 +297,42 @@ func trade_state(action: StringName) -> void:
 		player_inventory(action)
 		if action == Action.OPTIONS:
 			gp.ui.sub_state = 0
+
+
+## The boat timetable. One extra row past the destinations is "Stay here", so
+## the cursor range is the row count, not count - 1.
+func boat_state(action: StringName) -> void:
+
+	var last: int = gp.ui.boat_rows.size()
+
+	if action == Action.MOVE_UP:
+		gp.ui.command_num -= 1
+		gp.play_se(SE.CURSOR_MOVE)
+		if gp.ui.command_num < 0:
+			gp.ui.command_num = last
+	if action == Action.MOVE_DOWN:
+		gp.ui.command_num += 1
+		gp.play_se(SE.CURSOR_MOVE)
+		if gp.ui.command_num > last:
+			gp.ui.command_num = 0
+	if action == Action.CONFIRM:
+		enter_pressed = true
+	if action == Action.OPTIONS:
+		# Always a way off the boat, whatever the cursor is on.
+		gp.ui.command_num = 0
+		gp.game_state = gp.PLAY_STATE
+
+
+## The ending screen swallows input: the run is over, and the only thing left
+## is the title screen.
+func ending_state(action: StringName) -> void:
+
+	if action == Action.CONFIRM or action == Action.OPTIONS:
+		gp.ui.game_finished = false
+		gp.ui.command_num = 0
+		gp.ui.title_screen_state = 0
+		gp.game_state = gp.TITLE_STATE
+		gp.stop_music()
 
 
 func map_state(action: StringName) -> void:

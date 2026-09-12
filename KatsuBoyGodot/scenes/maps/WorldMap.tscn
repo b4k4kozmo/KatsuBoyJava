@@ -174,6 +174,13 @@ item = "Boots"
 position = Vector2(4608, 4560)
 script = ExtResource("3_din4q")
 
+[node name="DockGuide" type="Node2D" parent="NPCs"]
+position = Vector2(4416, 4656)
+script = ExtResource("3_din4q")
+guide_dungeon_id = "mushroom_cave"
+guide_col = 87
+guide_row = 97
+
 [node name="Monsters" type="Node2D" parent="."]
 
 [node name="Snome" type="Node2D" parent="Monsters"]
@@ -326,6 +333,12 @@ required_direction = "up"
 target_map = 2
 target_col = 82
 target_row = 67
+
+[node name="BoatDock" type="Node2D" parent="Events"]
+position = Vector2(4176, 4656)
+script = ExtResource("6_x5e63")
+kind = "Boat"
+dock_of = "port"
 
 [node name="PlayerStart" type="Node2D" parent="."]
 position = Vector2(4512, 4512)

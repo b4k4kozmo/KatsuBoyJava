@@ -40,6 +40,13 @@ var npc_slot_col: int = 0
 var npc_slot_row: int = 0
 var sound_num: int = 17
 
+## Which dock the player is standing on, by dungeon id. The boat hides the
+## route back to where you already are.
+var boat_dock_of: String = ""
+## The rows the boat menu last drew, so the input handler and the draw code
+## agree on what row 2 means.
+var boat_rows: Array[Dictionary] = []
+
 var sub_state: int = 0
 var counter: int = 0
 var npc: Entity
@@ -131,6 +138,10 @@ func draw(g2) -> void:
 	if gp.game_state == gp.TRANSITION_STATE:
 		draw_transition()
 	# TRADE STATE
+	if gp.game_state == gp.BOAT_STATE:
+		draw_boat_screen()
+	if gp.game_state == gp.ENDING_STATE:
+		draw_ending_screen()
 	if gp.game_state == gp.TRADE_STATE:
 		draw_trade_screen()
 	# SLEEP STATE
@@ -351,6 +362,23 @@ func draw_pause_screen() -> void:
 	var y: int = gp.screen_height / 2
 
 	g2.draw_str(text, x, y)
+
+	# What you are supposed to be doing, worked out from the quest log rather
+	# than tracked separately, so it cannot drift out of step with the game.
+	if gp.quest == null or gp.dungeons.is_empty():
+		return
+
+	g2.set_font(maru_monica, 28)
+	g2.set_color(kamiwhite)
+	var objective: String = gp.quest.objective_text(gp.dungeons)
+	g2.draw_str(objective, get_x_for_centered_text(objective), y + gp.tile_size)
+
+	var counted: int = QuestLog.countable(gp.dungeons).size()
+	if counted > 0:
+		var tally := "%d of %d dungeons cleared" % [gp.quest.cleared_count(gp.dungeons), counted]
+		g2.set_font(maru_monica, 22)
+		g2.set_color(kamigreen)
+		g2.draw_str(tally, get_x_for_centered_text(tally), y + int(gp.tile_size * 1.7))
 
 
 func draw_dialogue_screen() -> void:
@@ -831,6 +859,133 @@ func update_transition() -> void:
 func draw_transition() -> void:
 	g2.set_color(Color(kamiblack, mini(counter * 5, 255) / 255.0))
 	g2.fill_rect(0, 0, gp.screen_width, gp.screen_height)
+
+
+## The boat timetable. Draws every route the player could ever take, with the
+## reason any of them are unavailable, so the timetable teaches itself rather
+## than needing a wiki.
+func draw_boat_screen() -> void:
+
+	var day: int = gp.e_manager.clock.day_index if gp.e_manager and gp.e_manager.clock else 0
+
+	boat_rows = BoatService.destinations(gp.dungeons, gp.quest, day)
+	# Never offer to sail to the dock you are standing on.
+	if not boat_dock_of.is_empty():
+		var kept: Array[Dictionary] = []
+		for row in boat_rows:
+			if row["info"].id != boat_dock_of:
+				kept.append(row)
+		boat_rows = kept
+
+	var x: int = gp.tile_size * 2
+	var y: int = gp.tile_size
+	var width: int = gp.tile_size * 16
+	var height: int = gp.tile_size * 10
+	draw_sub_window(x, y, width, height)
+
+	g2.set_font(maru_monica, 32)
+	g2.set_color(kamiwhite)
+
+	var text_x: int = x + gp.tile_size
+	var text_y: int = y + gp.tile_size + 8
+
+	g2.set_color(kamipink)
+	g2.draw_str("THE WUNDERBOAT", text_x, text_y)
+	g2.set_color(kamiwhite)
+	var clock_text: String = gp.e_manager.clock.day_name() if gp.e_manager and gp.e_manager.clock else "Today"
+	g2.draw_str(clock_text, x + width - gp.tile_size * 4, text_y)
+	text_y += int(gp.tile_size * 0.9)
+
+	if boat_rows.is_empty():
+		g2.draw_str("No routes from here yet.", text_x, text_y + gp.tile_size)
+		g2.draw_str("[ESC] Back", text_x, y + height - 24)
+		gp.key_h.enter_pressed = false
+		return
+
+	command_num = clampi(command_num, 0, boat_rows.size())
+
+	for i in range(boat_rows.size()):
+		var row: Dictionary = boat_rows[i]
+		var info: DungeonInfo = row["info"]
+
+		# Available routes read clearly; blocked ones are dimmed but still
+		# legible, because the reason is the useful part.
+		if row["sailing"]:
+			g2.set_color(kamiwhite if i != command_num else kamipink)
+		else:
+			g2.set_color(kamigreen)
+
+		var label: String = info.display_name
+		if row["cleared"]:
+			label += "  (cleared)"
+		g2.draw_str(label, text_x, text_y)
+
+		var note: String = row["reason"]
+		if note.is_empty():
+			note = "%s  -  sails %s" % [info.scale_text(), info.timetable_text()]
+		g2.set_font(maru_monica, 22)
+		g2.draw_str(note, text_x + gp.tile_size * 6, text_y)
+		g2.set_font(maru_monica, 32)
+
+		if i == command_num:
+			g2.set_color(kamipink)
+			g2.draw_str(">", text_x - 26, text_y)
+			if gp.key_h.enter_pressed and row["sailing"]:
+				gp.key_h.enter_pressed = false
+				command_num = 0
+				gp.event_h.sail_to(info)
+				return
+
+		text_y += int(gp.tile_size * 0.8)
+
+	# "Stay here" is always the last row, so ESC is never the only way out.
+	g2.set_color(kamiwhite if command_num != boat_rows.size() else kamipink)
+	text_y += 10
+	g2.draw_str("Stay here", text_x, text_y)
+	if command_num == boat_rows.size():
+		g2.draw_str(">", text_x - 26, text_y)
+		if gp.key_h.enter_pressed:
+			gp.key_h.enter_pressed = false
+			command_num = 0
+			gp.game_state = gp.PLAY_STATE
+
+	g2.set_font(maru_monica, 22)
+	g2.set_color(kamiwhite)
+	g2.draw_str("[ESC] Back", text_x, y + height - 24)
+
+	gp.key_h.enter_pressed = false
+
+
+## Shown after sailing home with every dungeon cleared.
+func draw_ending_screen() -> void:
+
+	g2.set_color(Color(0, 0, 0, 0.85))
+	g2.fill_rect(0, 0, gp.screen_width, gp.screen_height)
+
+	g2.set_font(amari, 72)
+	g2.set_color(kamipink)
+	var title := "THE ADVENTURE ENDS"
+	g2.draw_str(title, get_x_for_centered_text(title), gp.tile_size * 3)
+
+	g2.set_font(maru_monica, 34)
+	g2.set_color(kamiwhite)
+	var lines := [
+		"Katsu Boy sailed home.",
+		"",
+		"Level %d" % gp.player.level,
+		"%d coins" % gp.player.coin,
+		"%d dungeons cleared" % gp.quest.cleared_count(gp.dungeons),
+	]
+	var line_y: int = gp.tile_size * 5
+	for line in lines:
+		if not line.is_empty():
+			g2.draw_str(line, get_x_for_centered_text(line), line_y)
+		line_y += 44
+
+	g2.set_font(maru_monica, 28)
+	g2.set_color(kamigreen)
+	var prompt := "Thanks for playing"
+	g2.draw_str(prompt, get_x_for_centered_text(prompt), gp.screen_height - gp.tile_size)
 
 
 func draw_trade_screen() -> void:

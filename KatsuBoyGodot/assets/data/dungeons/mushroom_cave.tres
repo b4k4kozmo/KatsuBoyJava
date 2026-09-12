@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DungeonInfo" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bpunq00tdah5f" path="res://scripts/data/DungeonInfo.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mushroom_cave"
+display_name = "Mushroom Cave"
+map_index = 3
+arrive_col = 40
+arrive_row = 44
+scale = 0
+sail_days = 18
+ticket_id = "mushroom_cave"
+ticket_price = 40
+unlocked_by = ""
+hint = "The cave under the mushrooms. The boat runs Mondays and Thursdays - buy passage at Kami Mart."
+is_victory = false
+is_home_port = false

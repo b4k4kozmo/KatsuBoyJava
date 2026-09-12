@@ -124,6 +124,11 @@ optional and all documented in [AUTHORING.md](AUTHORING.md):
   more, Friday is a sale, Saturday hits harder, the rest are ordinary. Each day
   is a resource in `assets/data/days/`, all of it multipliers you can tune.
 - **Shaders** for the night filter and for hit sparks, both palette-only.
+- **The Wunderboat.** A ticketed boat with a weekly timetable that takes you to
+  dungeons, a quest log that tracks what you have cleared, bosses that hand over
+  the next route, guide NPCs who walk you to the dock, and an ending once
+  everything is cleared. Destinations are `.tres` files, so adding one is
+  authoring rather than coding — see `ROADMAP.md`.
 - **Dev tools** (F1) and a **regression test suite**.
 
 ## Bugs fixed along the way

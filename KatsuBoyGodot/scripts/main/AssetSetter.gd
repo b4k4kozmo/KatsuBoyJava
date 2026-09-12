@@ -125,6 +125,12 @@ func set_npc() -> void:
 				push_warning("Unknown NPC '%s' on map %d." % [m.npc, map_num])
 				continue
 			_place(entity, m)
+			# A guide NPC needs to know which dungeon he is pointing at and
+			# where he walks when you follow him. Both come from the marker.
+			if entity is NPC_OldMan:
+				entity.guide_dungeon_id = m.guide_dungeon_id
+				entity.guide_col = m.guide_col
+				entity.guide_row = m.guide_row
 			gp.npc[map_num][i] = entity
 			npc_by_marker[m] = entity
 			i += 1
@@ -146,6 +152,11 @@ func set_monster() -> void:
 				push_warning("Unknown monster '%s' on map %d." % [m.monster, map_num])
 				continue
 			_place(entity, m)
+			# A boss needs to know which dungeon it guards and which route its
+			# death opens. Both are set on the marker in the Inspector.
+			if entity is MON_Boss:
+				entity.dungeon_id = m.boss_dungeon_id
+				entity.reward_ticket = m.reward_ticket
 			gp.monster[map_num][i] = entity
 			i += 1
 		_clear_rest(gp.monster, map_num, i)

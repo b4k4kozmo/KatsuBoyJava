@@ -17,6 +17,7 @@ to play.
 - [Painting maps](#painting-maps)
 - [Placing things on a map](#placing-things-on-a-map)
 - [Node reference](#node-reference)
+- [Dungeons, tickets and the boat](#dungeons-tickets-and-the-boat)
 - [Building a new map or dungeon](#building-a-new-map-or-dungeon)
 - [Settings you can tune](#settings-you-can-tune)
 - [Controls and rebinding](#controls-and-rebinding)
@@ -39,6 +40,7 @@ to play.
 | the list of maps, colours, day/night length | `main.tscn` → select **GamePanel** |
 | key bindings | Project Settings → Input Map |
 | dialogue | `scripts/entity/NPC_*.gd` (code) |
+| where the boat goes, and when | `assets/data/dungeons/*.tres` |
 
 ---
 
@@ -192,9 +194,13 @@ Under **Monsters**. Spawns one monster.
 
 | Property | What it does |
 |---|---|
-| **Monster** | Slime / Snome / Kamijack / Shadow |
+| **Monster** | Slime / Snome / Kamijack / Shadow / Boss |
+| **Boss Dungeon Id** | `Boss` only — the `DungeonInfo` id this boss guards. Killing it clears that dungeon. |
+| **Reward Ticket** | `Boss` only — the `ticket_id` of the route its death opens. Leave empty if it opens nothing. |
 
-Its numbers come from `assets/data/monsters/<name>.tres`.
+Its numbers come from `assets/data/monsters/<name>.tres`. A `Boss` is built from
+those numbers and then multiplied up — six times the health, double the attack —
+in `scripts/monster/MON_Boss.gd`.
 
 ### `NpcMarker`
 Under **NPCs**. Spawns a character you can talk to.
@@ -202,8 +208,15 @@ Under **NPCs**. Spawns a character you can talk to.
 | Property | What it does |
 |---|---|
 | **Npc** | OldMan / NanaMan / Merchant |
+| **Guide Dungeon Id** | `OldMan` only. Fill this in and he becomes a signpost: he tells you about that dungeon, makes it your objective, then walks off towards the dock. Empty = ordinary small talk. |
+| **Guide Col / Row** | where he walks to after you talk to him. The world map's boat dock is **87, 97**. `-1` means he stays put and wanders. |
 
-The Merchant opens the shop. Dialogue is in that NPC's script.
+The Merchant opens the shop. Dialogue is in that NPC's script — except a guide's,
+which is written from the dungeon's `hint`, price and timetable so it can never
+contradict the boat.
+
+The Merchant's stock is partly generated too: any dungeon with a
+`ticket_price` above zero is on the shelf until you buy it.
 
 ### `ObjectMarker`
 Under **Objects**. An item, chest or door.
@@ -236,6 +249,7 @@ Under **Events**. Fires when the player steps on its tile.
 | **Target Map** | `ChangeMap` only — index into GamePanel's Map Scenes |
 | **Target Col / Row** | the tile the player arrives on (`Teleport` and `ChangeMap`) |
 | **Speak Npc** | `Speak` only — drag the NpcMarker to talk to |
+| **Dock Of** | `Boat` only — the id of the dungeon this dock is in. The boat never offers to sail you where you already are. Leave empty for the home port. |
 
 | Kind | Does |
 |---|---|
@@ -244,6 +258,7 @@ Under **Events**. Fires when the player steps on its tile.
 | `DamagePit` | costs 1 life |
 | `HealingPool` | full heal, respawns monsters, **saves the game** |
 | `Speak` | starts a conversation |
+| `Boat` | opens the Wunderboat's timetable — press Confirm while standing on it |
 
 Markers are checked top to bottom in the scene tree and the **first match
 wins**, so if two overlap, move the one you want higher up.
@@ -262,6 +277,17 @@ The existing hut door is set up exactly like this — copy it as a template.
 Anywhere in any map scene. Where a new game begins and where the player
 respawns. Put exactly one in the whole project. No properties — just its
 position. Without one, the game falls back to tile 94,94 on map 0.
+
+### Dungeons, tickets and the boat
+
+A destination is a `.tres` file, not code. `assets/data/dungeons/*.tres` each
+describe one place the boat goes — which map, which tile you land on, which days
+it sails, what the ticket costs, what must be cleared first, and the hint the
+guide gives. Drop them into **GamePanel → Dungeons** in `main.tscn`.
+
+`ROADMAP.md → The boat, the tickets and the quest log` has the full picture and
+a step-by-step for adding one, including the generator that builds a dungeon map
+skeleton for you.
 
 ---
 

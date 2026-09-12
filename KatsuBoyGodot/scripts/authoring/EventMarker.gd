@@ -9,7 +9,7 @@ extends PlacementMarker
 ## Markers are checked in tree order and the FIRST one the player is touching
 ## wins, so if two overlap, the one higher up in the scene tree takes priority.
 
-@export_enum("DamagePit", "HealingPool", "Teleport", "ChangeMap", "Speak")
+@export_enum("DamagePit", "HealingPool", "Teleport", "ChangeMap", "Speak", "Boat")
 var kind: String = "Teleport":
 	set(value):
 		kind = value
@@ -40,6 +40,11 @@ var required_direction: String = "any":
 ## Used by Speak - drag the NpcMarker of the character to talk to.
 @export var speak_npc: NodePath
 
+## Used by Boat: the dungeon id this dock belongs to. The route back to it is
+## hidden while you are standing on it, so the boat never offers to take you
+## where you already are. Leave empty for the home port.
+@export var dock_of: String = ""
+
 
 func marker_color() -> Color:
 	match kind:
@@ -48,6 +53,7 @@ func marker_color() -> Color:
 		"Teleport": return Color(0.8, 0.5, 1)
 		"ChangeMap": return Color(1, 0.6, 0.2)
 		"Speak": return Color(0.5, 0.8, 1)
+		"Boat": return Color(0.35, 0.75, 0.95)
 	return Color(1, 1, 1)
 
 
@@ -56,6 +62,7 @@ func marker_label() -> String:
 		"Teleport": return "Teleport -> %d,%d" % [target_col, target_row]
 		"ChangeMap": return "ChangeMap -> map %d @ %d,%d" % [target_map, target_col, target_row]
 		"Speak": return "Speak"
+		"Boat": return "Boat dock" if dock_of.is_empty() else "Boat dock (%s)" % dock_of
 	return kind
 
 

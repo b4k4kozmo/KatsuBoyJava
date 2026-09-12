@@ -55,6 +55,36 @@ func set_items() -> void:
 	inventory.append(OBJ_Kamibokken.new(gp))
 	inventory.append(OBJ_Kami_Shield.new(gp))
 	inventory.append(OBJ_Tent.new(gp))
+	refresh_stock()
+
+
+## Boat tickets are stocked from the dungeon files rather than listed here, so
+## adding a destination with a ticket_price puts it on the shelf by itself.
+## Tickets the player already holds come off the shelf - nobody wants to sell
+## the same passage twice.
+func refresh_stock() -> void:
+
+	for i in range(inventory.size() - 1, -1, -1):
+		if inventory[i] is OBJ_BoatTicket:
+			inventory.remove_at(i)
+
+	if gp.quest == null:
+		return
+
+	for d in gp.dungeons:
+		if not (d is DungeonInfo) or d.is_victory:
+			continue
+		if d.ticket_price <= 0 or d.ticket_id.is_empty():
+			continue
+		if gp.quest.has_ticket(d.ticket_id):
+			continue
+		# A route whose charts are not drawn yet is not on sale either, so the
+		# shop never spoils what is coming.
+		if not d.unlocked_by.is_empty() and not gp.quest.is_cleared(d.unlocked_by):
+			continue
+		var ticket := OBJ_BoatTicket.new(gp)
+		ticket.configure(d)
+		inventory.append(ticket)
 
 
 func speak() -> void:
@@ -62,6 +92,9 @@ func speak() -> void:
 	if not gp.today().shop_open:
 		start_dialogue(self, 9)
 		return
+
+	# Re-shelve before opening so the tickets match what the player needs now.
+	refresh_stock()
 
 	start_dialogue(self, dialogue_set)
 	gp.game_state = gp.TRADE_STATE

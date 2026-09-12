@@ -9,7 +9,7 @@ extends PlacementMarker
 @export_enum(
 	"Kami Coin", "Key", "Door", "Chest", "Candle", "Tent", "Green Potion",
 	"Heart", "Mana Crystal", "Boots", "Kami Axe", "Kami no Bokken",
-	"Kami Shield", "Puffa Shield", "Normal Sword", "Carbuncle"
+	"Kami Shield", "Puffa Shield", "Normal Sword", "Carbuncle", "Cave Ticket"
 ) var item: String = "Kami Coin":
 	set(value):
 		item = value
@@ -17,7 +17,7 @@ extends PlacementMarker
 
 ## Only used when item is "Chest" - what you find inside.
 @export_enum("Key", "Kami Coin", "Green Potion", "Candle", "Tent",
-	"Kami Axe", "Kami no Bokken", "Kami Shield", "Boots"
+	"Kami Axe", "Kami no Bokken", "Kami Shield", "Boots", "Cave Ticket"
 ) var chest_loot: String = "Key":
 	set(value):
 		chest_loot = value
@@ -30,6 +30,7 @@ const PREVIEWS := {
 	"Kami Axe": "axe", "Kami no Bokken": "kamibokken",
 	"Kami Shield": "kamishield", "Puffa Shield": "puffa",
 	"Normal Sword": "sword", "Carbuncle": "carbuncle_green_1",
+	"Cave Ticket": "key",
 }
 
 
