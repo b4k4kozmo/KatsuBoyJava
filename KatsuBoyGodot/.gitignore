@@ -1,0 +1,8 @@
+# Godot 4 - the import cache is regenerated on first open.
+.godot/
+
+# Exported builds
+build/
+*.exe
+*.pck
+*.zip
