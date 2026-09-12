@@ -1,0 +1,12 @@
+# Godot's import/derived data - regenerated on open, never committed.
+KatsuBoyGodot/.godot/
+
+# Exported desktop builds. The web build in web/ IS committed, because the
+# website serves it; desktop binaries are 70-100 MB each and get rebuilt from
+# the project whenever they are needed.
+builds/
+
+# Temporary harness directories used while testing.
+KatsuBoyGodot/_probe/
+KatsuBoyGodot/_shot/
+KatsuBoyGodot/_verify/

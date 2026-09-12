@@ -3,9 +3,16 @@ extends Node2D
 ## Developer cheats and a live readout, so you can test content without
 ## replaying the game to get to it.
 ##
-## Add this node under GamePanel (it is already in main.tscn) and press F1 in
-## game. Untick "Enabled" in the Inspector - or delete the node - to turn the
-## whole thing off for a release build; nothing else depends on it.
+## The node lives under GamePanel in main.tscn. Press F1 in game for the panel.
+##
+## EDITOR ONLY. _ready() switches the whole thing off unless the game is
+## running from the Godot editor, so no exported build - web or desktop - ships
+## working cheats, whatever the Inspector tick says. That matters because the
+## web build reports to the high-score board on kamimart.com, and F10 handing
+## out 1000 coins would make that board meaningless.
+##
+## Nothing else in the game depends on this node, so it stays in the project
+## for development rather than being deleted before a release.
 
 ## Master switch. When off, none of the keys below do anything.
 @export var enabled: bool = true
@@ -34,6 +41,16 @@ const HELP := [
 
 func _ready() -> void:
 	gp = get_parent()
+
+	# has_feature("editor") is true when running from the editor and false in
+	# every export, which is exactly the line we want: cheats while developing,
+	# none in anything a player can download or open in a browser.
+	if not OS.has_feature("editor"):
+		enabled = false
+		set_process_input(false)
+		hide()
+		return
+
 	panel_visible = panel_visible_on_start
 	z_index = 100
 

@@ -15,9 +15,9 @@ extends SceneTree
 ## collision, pathfinding or the map screen changes. It is purely what the
 ## camera sees when it looks past the edge.
 ##
-## Each border cell copies the nearest real map cell: water continues as water,
-## everything else becomes tree line, so the world reads as carrying on rather
-## than stopping.
+## Each border cell looks at the nearest real map cell: if that is any kind of
+## water the border gets plain open water, and everything else becomes tree
+## line, so the world reads as carrying on rather than stopping.
 ##
 ## Re-running is safe - it overwrites the same cells with the same result.
 
@@ -37,8 +37,14 @@ const ATLAS_COLS := 11
 
 ## Tile ids from build_tileset.gd's TILE_NAMES order.
 const TREE_ID := 16
-const WATER_FIRST := 18   # water01
-const WATER_LAST := 30    # water13
+
+## water01 is the only open-water tile in the set: every one of
+## water02..water13 is a shore or corner piece with grass baked into it.
+## Copying a neighbouring variant outward therefore dragged islands of grass
+## out across the border, so open water is always painted with water01.
+const OPEN_WATER_ID := 18   # water01
+const WATER_FIRST := 18     # water01
+const WATER_LAST := 30      # water13
 
 
 func atlas_coords(tile_id: int) -> Vector2i:
@@ -88,7 +94,7 @@ func _init() -> void:
 			var near_id: int = edge_ids[cell]
 			var paint_id: int = TREE_ID
 			if near_id >= WATER_FIRST and near_id <= WATER_LAST:
-				paint_id = near_id   # keep the exact water variant
+				paint_id = OPEN_WATER_ID   # plain water, never a grassy shore piece
 				water += 1
 			else:
 				trees += 1
