@@ -83,7 +83,7 @@ for a Java name with an underscore in it will find the same code here.
 | `BufferedImage` | `Texture2D` | `Entity.setup()` still pre-scales each sprite once at load, so it is blitted 1:1 afterwards. |
 | `java.awt.Rectangle` | `scripts/util/Rect.gd` | Godot's `Rect2i` is a value type; the game relies on rectangles being mutable objects that get aliased and temporarily shifted, so this is a tiny reference-type stand-in with the same `intersects()` rules. |
 | `java.awt.Color` | `Color8(r, g, b, a)` | Same 0–255 values. |
-| `RadialGradientPaint` | `GradientTexture2D` (radial fill) | Same five colour stops. It is drawn from a square texture centred on the player so the light stays a circle. |
+| `RadialGradientPaint` | `shaders/darkness.gdshader` | Same five opacity stops, computed per pixel instead of baked into a screen-sized image that had to be rebuilt whenever the light changed. One colour from the palette, varying only in opacity. |
 | `javax.sound.sampled.Clip` | `AudioStreamPlayer` | Same 0–5 volume steps and the same dB values. Looping restarts the stream on `finished`. Which file each slot plays is a `SoundBank` resource, and `SE.gd` names the slots so calls read `play_se(SE.COIN)`. |
 | `KeyEvent.VK_*` codes in `KeyHandler` | named actions in the Input Map | `KeyHandler` keeps its per-game-state structure but dispatches on `Action.MOVE_UP` instead of `KEY_W`, so bindings are editor data. |
 | `ObjectOutputStream` → `save.dat` | `FileAccess.store_var` → `user://save.dat` | GDScript has no object serialisation, so `DataStorage` gained `to_dict()`/`from_dict()`. `config.txt` moved to `user://` too, because `res://` is read-only in an exported game. |
@@ -160,6 +160,13 @@ artificial worst case of all 23 monsters pathfinding at once.
 
 ## Things to know
 
+- **Pixel scaling.** The game renders at exactly 960x576 and the window scales
+  that by whole numbers only (`stretch/mode = viewport`,
+  `scale_mode = integer`). Fractional scaling is what makes pixel art look
+  lumpy — some pixels ending up a row wider than their neighbours — so the
+  window letterboxes instead. Every sprite is also pre-scaled at a clean 3x,
+  and the few places that drew an already-scaled sprite into a smaller box
+  (the shop's coin icon, the map markers) now use their own whole-number sizes.
 - **Save and config files** live in Godot's user folder, not next to the
   project — `%APPDATA%\Godot\app_userdata\Adventure of Katsu Boy 2D\` on
   Windows, `~/.local/share/godot/app_userdata/…` on Linux,

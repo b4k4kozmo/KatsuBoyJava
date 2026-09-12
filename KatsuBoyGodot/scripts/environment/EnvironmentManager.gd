@@ -18,5 +18,4 @@ func update() -> void:
 	lighting.update()
 
 
-func draw(g2) -> void:
-	lighting.draw(g2)
+## Drawing is LightingOverlay's job now (a node in main.tscn).

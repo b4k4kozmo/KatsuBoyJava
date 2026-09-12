@@ -501,6 +501,10 @@ func damage_player(atk: int) -> void:
 
 		gp.player.life -= damage
 		gp.player.invincible = true
+		if gp.effects != null:
+			# parries flash green, hits flash pink
+			var flash: Color = gp.ui.kamigreen if damage == 0 else gp.ui.kamipink
+			gp.effects.add_impact_on(gp.player, flash)
 
 
 func set_knock_back(target, atkr, power: int) -> void:

@@ -1,5 +1,5 @@
 class_name GamePanel
-extends Node2D
+extends Graphics2D
 ## Java: main/GamePanel.java (+ main/Main.java)
 ##
 ## This node is two things at once, exactly like the Swing JPanel was:
@@ -39,6 +39,12 @@ var map_node: Array[Node2D] = []
 ## See scripts/data/SE.gd for the slot names.
 @export var sound_bank: SoundBank
 
+## Testing aid: set this to a map number to boot straight into that map instead
+## of map 0, so you can play a dungeon without walking to it. -1 = off.
+## The player lands on that map's PlayerStart if it has one, otherwise the
+## middle of the map.
+@export var debug_start_map: int = -1
+
 @export_group("Day / night cycle")
 ## Frames of daylight before dusk starts. 60 frames = 1 second.
 @export var day_length_frames: int = 9000
@@ -60,7 +66,10 @@ var map_node: Array[Node2D] = []
 ## Holds the map scenes and scrolls them with the player. Sits behind
 ## everything GamePanel draws itself (z_index -1), so tiles render under the
 ## entities exactly like they did when we blitted them by hand.
+## It is a node in main.tscn; this just finds it.
 var world: Node2D
+## Hit sparks. Optional - the game runs without it.
+var effects: EffectsLayer
 
 # FOR FULL SCREEN
 # (Java kept a BufferedImage "tempScreen" and stretched it onto the window.
@@ -111,10 +120,15 @@ const MAP_STATE := 10
 func _ready() -> void:
 	# --- the maps come first: everything else reads tiles and markers off them
 	max_map = maxi(map_scenes.size(), 1)
-	world = Node2D.new()
-	world.name = "World"
-	world.z_index = -1
-	add_child(world)
+
+	world = get_node_or_null("World")
+	if world == null:
+		# main.tscn should have one, but keep the game runnable without it.
+		world = Node2D.new()
+		world.name = "World"
+		world.z_index = -1
+		add_child(world)
+	effects = get_node_or_null("EffectsLayer")
 
 	map_node.resize(max_map)
 	for i in range(map_scenes.size()):
@@ -156,6 +170,23 @@ func _ready() -> void:
 		set_full_screen()
 
 	setup_game()
+
+	if debug_start_map >= 0 and debug_start_map < max_map:
+		jump_to_map(debug_start_map)
+
+
+## Drop the player onto a map. Used by the debug_start_map setting and by the
+## dev tools' "next map" key.
+func jump_to_map(map_num: int) -> void:
+	if map_num < 0 or map_num >= max_map:
+		return
+	current_map = map_num
+	var start := a_setter.player_start_on(map_num)
+	player.world_x = tile_size * start.x
+	player.world_y = tile_size * start.y
+	e_handler.prev_event_x = player.world_x
+	e_handler.prev_event_y = player.world_y
+	e_handler.can_touch_event = false
 
 
 ## Java used fixed size arrays: new Entity[maxMap][slots]. Godot arrays resize
@@ -209,6 +240,13 @@ func set_windowed() -> void:
 ## counter in the game keeps its original timing.
 func _physics_process(_delta: float) -> void:
 	update()
+
+
+## World coordinates -> on-screen pixels. The same maths every entity's draw()
+## does, shared so the effect layers can use it too.
+func to_screen(world_x: int, world_y: int) -> Vector2:
+	return Vector2(world_x - player.world_x + player.screen_x,
+			world_y - player.world_y + player.screen_y)
 
 
 func _process(_delta: float) -> void:
@@ -297,82 +335,61 @@ func update() -> void:
 		ui.update_sleep()
 
 
-## Java: drawToTempScreen(). drawToScreen() is gone - the engine presents the
-## viewport for us (and stretches it when full screen).
+## Java: drawToTempScreen(), minus the parts that now live on their own layer.
+##
+## The screen is built from layers that are real nodes in main.tscn, drawn back
+## to front by z_index:
+##
+##   World          (-1)  the TileMapLayer terrain
+##   GamePanel       (0)  interactive tiles and entities  <- this function
+##   LightingOverlay (5)  the day/night shader
+##   EffectsLayer    (6)  hit sparks
+##   HudLayer       (10)  mini map, UI, menus, debug text
+##
 func _draw() -> void:
-	# reset the Graphics2D-ish state at the top of every frame
-	alpha = 1.0
-	_stroke = 1.0
 
-	# draw items are layers in top to bottom order
+	reset_pen()
 
-	# TITLE SCREEN
-	if game_state == TITLE_STATE:
-		ui.draw(self)
-	# MAP SCREEN
-	elif game_state == MAP_STATE:
-		map.draw_full_map_screen(self)
-	# OTHERS
-	else:
-		# TILE
-		tile_m.draw(self)
+	# The title and full-map screens are pure UI: HudLayer draws those.
+	if game_state == TITLE_STATE or game_state == MAP_STATE:
+		return
 
-		for i in range(i_tile[1].size()):
-			if i_tile[current_map][i] != null:
-				i_tile[current_map][i].draw(self)
+	# The terrain draws itself (World), so all that is left of the old tile
+	# pass is the A* debug overlay.
+	tile_m.draw(self)
 
-		# ADD ENTITIES TO THE LIST
-		entity_list.append(player)
+	for i in range(i_tile[1].size()):
+		if i_tile[current_map][i] != null:
+			i_tile[current_map][i].draw(self)
 
-		for i in range(npc[1].size()):
-			if npc[current_map][i] != null:
-				entity_list.append(npc[current_map][i])
-		for i in range(obj[1].size()):
-			if obj[current_map][i] != null:
-				entity_list.append(obj[current_map][i])
-		for i in range(monster[1].size()):
-			if monster[current_map][i] != null:
-				entity_list.append(monster[current_map][i])
-		for i in range(projectile[1].size()):
-			if projectile[current_map][i] != null:
-				entity_list.append(projectile[current_map][i])
-		for i in range(particle_list.size()):
-			if particle_list[i] != null:
-				entity_list.append(particle_list[i])
+	# ADD ENTITIES TO THE LIST
+	entity_list.append(player)
 
-		# SORT (painter's algorithm on world_y, same as the Java Comparator)
-		entity_list.sort_custom(func(e1, e2): return e1.world_y < e2.world_y)
+	for i in range(npc[1].size()):
+		if npc[current_map][i] != null:
+			entity_list.append(npc[current_map][i])
+	for i in range(obj[1].size()):
+		if obj[current_map][i] != null:
+			entity_list.append(obj[current_map][i])
+	for i in range(monster[1].size()):
+		if monster[current_map][i] != null:
+			entity_list.append(monster[current_map][i])
+	for i in range(projectile[1].size()):
+		if projectile[current_map][i] != null:
+			entity_list.append(projectile[current_map][i])
+	for i in range(particle_list.size()):
+		if particle_list[i] != null:
+			entity_list.append(particle_list[i])
 
-		# DRAW ENTITIES
-		for e in entity_list:
-			e.draw(self)
+	# SORT (painter's algorithm on world_y, same as the Java Comparator)
+	entity_list.sort_custom(func(e1, e2): return e1.world_y < e2.world_y)
 
-		# EMPTY ENTITY LIST
-		entity_list.clear()
+	# DRAW ENTITIES
+	for e in entity_list:
+		e.draw(self)
 
-		# ENVIRONMENT
-		e_manager.draw(self)
-
-		# MINI MAP
-		map.draw_mini_map(self)
-
-		# UI
-		ui.draw(self)
-
-	# DEBUG
-	if key_h.check_draw_time == true:
-		set_font(ui.maru_monica, 24)
-		set_color(ui.kamiblack)
-		draw_str("Col: " + str(player.world_x / 48), 10 + 2, 432 + 2)
-		draw_str("Row: " + str(player.world_y / 48), 10 + 2, 464 + 2)
-		draw_str("WorldX: " + str(player.world_x), 10 + 2, 496 + 2)
-		draw_str("WorldY: " + str(player.world_y), 10 + 2, 528 + 2)
-
-		set_color(ui.kamiwhite)
-		draw_str("Col: " + str(player.world_x / 48), 10, 432)
-		draw_str("Row: " + str(player.world_y / 48), 10, 464)
-		draw_str("WorldX: " + str(player.world_x), 10, 496)
-		draw_str("WorldY: " + str(player.world_y), 10, 528)
+	# EMPTY ENTITY LIST
+	entity_list.clear()
 
 
 func play_music(i: int) -> void:
@@ -392,93 +409,3 @@ func play_se(i: int) -> void:
 
 func stop_se() -> void:
 	se.stop()
-
-
-# ---------------------------------------------------------------------------
-# Graphics2D stand-ins.
-#
-# Java kept the pen state (font, colour, stroke, alpha composite) on the
-# Graphics2D object and then called drawString/fillRect/drawImage. Godot's
-# draw_* calls each take their colour explicitly, so we keep the same pen state
-# here and let the helpers below apply it. That way every drawing routine in
-# the game still reads like the original.
-# ---------------------------------------------------------------------------
-
-var _font: Font
-var _font_size: int = 24
-var _color: Color = Color.WHITE
-var _stroke: float = 1.0
-## Java's AlphaComposite: multiplied into every sprite we blit.
-var alpha: float = 1.0
-
-
-func set_font(font: Font, size: int) -> void:
-	_font = font
-	_font_size = size
-
-
-## Java: g2.setFont(g2.getFont().deriveFont(size)) - keep the font, change size.
-func derive_font(size: int) -> void:
-	_font_size = size
-
-
-func set_color(color: Color) -> void:
-	_color = color
-
-
-func set_stroke(width: float) -> void:
-	_stroke = width
-
-
-## Java: changeAlpha(g2, value) / setComposite(AlphaComposite...)
-func change_alpha(value: float) -> void:
-	alpha = value
-
-
-## The tint every sprite blit is drawn with, so the alpha composite applies.
-func tint() -> Color:
-	return Color(1, 1, 1, alpha)
-
-
-## Java: g2.drawString(text, x, y) - (x, y) is the text BASELINE in both APIs.
-func draw_str(text: String, x: int, y: int) -> void:
-	draw_string(_font, Vector2(x, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, _font_size, _color)
-
-
-## Java: g2.getFontMetrics().getStringBounds(text, g2).getWidth()
-func get_string_width(text: String) -> int:
-	return int(_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, _font_size).x)
-
-
-## Java: g2.drawImage(image, x, y, null) - draws at the sprite's own size.
-func draw_img(texture: Texture2D, x: int, y: int) -> void:
-	if texture == null:
-		return
-	draw_texture(texture, Vector2(x, y), tint())
-
-
-## Java: g2.drawImage(image, x, y, width, height, null)
-func draw_img_scaled(texture: Texture2D, x: int, y: int, width: int, height: int) -> void:
-	if texture == null:
-		return
-	draw_texture_rect(texture, Rect2(x, y, width, height), false, tint())
-
-
-func fill_rect(x: int, y: int, width: int, height: int) -> void:
-	draw_rect(Rect2(x, y, width, height), _color, true)
-
-
-func fill_round_rect(x: int, y: int, width: int, height: int, arc_width: int, _arc_height: int) -> void:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = _color
-	sb.set_corner_radius_all(int(arc_width / 2.0))
-	draw_style_box(sb, Rect2(x, y, width, height))
-
-
-func draw_round_rect(x: int, y: int, width: int, height: int, arc_width: int, _arc_height: int) -> void:
-	var sb := StyleBoxFlat.new()
-	sb.draw_center = false
-	sb.border_color = _color
-	sb.set_border_width_all(int(_stroke))
-	sb.set_corner_radius_all(int(arc_width / 2.0))
-	draw_style_box(sb, Rect2(x, y, width, height))

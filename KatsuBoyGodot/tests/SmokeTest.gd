@@ -17,6 +17,9 @@ var failed: Array[String] = []
 
 func _ready() -> void:
 	gp = get_parent()
+	# Monsters wander using randi(), which Godot seeds differently every run.
+	# Pin it so a failure is always reproducible.
+	seed(20240612)
 
 
 func check(label: String, condition: bool, detail: String = "") -> void:
@@ -191,6 +194,12 @@ func _physics_process(_d: float) -> void:
 			check("dialogue has text", gp.ui.current_dialogue.length() > 0)
 			gp.game_state = gp.PLAY_STATE
 
+		328:
+			# Clear the wandering monsters first: one of the Slimes spawns on
+			# the same tile as the doorway and can stand in it, which has
+			# nothing to do with what this phase is testing.
+			for i in range(gp.monster[0].size()):
+				gp.monster[0][i] = null
 		330:
 			print("\n-- map transitions (event markers) --")
 			gp.player.world_x = gp.tile_size * 8
@@ -223,6 +232,8 @@ func _physics_process(_d: float) -> void:
 			gp.player.world_y = gp.tile_size * 60
 			gp.player.direction = "down"
 			# parked just inside the axe's reach, and frozen so it cannot wander
+			# a fresh slime, parked just inside the axe's reach and frozen
+			gp.monster[0][1] = MON_Slime.new(gp)
 			gp.monster[0][1].world_x = gp.tile_size * 60
 			gp.monster[0][1].world_y = gp.tile_size * 60 + 24
 			gp.monster[0][1].speed = 0

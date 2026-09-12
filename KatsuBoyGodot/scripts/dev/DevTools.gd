@@ -112,7 +112,7 @@ func _input(event: InputEvent) -> void:
 			notify("monsters respawned")
 		KEY_F9:
 			var next: int = (gp.current_map + 1) % gp.max_map
-			gp.current_map = next
+			gp.jump_to_map(next)
 			notify("map %d" % next)
 		KEY_F10:
 			gp.player.coin += 1000

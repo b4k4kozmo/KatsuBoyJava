@@ -59,6 +59,23 @@ func player_start() -> Vector3i:
 	return Vector3i(0, 94, 94)
 
 
+## Somewhere sensible to stand on a given map: its PlayerStartMarker if it has
+## one, otherwise the first tile a marker sits on, otherwise the middle.
+func player_start_on(map_num: int) -> Vector2i:
+
+	if map_num < gp.map_node.size() and gp.map_node[map_num] != null:
+		var found := _find_player_start(gp.map_node[map_num])
+		if found != null:
+			return Vector2i(found.tile_col(), found.tile_row())
+		for group_name in ["NPCs", "Objects", "Monsters", "Events"]:
+			for m in markers(map_num, group_name):
+				if m is PlacementMarker:
+					return Vector2i(m.tile_col(), m.tile_row() + 1)
+
+	@warning_ignore("integer_division")
+	return Vector2i(gp.max_world_col / 2, gp.max_world_row / 2)
+
+
 func _find_player_start(node: Node) -> PlayerStartMarker:
 	if node is PlayerStartMarker:
 		return node as PlayerStartMarker

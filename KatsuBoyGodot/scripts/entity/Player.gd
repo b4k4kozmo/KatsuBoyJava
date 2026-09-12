@@ -394,6 +394,8 @@ func contact_monster(i: int) -> void:
 				life -= damage
 				invincible = true
 				transparent = true
+				if gp.effects != null:
+					gp.effects.add_impact_on(self, gp.ui.kamipink)
 				if gp.e_manager.lighting.day_state == gp.e_manager.lighting.NIGHT:
 					is_cursed = true
 
@@ -417,6 +419,8 @@ func damage_monster(i: int, atkr, atk: int, knock_back_power: int) -> void:
 
 			gp.monster[gp.current_map][i].life -= damage
 			gp.ui.add_message(str(damage) + " damage!")
+			if gp.effects != null:
+				gp.effects.add_impact_on(gp.monster[gp.current_map][i], gp.ui.kamiwhite)
 
 			gp.monster[gp.current_map][i].invincible = true
 			gp.monster[gp.current_map][i].damage_reaction()
@@ -438,6 +442,8 @@ func damage_interactive_tile(i: int) -> void:
 
 		gp.i_tile[gp.current_map][i].play_se()
 		gp.i_tile[gp.current_map][i].life -= 1
+		if gp.effects != null:
+			gp.effects.add_impact_on(gp.i_tile[gp.current_map][i], gp.ui.kamigreen, 0.8)
 		gp.i_tile[gp.current_map][i].invincible = true
 
 		# Generate particle

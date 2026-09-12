@@ -5,6 +5,7 @@ the Godot editor. Godot 4.5.1 — open `KatsuBoyGodot/project.godot`, press **F5
 to play.
 
 - [Where things are](#where-things-are)
+- [Finding your way around a map scene](#finding-your-way-around-a-map-scene)
 - [Where the tile editor is](#where-the-tile-editor-is)
 - [Painting maps](#painting-maps)
 - [Placing things on a map](#placing-things-on-a-map)
@@ -31,6 +32,36 @@ to play.
 | the list of maps, colours, day/night length | `main.tscn` → select **GamePanel** |
 | key bindings | Project Settings → Input Map |
 | dialogue | `scripts/entity/NPC_*.gd` (code) |
+
+---
+
+## Finding your way around a map scene
+
+A map is 100 x 100 tiles — 4800 x 4800 pixels — and the editor opens at the
+top-left corner, so the thing you want is usually off screen. Three ways to get
+to it:
+
+**Frame a node.** Click it in the **Scene** dock and press **F**. The 2D view
+jumps to it and zooms in. This is the fastest way to find the merchant, a
+doorway, or the player start — click it in the tree, press F, and you're there.
+
+**Get around by hand.** Middle-mouse drag (or space + drag) pans. Scroll wheel
+zooms. **Shift+F** toggles freelook-style panning with the arrow keys.
+
+**See the whole map.** Select the **Tiles** node and press **F** to frame the
+entire painted area at once, then zoom in where you want to work.
+
+### Playing a single map
+
+Walking from the start to a dungeon every time you want to test it gets old.
+Open `main.tscn`, select **GamePanel**, and set **Debug Start Map** to that
+map's number — the game boots straight into it, on that map's PlayerStart (or
+somewhere sensible if it hasn't got one). Set it back to `-1` when you're done.
+
+In game, **F9** jumps to the next map, which is quicker for a look around.
+
+> Map numbers are positions in GamePanel's **Map Scenes** list: `WorldMap` is 0,
+> `MushroomHut` is 1, `TestMap` is 2.
 
 ---
 
@@ -131,6 +162,11 @@ run time, so this is for your eyes, not correctness.)
 Each marker draws its real sprite in the editor, so you can see what you placed.
 Markers never draw in game — at startup `AssetSetter` reads them and builds the
 actual entities.
+
+> **Watch out for markers on the same tile.** A Slime spawns on tile 8,46 in
+> `WorldMap` — the same tile as the doorway to the hut — so it can physically
+> stand in the door and block it. That came straight from the Java version.
+> Now that both are nodes you can just drag one of them off the other.
 
 **Per-map limits:** 20 objects, 10 NPCs, 30 monsters, 50 interactive tiles.
 Going over is ignored with a warning in the **Output** panel. To raise one,
@@ -343,6 +379,62 @@ it.
 
 The dev keys are raw key codes on purpose, so they can't clash with anything a
 player rebinds.
+
+---
+
+## How the screen is put together
+
+`main.tscn` draws in layers, each a real node, ordered by **z_index**:
+
+| Node | z | Draws |
+|---|---|---|
+| `World` | -1 | the TileMapLayer terrain, scrolled to follow the player |
+| `GamePanel` | 0 | interactive tiles and entities, depth-sorted |
+| `LightingOverlay` | 5 | day/night darkness (shader) |
+| `EffectsLayer` | 6 | hit sparks (shader) |
+| `HudLayer` | 10 | mini map, HUD, menus, debug text |
+
+That's why night darkens the world but not your health bar. All of them extend
+`Graphics2D`, which carries the Java-style pen state (`set_color`, `draw_str`,
+`fill_rect`, `draw_img`), so any of them can be passed as the `g2` argument.
+
+### Shaders
+
+Both live in `shaders/` and only ever use colours from the palette.
+
+**`darkness.gdshader`** on `LightingOverlay` — the night filter and the circle
+of light around the player. Select the node, expand **Material → Shader
+Parameters**:
+
+| Parameter | What it does |
+|---|---|
+| **Darkness** | how black full night gets |
+| **Bands** | 0 = smooth falloff. Higher posterises the light into that many steps, for a chunkier look |
+| **Dark Color** | the colour night is painted in — fed from the palette at run time |
+
+Light position, radius and the day/night fade are driven by the game each frame,
+so changing them in the Inspector won't stick.
+
+**`impact.gdshader`** on `EffectsLayer` — the expanding ring when a hit lands.
+One material draws every spark, so each one's colour and age ride in on the
+draw call's modulate.
+
+| Where | What |
+|---|---|
+| `EffectsLayer` → **Enabled** | turn sparks off without deleting the node |
+| `EffectsLayer` → **Impact Life** | how long a spark lasts, in frames |
+| `EffectsLayer` → **Impact Size** | how big it is, in pixels |
+| Material → **Cells** | how coarsely the ring is pixelated |
+| Material → **Thickness** | how thick the ring starts out |
+
+Sparks fire from `Player.damage_monster`, `Player.damage_interactive_tile` and
+`Entity.damage_player`. To add one somewhere else:
+
+```gdscript
+gp.effects.add_impact_on(some_entity, gp.ui.kamiwhite)
+```
+
+Deleting the `EffectsLayer` node is safe — every call site checks for it.
 
 ---
 

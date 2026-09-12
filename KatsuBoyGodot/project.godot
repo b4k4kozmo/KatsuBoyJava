@@ -25,7 +25,12 @@ run/max_fps=60
 
 window/size/viewport_width=960
 window/size/viewport_height=576
-window/stretch/mode="canvas_items"
+; Render the game at exactly 960x576 and scale that image to the window.
+; "integer" means it is only ever scaled by a whole number, so every source
+; pixel ends up the same size on screen - fractional scaling is what makes
+; pixel art look lumpy, with some pixels a row wider than their neighbours.
+window/stretch/mode="viewport"
+window/stretch/scale_mode="integer"
 
 [input]
 

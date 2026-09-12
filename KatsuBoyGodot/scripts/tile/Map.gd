@@ -15,12 +15,16 @@ func _init(gp) -> void:
 	create_world_map()
 
 
-## The world map images are only ever shown at 500x500 (full map) or 200x200
-## (mini map). Java built them at full tile resolution - 4800x4800 pixels per
-## map, ~92 MB each - which is what makes the Java build chug/run out of heap
-## on the map screen. We render each tile at MAP_TILE_SIZE instead, which looks
-## identical once it is scaled down to the window but costs a fraction of that.
-const MAP_TILE_SIZE := 8
+## Java built these at full tile resolution - 4800x4800 pixels per map, ~92 MB
+## each - for pictures only ever shown at 500x500. We render one small square
+## per tile instead.
+##
+## 5 px per tile x 100 tiles = exactly the 500x500 the full map screen draws, so
+## it is blitted 1:1 with no resampling, and the mini map takes a clean half of
+## it. Any other number here means fractional scaling and uneven pixels.
+const MAP_TILE_SIZE := 5
+const FULL_MAP_SIZE := MAP_TILE_SIZE * 100    # 500
+const MINI_MAP_SIZE := 250                    # exactly half of the full map
 
 
 func create_world_map() -> void:
@@ -69,9 +73,9 @@ func draw_full_map_screen(g2) -> void:
 	g2.set_color(gp.ui.kamiblack)
 	g2.fill_rect(0, 0, gp.screen_width, gp.screen_height)
 
-	# Draw Map
-	var width := 500
-	var height := 500
+	# Draw Map, 1:1
+	var width := FULL_MAP_SIZE
+	var height := FULL_MAP_SIZE
 	@warning_ignore("integer_division")
 	var x: int = gp.screen_width / 2 - width / 2
 	@warning_ignore("integer_division")
@@ -82,9 +86,9 @@ func draw_full_map_screen(g2) -> void:
 	var scale: float = float(gp.tile_size * gp.max_world_col) / width
 	var player_x: int = int(x + gp.player.world_x / scale)
 	var player_y: int = int(y + gp.player.world_y / scale)
-	@warning_ignore("integer_division")
-	var player_size: int = gp.tile_size / 2
-	g2.draw_img_scaled(gp.player.down1, player_x - 10, player_y - 10, player_size, player_size)
+	# 32 px = a clean 2x of the 16 px source sprite
+	var player_size := 32
+	g2.draw_img_scaled(gp.player.down1, player_x - 16, player_y - 16, player_size, player_size)
 
 	# Hint
 	g2.set_font(gp.ui.maru_monica, 32)
@@ -96,9 +100,9 @@ func draw_mini_map(g2) -> void:
 
 	if mini_map_on == true:
 
-		# Draw Map
-		var width := 200
-		var height := 200
+		# Draw Map at exactly half size
+		var width := MINI_MAP_SIZE
+		var height := MINI_MAP_SIZE
 		var x: int = gp.screen_width - width - 25
 		var y := 25
 
@@ -109,8 +113,8 @@ func draw_mini_map(g2) -> void:
 		var scale: float = float(gp.tile_size * gp.max_world_col) / width
 		var player_x: int = int(x + gp.player.world_x / scale)
 		var player_y: int = int(y + gp.player.world_y / scale)
-		@warning_ignore("integer_division")
-		var player_size: int = gp.tile_size / 3
-		g2.draw_img_scaled(gp.player.down1, player_x - 6, player_y - 6, player_size, player_size)
+		# 16 px = the source sprite at 1:1
+		var player_size := 16
+		g2.draw_img_scaled(gp.player.down1, player_x - 8, player_y - 8, player_size, player_size)
 
 		g2.change_alpha(1.0)

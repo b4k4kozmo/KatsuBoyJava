@@ -16,6 +16,7 @@ var heart_empty: Texture2D
 var crystal_full: Texture2D
 var crystal_blank: Texture2D
 var coin: Texture2D
+var coin_icon: Texture2D
 
 var message_on: bool = false
 var message: Array[String] = []
@@ -73,6 +74,10 @@ func _init(gp) -> void:
 	crystal_blank = crystal.image2
 	var kami_coin := OBJ_Coin.new(gp)
 	coin = kami_coin.down1
+	# A 2x version for the little price boxes. Drawing the 3x world sprite into
+	# a 32px box resampled it and made those pixels a different size to
+	# everything else on screen.
+	coin_icon = kami_coin.setup("/objects/coin", 32, 32)
 
 
 ## Put the colours back to what the Inspector says.
@@ -878,7 +883,7 @@ func trade_buy() -> void:
 		width = int(gp.tile_size * 2.5)
 		height = gp.tile_size
 		draw_sub_window(x, y, width, height)
-		g2.draw_img_scaled(coin, x + 10, y + 8, 32, 32)
+		g2.draw_img(coin_icon, x + 10, y + 8)
 
 		var price: int = npc.inventory[item_index].price
 		var text: String = str(price)
@@ -945,7 +950,7 @@ func trade_sell() -> void:
 		width = int(gp.tile_size * 2.5)
 		height = gp.tile_size
 		draw_sub_window(x, y, width, height)
-		g2.draw_img_scaled(coin, x + 10, y + 8, 32, 32)
+		g2.draw_img(coin_icon, x + 10, y + 8)
 
 		@warning_ignore("integer_division")
 		var price: int = gp.player.inventory[item_index].price / 2
