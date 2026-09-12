@@ -1,5 +1,12 @@
 # Working on Katsu Boy
 
+> Looking for *what to build next* rather than how to build it? See
+> **[ROADMAP.md](ROADMAP.md)** — what the game loop is missing, the smallest
+> shape that makes it a complete game, a build order, and step-by-step recipes
+> for adding monsters, bosses, dungeons, items, an objective tracker and an
+> ending using the framework described here.
+
+
 Everything you can change without writing code, and exactly where it lives in
 the Godot editor. Godot 4.5.1 — open `KatsuBoyGodot/project.godot`, press **F5**
 to play.
