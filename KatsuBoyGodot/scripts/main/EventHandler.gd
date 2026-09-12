@@ -183,6 +183,9 @@ func healing_pool(game_state: int) -> void:
 		gp.a_setter.set_monster()
 		gp.player.is_cursed = false
 		gp.save_load.save()
+		# Saving also reports progress, so a player who never dies still shows
+		# up on the web high-score board.
+		WebScore.post_progress(gp.player.level, gp.player.coin)
 
 
 func change_map(current_map: int, x: int, y: int) -> void:

@@ -341,6 +341,9 @@ func update() -> void:
 		gp.stop_se()
 		gp.stop_music()
 		gp.play_se(SE.DEATH)
+		# A run ending is the natural moment to report progress to the web
+		# high-score board. No-op outside the browser build.
+		WebScore.post_progress(level, coin)
 
 
 func pick_up_object(i: int) -> void:
