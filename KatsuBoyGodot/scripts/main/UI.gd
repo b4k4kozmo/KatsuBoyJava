@@ -106,11 +106,13 @@ func draw(g2) -> void:
 	# PLAY STATE
 	if gp.game_state == gp.PLAY_STATE:
 		draw_player_life()
+		draw_clock()
 		draw_message()
 		command_num = 0
 	# PAUSE STATE
 	if gp.game_state == gp.PAUSE_STATE:
 		draw_player_life()
+		draw_clock()
 		draw_pause_screen()
 	# DIALOGUE STATE
 	if gp.game_state == gp.DIALOGUE_STATE:
@@ -200,6 +202,36 @@ func update_messages() -> void:
 			message_counter.remove_at(i)
 		else:
 			i += 1
+
+
+## The day, the time and what part of the day it is, in a little window along
+## the top. Sits between the hearts and the mini map.
+func draw_clock() -> void:
+
+	if not gp.show_clock or gp.e_manager == null or gp.e_manager.clock == null:
+		return
+
+	var clock: GameClock = gp.e_manager.clock
+
+	var width: int = gp.tile_size * 6
+	var height: int = int(gp.tile_size * 1.8)
+	@warning_ignore("integer_division")
+	var x: int = gp.screen_width / 2 - width / 2
+	var y := 10
+
+	draw_sub_window(x, y, width, height)
+
+	# day and time
+	g2.set_font(maru_monica, 30)
+	g2.set_color(kamiwhite)
+	var text: String = clock.day_name() + "   " + clock.time_string()
+	g2.draw_str(text, get_x_for_centered_text(text), y + 36)
+
+	# morning / afternoon / evening / sunrise / sunset / night
+	g2.set_font(maru_monica, 26)
+	g2.set_color(kamigreen)
+	var period: String = clock.period_name()
+	g2.draw_str(period, get_x_for_centered_text(period), y + 68)
 
 
 func draw_message() -> void:
@@ -989,6 +1021,8 @@ func trade_sell() -> void:
 func update_sleep() -> void:
 
 	counter += 1
+	# The clock keeps running while you sleep, but the screen fade is scripted,
+	# so drive filter_alpha directly here rather than from the hour.
 
 	if counter < 120:
 		gp.e_manager.lighting.filter_alpha += 0.01
@@ -1000,8 +1034,9 @@ func update_sleep() -> void:
 		if gp.e_manager.lighting.filter_alpha <= 0.0:
 			gp.e_manager.lighting.filter_alpha = 0.0
 			counter = 0
-			gp.e_manager.lighting.day_state = gp.e_manager.lighting.DAY
-			gp.e_manager.lighting.day_counter = 0
+			# Wake up at sunrise, one day later.
+			gp.e_manager.clock.set_time(int(gp.sunrise_end_hour), 0, true)
+			gp.e_manager.lighting.refresh()
 			gp.game_state = gp.PLAY_STATE
 			gp.player.get_image()
 

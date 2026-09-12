@@ -34,7 +34,7 @@ godot --headless --path . res://tests/SmokeTest.tscn
 | Options | `Esc` |
 | Full map | `M` |
 | Mini map on/off | `X` |
-| Debug overlay (coords, A\* path, day state) | `T` |
+| Debug overlay (coords, A\* path) | `T` |
 
 All of those are named actions in **Project Settings → Input Map**, so they can
 be rebound (or given gamepad bindings) without touching code.
@@ -89,6 +89,19 @@ for a Java name with an underscore in it will find the same code here.
 | `ObjectOutputStream` → `save.dat` | `FileAccess.store_var` → `user://save.dat` | GDScript has no object serialisation, so `DataStorage` gained `to_dict()`/`from_dict()`. `config.txt` moved to `user://` too, because `res://` is read-only in an exported game. |
 | `ai/Node.java` | `ai/PathNode.gd` | `Node` is Godot's own base class. |
 | `object/SuperObject.java` | dropped | Dead code — nothing referenced it. |
+
+## Beyond the port
+
+A few things were added that the Java version did not have. They are all
+optional and all documented in [AUTHORING.md](AUTHORING.md):
+
+- **A clock and calendar.** Time advances in five-minute steps, the HUD shows
+  the day, the time and whether it is Morning / Afternoon / Evening / Sunrise /
+  Sunset / Night, and the day/night lighting is derived from the hour rather
+  than from its own frame counter. Java ran two unrelated timers; now the
+  shader, the merchant's night prices and the curse all read one clock.
+- **Shaders** for the night filter and for hit sparks, both palette-only.
+- **Dev tools** (F1) and a **regression test suite**.
 
 ## Bugs fixed along the way
 

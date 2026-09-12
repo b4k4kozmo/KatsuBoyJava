@@ -369,6 +369,88 @@ func _physics_process(_d: float) -> void:
 			release(Action.MOVE_LEFT)
 
 		1000:
+			print("\n-- clock --")
+			var clock: GameClock = gp.e_manager.clock
+			var light = gp.e_manager.lighting
+
+			clock.reset()
+			check("starts on the configured day", clock.day_name() == "Sunday", clock.day_name())
+			check("starts at the configured time", clock.time_string() == "8:00 AM", clock.time_string())
+			check("starts in the morning", clock.period_name() == "Morning", clock.period_name())
+
+			# 12-hour formatting round the awkward hours
+			clock.set_time(0, 0)
+			check("midnight reads 12:00 AM", clock.time_string() == "12:00 AM", clock.time_string())
+			clock.set_time(12, 0)
+			check("noon reads 12:00 PM", clock.time_string() == "12:00 PM", clock.time_string())
+			clock.set_time(13, 5)
+			check("afternoon reads 1:05 PM", clock.time_string() == "1:05 PM", clock.time_string())
+
+			# the named parts of the day
+			var periods := {5.5: "Sunrise", 10.0: "Morning", 14.0: "Afternoon",
+					18.0: "Evening", 20.5: "Sunset", 23.0: "Night", 2.0: "Night"}
+			var period_ok := true
+			var period_detail := ""
+			for h in periods:
+				clock.set_time(int(h), int((h - floor(h)) * 60))
+				if clock.period_name() != periods[h]:
+					period_ok = false
+					period_detail += " %s->%s(want %s)" % [clock.time_string(), clock.period_name(), periods[h]]
+			check("every part of the day is named right", period_ok, period_detail)
+
+			# darkness follows the same schedule the shader fades with
+			clock.set_time(12, 0)
+			check("noon is fully light", is_equal_approx(clock.darkness_amount(), 0.0))
+			clock.set_time(23, 0)
+			check("late evening is fully dark", is_equal_approx(clock.darkness_amount(), 1.0))
+			clock.set_time(3, 0)
+			check("small hours are fully dark", is_equal_approx(clock.darkness_amount(), 1.0))
+			clock.set_time(20, 30)
+			check("half way through sunset is half dark",
+				absf(clock.darkness_amount() - 0.5) < 0.01, str(clock.darkness_amount()))
+			clock.set_time(5, 30)
+			check("half way through sunrise is half dark",
+				absf(clock.darkness_amount() - 0.5) < 0.01, str(clock.darkness_amount()))
+
+			# the rest of the game asks "is it night?" - that has to agree
+			clock.set_time(12, 0); light.refresh()
+			check("noon counts as day", light.day_state == light.DAY)
+			clock.set_time(23, 0); light.refresh()
+			check("night counts as night", light.day_state == light.NIGHT)
+			clock.set_time(20, 30); light.refresh()
+			check("sunset counts as dusk", light.day_state == light.DUSK)
+			clock.set_time(5, 30); light.refresh()
+			check("sunrise counts as dawn", light.day_state == light.DAWN)
+		1004:
+			var clock2: GameClock = gp.e_manager.clock
+			clock2.reset()
+			# a full day forward rolls the calendar exactly once
+			clock2.advance(24 * 60)
+			check("a day later is Monday", clock2.day_name() == "Monday", clock2.day_name())
+			check("and the same time of day", clock2.time_string() == "8:00 AM", clock2.time_string())
+			clock2.advance(24 * 60 * 6)
+			check("a week later is back to Sunday", clock2.day_name() == "Sunday", clock2.day_name())
+
+			# sleeping in a tent wakes you at sunrise the next morning
+			clock2.set_time(22, 0)
+			var before: String = clock2.day_name()
+			clock2.set_time(int(gp.sunrise_end_hour), 0, true)
+			check("a tent wakes you at sunrise", clock2.time_string() == "6:00 AM", clock2.time_string())
+			check("a tent moves you to the next day", clock2.day_name() != before,
+				"%s -> %s" % [before, clock2.day_name()])
+
+			# ticking: one step per frames_per_time_step, minutes_per_time_step each
+			clock2.reset()
+			gp.e_manager.clock.step_counter = gp.frames_per_time_step - 1
+		1005:
+			var clock3: GameClock = gp.e_manager.clock
+			check("the clock ticks forward in steps",
+				clock3.minute() == gp.start_minute + gp.minutes_per_time_step,
+				clock3.time_string())
+			clock3.reset()
+			gp.e_manager.lighting.refresh()
+
+		1010:
 			print("\n================================")
 			print("%d passed, %d failed" % [passed, failed.size()])
 			for f in failed:

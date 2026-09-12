@@ -21,7 +21,7 @@ var message_timer: int = 0
 const HELP := [
 	"F1  this panel",
 	"F2  god mode",
-	"F3  cycle day / dusk / night / dawn",
+	"F3  +3 hours",
 	"F4  give one of every item",
 	"F6  full heal + refill mana",
 	"F7  kill every monster on this map",
@@ -74,19 +74,8 @@ func _input(event: InputEvent) -> void:
 				gp.player.get_attack()
 			notify("god mode %s" % ("ON" if god_mode else "OFF"))
 		KEY_F3:
-			var light = gp.e_manager.lighting
-			match light.day_state:
-				light.DAY:
-					light.day_state = light.DUSK
-				light.DUSK:
-					light.day_state = light.NIGHT
-					light.filter_alpha = 1.0
-				light.NIGHT:
-					light.day_state = light.DAWN
-				_:
-					light.day_state = light.DAY
-					light.filter_alpha = 0.0
-			light.day_counter = 0
+			gp.e_manager.clock.advance(3 * 60)
+			gp.e_manager.lighting.refresh()
 			notify("time: " + day_name())
 		KEY_F4:
 			for item_name in ["Key", "Green Potion", "Tent", "Candle", "Boots",
@@ -127,13 +116,10 @@ func _input(event: InputEvent) -> void:
 
 
 func day_name() -> String:
-	var light = gp.e_manager.lighting
-	match light.day_state:
-		light.DAY: return "Day"
-		light.DUSK: return "Dusk"
-		light.NIGHT: return "Night"
-		light.DAWN: return "Dawn"
-	return "?"
+	var clock = gp.e_manager.clock
+	if clock == null:
+		return "?"
+	return "%s %s (%s)" % [clock.day_name(), clock.time_string(), clock.period_name()]
 
 
 func state_name() -> String:

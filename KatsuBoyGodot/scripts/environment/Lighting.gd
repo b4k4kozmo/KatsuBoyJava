@@ -1,9 +1,14 @@
 class_name Lighting
 extends RefCounted
 ## Java: environment/Lighting.java
+##
+## Java ran its own timer here: so many frames of day, then fade, then so many
+## frames of night. That is gone - the GameClock is the single source of truth
+## now, and this just reads the hour off it. So "is it night?" means the same
+## thing to the darkness shader, the merchant's night prices, the curse, and
+## the clock on the HUD.
 
 var gp
-var day_counter: int
 var filter_alpha: float = 0.0
 
 const DAY := 0
@@ -25,8 +30,8 @@ func set_light_source() -> void:
 
 
 func reset_day() -> void:
-	day_state = DAY
-	filter_alpha = 0.0
+	gp.e_manager.clock.reset()
+	refresh()
 
 
 func update() -> void:
@@ -35,30 +40,29 @@ func update() -> void:
 		set_light_source()
 		gp.player.light_updated = false
 
-	# Check the state of the day
-	if day_state == DAY:
-		day_counter += 1
-		if day_counter > gp.day_length_frames:
-			day_state = DUSK
-			day_counter = 0
+	# While sleeping, UI.update_sleep() is scripting the fade by hand.
+	if gp.game_state == gp.SLEEP_STATE:
+		return
 
-	if day_state == DUSK:
-		filter_alpha += gp.dusk_fade_speed
-		if filter_alpha > 1.0:
-			filter_alpha = 1.0
-			day_state = NIGHT
+	refresh()
 
-	if day_state == NIGHT:
-		day_counter += 1
-		if day_counter > gp.night_length_frames:
-			day_state = DAWN
-			day_counter = 0
 
-	if day_state == DAWN:
-		filter_alpha -= gp.dawn_fade_speed
-		if filter_alpha < 0.0:
-			filter_alpha = 0.0
-			day_state = DAY
+## Read the hour off the clock and work out how dark it is and which part of
+## the cycle we are in.
+func refresh() -> void:
+
+	var clock: GameClock = gp.e_manager.clock
+	filter_alpha = clock.darkness_amount()
+
+	var h: float = clock.hour_float()
+	if GameClock.in_window(h, gp.sunrise_start_hour, gp.sunrise_end_hour):
+		day_state = DAWN
+	elif GameClock.in_window(h, gp.sunset_start_hour, gp.sunset_end_hour):
+		day_state = DUSK
+	elif GameClock.in_window(h, gp.sunset_end_hour, gp.sunrise_start_hour):
+		day_state = NIGHT
+	else:
+		day_state = DAY
 
 
 ## Drawing moved to LightingOverlay (a node in main.tscn with the darkness

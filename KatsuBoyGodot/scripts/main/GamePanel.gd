@@ -45,15 +45,31 @@ var map_node: Array[Node2D] = []
 ## middle of the map.
 @export var debug_start_map: int = -1
 
+@export_group("Time of day")
+## Game frames between each tick of the clock. 60 = one tick per real second.
+@export var frames_per_time_step: int = 60
+## How many in-game minutes each tick adds. At the defaults a full 24 hours
+## takes about five real minutes.
+@export var minutes_per_time_step: int = 5
+## What a new game starts at. 0 = Sunday.
+@export_range(0, 6) var start_day: int = 0
+@export_range(0, 23) var start_hour: int = 8
+@export_range(0, 59) var start_minute: int = 0
+## The hour the calendar flips to the next day. 0 = midnight.
+@export_range(0, 23) var day_rollover_hour: int = 0
+## Show the clock on the HUD.
+@export var show_clock: bool = true
+
 @export_group("Day / night cycle")
-## Frames of daylight before dusk starts. 60 frames = 1 second.
-@export var day_length_frames: int = 9000
-## Frames of darkness before dawn starts.
-@export var night_length_frames: int = 4800
-## How fast dusk falls, per frame. Bigger = quicker.
-@export var dusk_fade_speed: float = 0.001
-## How fast dawn breaks, per frame.
-@export var dawn_fade_speed: float = 0.001
+## Sunrise runs between these two hours: dark before, light after.
+@export_range(0.0, 24.0, 0.25) var sunrise_start_hour: float = 5.0
+@export_range(0.0, 24.0, 0.25) var sunrise_end_hour: float = 6.0
+## Sunset runs between these two: light before, dark after.
+@export_range(0.0, 24.0, 0.25) var sunset_start_hour: float = 20.0
+@export_range(0.0, 24.0, 0.25) var sunset_end_hour: float = 21.0
+## When "Morning" becomes "Afternoon", and "Afternoon" becomes "Evening".
+@export_range(0.0, 24.0, 0.25) var midday_hour: float = 12.0
+@export_range(0.0, 24.0, 0.25) var evening_hour: float = 17.0
 ## How dark full night gets, 0 (none) to 255 (pitch black).
 @export_range(0, 255) var night_darkness: int = 240
 

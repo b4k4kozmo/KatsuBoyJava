@@ -289,11 +289,45 @@ cover it.
 |---|---|---|
 | | **Map Scenes** | the maps, in order. Index = map number |
 | | **Sound Bank** | which audio set to use |
-| Day / night | **Day Length Frames** | daylight before dusk (60 frames = 1 second) |
-| Day / night | **Night Length Frames** | darkness before dawn |
-| Day / night | **Dusk / Dawn Fade Speed** | how fast the light changes |
+| | **Debug Start Map** | boot straight into this map. -1 = off |
+| Time of day | **Frames Per Time Step** | game frames between clock ticks. 60 = one tick a second |
+| Time of day | **Minutes Per Time Step** | in-game minutes each tick adds |
+| Time of day | **Start Day / Hour / Minute** | when a new game begins. Day 0 = Sunday |
+| Time of day | **Day Rollover Hour** | when the calendar flips over. 0 = midnight |
+| Time of day | **Show Clock** | the clock window on the HUD |
+| Day / night | **Sunrise Start / End Hour** | dark before, light after |
+| Day / night | **Sunset Start / End Hour** | light before, dark after |
+| Day / night | **Midday Hour** | when "Morning" becomes "Afternoon" |
+| Day / night | **Evening Hour** | when "Afternoon" becomes "Evening" |
 | Day / night | **Night Darkness** | 0 = no night, 255 = pitch black |
 | Palette | **Color Green / Black / Pink / White** | the four colours the whole UI is drawn from |
+
+### The clock
+
+Time moves in steps, Harvest Moon style: every second of real time the clock
+jumps forward five in-game minutes, so a full 24 hours takes about five real
+minutes. The HUD shows the day, the time, and which part of the day it is.
+
+At the defaults:
+
+| Hours | Shows as | Light |
+|---|---|---|
+| 5:00 – 6:00 | Sunrise | fading up |
+| 6:00 – 12:00 | Morning | full daylight |
+| 12:00 – 17:00 | Afternoon | full daylight |
+| 17:00 – 20:00 | Evening | full daylight |
+| 20:00 – 21:00 | Sunset | fading down |
+| 21:00 – 5:00 | Night | full dark |
+
+**The clock is the single source of truth.** The darkness shader, the merchant's
+night prices, the night curse and the HUD all read the same hour, so moving
+`Sunset Start Hour` moves all of them together. There is no separate lighting
+timer any more.
+
+Sleeping in a tent wakes you at **Sunrise End Hour** on the next day.
+
+In game, **F3** pushes the clock forward three hours, which is the quickest way
+to see a night behaviour.
 
 ### `assets/data/player.tres`
 
