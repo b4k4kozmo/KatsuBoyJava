@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>$GODOT_PROJECT_NAME</title>
 $GODOT_HEAD_INCLUDE
+<script>
+// When the demo is embedded in another page (kamimart.com/katsuboy), that page
+// supplies the title and the controls, so hide this page's own chrome and show
+// nothing but the game. Runs before first paint to avoid a flash.
+if (window.self !== window.top) { document.documentElement.className = 'embedded'; }
+</script>
 <style>
 /* The game's own palette: kamiblack, kamigreen, kamipink, kamiwhite. */
 :root {
@@ -65,9 +71,15 @@ h1 {
 
 #canvas {
 	display: block;
-	width: 960px;
-	height: 576px;
-	max-width: 100%;
+	/* Godot writes style="width: 960px; height: 576px" onto the canvas itself.
+	   That inline height would squash the picture on any window narrower than
+	   960, so these override it - an !important rule in a stylesheet beats a
+	   plain inline style. The drawing buffer stays 960x576 either way, which is
+	   what keeps the pixels crisp; this only changes the displayed size. */
+	width: 960px !important;
+	max-width: 100% !important;
+	aspect-ratio: 960 / 576;
+	height: auto !important;
 	image-rendering: pixelated;
 	image-rendering: crisp-edges;
 	border: 0;
@@ -146,6 +158,15 @@ kbd {
 
 footer { color: #8c7f95; font-size: 12px; text-align: center; }
 footer a { color: var(--kamigreen); }
+
+/* Embedded: just the game, no page furniture around it. */
+.embedded body { padding: 0; gap: 0; background: #000; }
+.embedded h1,
+.embedded .tagline,
+.embedded #hint,
+.embedded .controls,
+.embedded footer { display: none; }
+.embedded #game-frame { border: 0; border-radius: 0; }
 </style>
 </head>
 <body>
