@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bkatsusmoketest"]
+[gd_scene load_steps=17 format=3 uid="uid://bkatsusmoketest"]
 
 [ext_resource type="Script" path="res://scripts/main/GamePanel.gd" id="1_gp"]
 [ext_resource type="PackedScene" path="res://scenes/maps/WorldMap.tscn" id="2_worldmap"]
@@ -9,12 +9,20 @@
 [ext_resource type="Script" path="res://scripts/effects/EffectsLayer.gd" id="7_fx"]
 [ext_resource type="Script" path="res://scripts/main/HudLayer.gd" id="8_hud"]
 [ext_resource type="Shader" path="res://shaders/darkness.gdshader" id="9_ds"]
+[ext_resource type="Resource" path="res://assets/data/days/sunday.tres" id="20_sunday"]
+[ext_resource type="Resource" path="res://assets/data/days/monday.tres" id="21_monday"]
+[ext_resource type="Resource" path="res://assets/data/days/tuesday.tres" id="22_tuesday"]
+[ext_resource type="Resource" path="res://assets/data/days/wednesday.tres" id="23_wednesday"]
+[ext_resource type="Resource" path="res://assets/data/days/thursday.tres" id="24_thursday"]
+[ext_resource type="Resource" path="res://assets/data/days/friday.tres" id="25_friday"]
+[ext_resource type="Resource" path="res://assets/data/days/saturday.tres" id="26_saturday"]
 
 [sub_resource type="ShaderMaterial" id="SM_d"]
 shader = ExtResource("9_ds")
 
 [node name="GamePanel" type="Node2D"]
 script = ExtResource("1_gp")
+day_effects = Array[Resource]([ExtResource("20_sunday"), ExtResource("21_monday"), ExtResource("22_tuesday"), ExtResource("23_wednesday"), ExtResource("24_thursday"), ExtResource("25_friday"), ExtResource("26_saturday")])
 map_scenes = Array[PackedScene]([ExtResource("2_worldmap"), ExtResource("3_mushroomhut"), ExtResource("4_testmap")])
 
 [node name="World" type="Node2D" parent="."]

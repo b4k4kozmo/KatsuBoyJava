@@ -329,6 +329,42 @@ Sleeping in a tent wakes you at **Sunrise End Hour** on the next day.
 In game, **F3** pushes the clock forward three hours, which is the quickest way
 to see a night behaviour.
 
+### Days of the week
+
+Each day does something slightly different. The resources are in
+`assets/data/days/` — one per day — and GamePanel's **Days of the week → Day
+Effects** list holds them in Sunday-to-Saturday order.
+
+| Day | What it does |
+|---|---|
+| **Sunday** | Kami Mart is shut. Hearts and mana crystals restore 1.5x |
+| **Monday** | The player takes 1.3x damage |
+| **Tuesday – Thursday** | Ordinary |
+| **Friday** | Shop prices are 0.75x |
+| **Saturday** | The player deals 1.3x damage |
+
+Every field is a multiplier on a number the game already had, so a day with all
+the defaults is just an ordinary day:
+
+| Property | Affects |
+|---|---|
+| **Damage Dealt Multiplier** | how hard the player hits |
+| **Damage Taken Multiplier** | how hard the player is hit |
+| **Shop Open** | off = the merchant turns you away |
+| **Shop Price Multiplier** | what the merchant charges. Below 1.0 is a sale |
+| **Healing Multiplier** | health and mana from pickups |
+| **Note** | one line shown when the day starts. Leave blank to stay quiet |
+
+Multipliers are applied with rounding, so they do very little while your numbers
+are tiny — 1 damage stays 1 damage — and matter more as you level up and find
+better gear. That is on purpose: a brand new character should not be a third
+more fragile just because it is Monday. If you want a day to bite from the very
+start, give it a bigger multiplier.
+
+To add an effect to an ordinary day, open `assets/data/days/tuesday.tres` and
+change a number. To change what a day is *called*, that is `DAY_NAMES` in
+`scripts/environment/GameClock.gd`.
+
 ### `assets/data/player.tres`
 
 Starting level, life, mana, ammo, strength, dexterity, coins and exp curve;

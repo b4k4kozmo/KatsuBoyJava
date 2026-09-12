@@ -47,6 +47,7 @@ func set_dialogue() -> void:
 	dialogues[6][0] = "Ohhhhh baby!"
 	dialogues[7][0] = "Sure.. I'll take that off your hands.."
 	dialogues[8][0] = "I dont sell to the likes of you"
+	dialogues[9][0] = "Shut today! Come back tomorrow."
 
 
 func set_items() -> void:
@@ -57,6 +58,11 @@ func set_items() -> void:
 
 
 func speak() -> void:
+	# Some days the shop is shut - see assets/data/days/
+	if not gp.today().shop_open:
+		start_dialogue(self, 9)
+		return
+
 	start_dialogue(self, dialogue_set)
 	gp.game_state = gp.TRADE_STATE
 	gp.ui.npc = self

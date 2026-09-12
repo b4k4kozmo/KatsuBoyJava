@@ -387,7 +387,9 @@ func contact_monster(i: int) -> void:
 			if gp.monster[gp.current_map][i].life > 0:
 				gp.play_se(SE.RECEIVE_DAMAGE)
 
-				var damage: int = gp.monster[gp.current_map][i].attack - defense
+				var damage: int = DayEffect.apply(
+						gp.monster[gp.current_map][i].attack,
+						gp.today().damage_taken_multiplier) - defense
 				if damage < 1:
 					damage = 1
 
@@ -412,6 +414,9 @@ func damage_monster(i: int, atkr, atk: int, knock_back_power: int) -> void:
 
 			if gp.monster[gp.current_map][i].off_balance == true:
 				atk *= 3
+
+			# Saturday hits harder, and so on - see assets/data/days/
+			atk = DayEffect.apply(atk, gp.today().damage_dealt_multiplier)
 
 			var damage: int = atk - gp.monster[gp.current_map][i].defense
 			if damage < 0:

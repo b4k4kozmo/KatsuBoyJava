@@ -20,6 +20,7 @@ func use(_entity) -> bool:
 	sound_number = 20
 	set_sound()
 	gp.play_se(SE.POWER_UP)
-	gp.ui.add_message("Mana +" + str(value))
-	gp.player.mana += value
+	var restored: int = DayEffect.apply(value, gp.today().healing_multiplier)
+	gp.ui.add_message("Mana +" + str(restored))
+	gp.player.mana += restored
 	return true

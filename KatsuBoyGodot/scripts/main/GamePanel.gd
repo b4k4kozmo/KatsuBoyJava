@@ -60,6 +60,11 @@ var map_node: Array[Node2D] = []
 ## Show the clock on the HUD.
 @export var show_clock: bool = true
 
+@export_group("Days of the week")
+## What each day of the week does, Sunday first. Edit the resources in
+## assets/data/days/ to tune them; empty entries mean an ordinary day.
+@export var day_effects: Array[DayEffect] = []
+
 @export_group("Day / night cycle")
 ## Sunrise runs between these two hours: dark before, light after.
 @export_range(0.0, 24.0, 0.25) var sunrise_start_hour: float = 5.0
@@ -338,6 +343,8 @@ func update() -> void:
 				i_tile[current_map][j].update()
 
 		e_manager.update()
+		if e_manager.clock.take_day_change():
+			announce_day()
 		ui.update_messages()
 
 	if game_state == PAUSE_STATE:
@@ -406,6 +413,25 @@ func _draw() -> void:
 
 	# EMPTY ENTITY LIST
 	entity_list.clear()
+
+
+## What today does to the game. Never null, so callers can use it directly.
+func today() -> DayEffect:
+	if e_manager != null and e_manager.clock != null:
+		var i: int = e_manager.clock.day_index
+		if i >= 0 and i < day_effects.size() and day_effects[i] != null:
+			return day_effects[i]
+	return _neutral_day
+
+
+var _neutral_day: DayEffect = DayEffect.neutral()
+
+
+## Tell the player what the new day means for them.
+func announce_day() -> void:
+	var effect: DayEffect = today()
+	if effect.note != "":
+		ui.add_message(effect.note)
 
 
 func play_music(i: int) -> void:

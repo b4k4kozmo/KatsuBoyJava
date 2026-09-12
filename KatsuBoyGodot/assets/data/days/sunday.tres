@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DayEffect" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/DayEffect.gd" id="1_a35be"]
+
+[resource]
+script = ExtResource("1_a35be")
+display_name = "Sunday"
+note = "Sunday. The market is shut, but rest does you more good."
+shop_open = false
+healing_multiplier = 1.5

@@ -21,6 +21,8 @@ func use(entity) -> bool:
 	sound_number = 20
 	set_sound()
 	gp.play_se(SE.POWER_UP)
-	gp.ui.add_message("Life +" + str(value))
-	entity.life += value
+	# Some days food does you more good - see assets/data/days/
+	var healed: int = DayEffect.apply(value, gp.today().healing_multiplier)
+	gp.ui.add_message("Life +" + str(healed))
+	entity.life += healed
 	return true

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="DayEffect" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/DayEffect.gd" id="1_a7cmh"]
+
+[resource]
+script = ExtResource("1_a7cmh")
+display_name = "Monday"
+note = "Monday. Everything hits a little harder today."
+damage_taken_multiplier = 1.3

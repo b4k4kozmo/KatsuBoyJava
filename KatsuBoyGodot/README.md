@@ -100,6 +100,9 @@ optional and all documented in [AUTHORING.md](AUTHORING.md):
   Sunset / Night, and the day/night lighting is derived from the hour rather
   than from its own frame counter. Java ran two unrelated timers; now the
   shader, the merchant's night prices and the curse all read one clock.
+- **Days of the week.** Sunday shuts the shop but heals more, Monday hurts
+  more, Friday is a sale, Saturday hits harder, the rest are ordinary. Each day
+  is a resource in `assets/data/days/`, all of it multipliers you can tune.
 - **Shaders** for the night filter and for hit sparks, both palette-only.
 - **Dev tools** (F1) and a **regression test suite**.
 

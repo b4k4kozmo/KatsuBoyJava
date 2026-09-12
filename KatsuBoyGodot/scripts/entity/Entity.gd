@@ -467,7 +467,8 @@ func do_attacking() -> void:
 func damage_player(atk: int) -> void:
 	if gp.player.invincible == false:
 
-		var damage: int = atk - gp.player.defense
+		# Monday stings - see assets/data/days/
+		var damage: int = DayEffect.apply(atk, gp.today().damage_taken_multiplier) - gp.player.defense
 
 		# Get an opposite direction of the attacker
 		var can_guard_direction: String = get_opposite_direction(direction)

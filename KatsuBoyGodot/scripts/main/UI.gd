@@ -917,7 +917,9 @@ func trade_buy() -> void:
 		draw_sub_window(x, y, width, height)
 		g2.draw_img(coin_icon, x + 10, y + 8)
 
-		var price: int = npc.inventory[item_index].price
+		# Friday is a sale day - see assets/data/days/
+		var price: int = DayEffect.apply(npc.inventory[item_index].price,
+				gp.today().shop_price_multiplier)
 		var text: String = str(price)
 		x = get_x_for_align_to_right_text(text, gp.tile_size * 8 - 30)
 		g2.draw_str(text, x, y + 34)
@@ -927,14 +929,14 @@ func trade_buy() -> void:
 			if gp.player.is_cursed == true:
 				npc.start_dialogue(npc, 8)
 			else:
-				if npc.inventory[item_index].price > gp.player.coin:
+				if price > gp.player.coin:
 					sub_state = 0
 					npc.start_dialogue(npc, 2)
 					gp.play_se(SE.RECEIVE_DAMAGE)
 				else:
 					if gp.player.can_obtain_item(npc.inventory[item_index]) == true:
 						sub_state = 0
-						gp.player.coin -= npc.inventory[item_index].price
+						gp.player.coin -= price
 						npc.start_dialogue(npc, 3)
 						gp.play_se(SE.COIN)
 					else:

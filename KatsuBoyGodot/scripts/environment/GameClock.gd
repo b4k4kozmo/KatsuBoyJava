@@ -21,6 +21,8 @@ var total_minutes: int = 0
 var day_index: int = 0
 ## Frames counted towards the next time step.
 var step_counter: int = 0
+## Set when the calendar rolls over, cleared by take_day_change().
+var _day_changed: bool = false
 
 
 func _init(gp) -> void:
@@ -32,6 +34,7 @@ func reset() -> void:
 	total_minutes = gp.start_hour * MINUTES_PER_HOUR + gp.start_minute
 	day_index = clampi(gp.start_day, 0, 6)
 	step_counter = 0
+	_day_changed = false
 
 
 func update() -> void:
@@ -49,6 +52,7 @@ func advance(minutes_to_add: int) -> void:
 		total_minutes += 1
 		if total_minutes % MINUTES_PER_DAY == rollover:
 			day_index = (day_index + 1) % 7
+			_day_changed = true
 
 
 ## Jump to a specific time. Rolls the calendar forward if that means skipping
@@ -60,6 +64,14 @@ func set_time(hour: int, minute: int = 0, next_day: bool = false) -> void:
 	if next_day:
 		total_minutes += MINUTES_PER_DAY
 		day_index = (day_index + 1) % 7
+		_day_changed = true
+
+
+## True once per new day. Reading it clears the flag.
+func take_day_change() -> bool:
+	var changed := _day_changed
+	_day_changed = false
+	return changed
 
 
 func minute_of_day() -> int:

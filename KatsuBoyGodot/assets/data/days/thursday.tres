@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="DayEffect" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/DayEffect.gd" id="1_4sshh"]
+
+[resource]
+script = ExtResource("1_4sshh")
+display_name = "Thursday"

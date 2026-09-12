@@ -47,6 +47,40 @@ func objects_on(map := 0) -> int:
 	return n
 
 
+## Hit a throwaway monster and report how much life it lost.
+func _hit_dummy(attack_value: int) -> int:
+	var dummy := MON_Slime.new(gp)
+	dummy.max_life = 1000
+	dummy.life = 1000
+	dummy.defense = 0
+	gp.monster[0][5] = dummy
+	gp.player.damage_monster(5, gp.player, attack_value, 0)
+	var lost: int = 1000 - dummy.life
+	gp.monster[0][5] = null
+	return lost
+
+
+## Take a hit from a throwaway monster and report how much life was lost.
+func _take_hit(attack_value: int) -> int:
+	var attacker := MON_Slime.new(gp)
+	gp.player.max_life = 1000
+	gp.player.life = 1000
+	gp.player.invincible = false
+	gp.player.guarding = false
+	attacker.damage_player(attack_value)
+	var lost: int = 1000 - gp.player.life
+	gp.player.invincible = false
+	return lost
+
+
+## Eat a heart and report how much life it gave back.
+func _use_heart() -> int:
+	gp.player.max_life = 1000
+	gp.player.life = 100
+	OBJ_Heart.new(gp).use(gp.player)
+	return gp.player.life - 100
+
+
 func press(action: StringName) -> void:
 	gp.key_h.action_pressed(action)
 
@@ -280,6 +314,7 @@ func _physics_process(_d: float) -> void:
 			print("\n-- trading --")
 			gp.current_map = 1
 			gp.player.coin = 500
+			gp.e_manager.clock.day_index = 3  # Wednesday: an ordinary day
 			gp.npc[1][1].speak()
 		874:
 			check("trade opened", gp.game_state == gp.TRADE_STATE)
@@ -450,7 +485,113 @@ func _physics_process(_d: float) -> void:
 			clock3.reset()
 			gp.e_manager.lighting.refresh()
 
-		1010:
+		1020:
+			print("\n-- days of the week --")
+			var clock: GameClock = gp.e_manager.clock
+
+			check("all seven days are configured", gp.day_effects.size() == 7,
+				str(gp.day_effects.size()))
+			check("today() follows the clock",
+				gp.today().display_name == clock.day_name(),
+				"%s vs %s" % [gp.today().display_name, clock.day_name()])
+
+			# the multiplier helper itself
+			check("a multiplier of 1 changes nothing", DayEffect.apply(7, 1.0) == 7)
+			check("a 1.3x multiplier rounds up sensibly", DayEffect.apply(4, 1.3) == 5,
+				str(DayEffect.apply(4, 1.3)))
+			check("a 0.75x multiplier discounts", DayEffect.apply(100, 0.75) == 75,
+				str(DayEffect.apply(100, 0.75)))
+
+			# Saturday: the player deals more damage
+			clock.day_index = 3
+			var normal_hit: int = _hit_dummy(10)
+			clock.day_index = 6
+			var saturday_hit: int = _hit_dummy(10)
+			check("Saturday deals more damage", saturday_hit > normal_hit,
+				"%d -> %d" % [normal_hit, saturday_hit])
+
+			# Monday: the player takes more damage
+			clock.day_index = 3
+			var normal_taken: int = _take_hit(10)
+			clock.day_index = 1
+			var monday_taken: int = _take_hit(10)
+			check("Monday takes more damage", monday_taken > normal_taken,
+				"%d -> %d" % [normal_taken, monday_taken])
+
+			# Tuesday to Thursday are ordinary
+			var ordinary := true
+			for d in [2, 3, 4]:
+				var e: DayEffect = gp.day_effects[d]
+				if not (is_equal_approx(e.damage_dealt_multiplier, 1.0)
+						and is_equal_approx(e.damage_taken_multiplier, 1.0)
+						and is_equal_approx(e.shop_price_multiplier, 1.0)
+						and is_equal_approx(e.healing_multiplier, 1.0)
+						and e.shop_open):
+					ordinary = false
+			check("Tuesday to Thursday are ordinary days", ordinary)
+
+		1024:
+			var clock2: GameClock = gp.e_manager.clock
+
+			# Sunday: healing does more
+			clock2.day_index = 3
+			var normal_heal: int = _use_heart()
+			clock2.day_index = 0
+			var sunday_heal: int = _use_heart()
+			check("Sunday heals more", sunday_heal > normal_heal,
+				"%d -> %d" % [normal_heal, sunday_heal])
+
+			# Friday: the shop discounts
+			clock2.day_index = 3
+			var normal_price: int = DayEffect.apply(200, gp.today().shop_price_multiplier)
+			clock2.day_index = 5
+			var friday_price: int = DayEffect.apply(200, gp.today().shop_price_multiplier)
+			check("Friday is cheaper", friday_price < normal_price,
+				"%d -> %d" % [normal_price, friday_price])
+
+		1028:
+			var clock3: GameClock = gp.e_manager.clock
+			# Sunday: the shop is shut
+			gp.current_map = 1
+			gp.game_state = gp.PLAY_STATE
+			clock3.day_index = 0
+			gp.npc[1][1].speak()
+			check("the shop is shut on Sunday", gp.game_state != gp.TRADE_STATE,
+				str(gp.game_state))
+			gp.game_state = gp.PLAY_STATE
+			clock3.day_index = 5
+			gp.npc[1][1].speak()
+			check("the shop opens on other days", gp.game_state == gp.TRADE_STATE,
+				str(gp.game_state))
+			gp.game_state = gp.PLAY_STATE
+			gp.ui.sub_state = 0
+			gp.current_map = 0
+
+			# a day with an effect announces itself; an ordinary one keeps quiet
+			clock3.day_index = 1  # Monday
+			gp.ui.message.clear()
+			gp.ui.message_counter.clear()
+			gp.announce_day()
+			check("a day with an effect announces itself",
+				gp.ui.message.size() == 1 and "Monday" in gp.ui.message[0],
+				str(gp.ui.message))
+			clock3.day_index = 3  # Wednesday
+			gp.ui.message.clear()
+			gp.ui.message_counter.clear()
+			gp.announce_day()
+			check("an ordinary day says nothing", gp.ui.message.is_empty(),
+				str(gp.ui.message))
+		1032:
+			var clock4: GameClock = gp.e_manager.clock
+			clock4.reset()
+			clock4.set_time(23, 59)
+			clock4.advance(2)
+			check("the clock reports the day change once", clock4.take_day_change() == true)
+			check("and only once", clock4.take_day_change() == false)
+			clock4.reset()
+			gp.e_manager.lighting.refresh()
+
+		1060:
 			print("\n================================")
 			print("%d passed, %d failed" % [passed, failed.size()])
 			for f in failed:

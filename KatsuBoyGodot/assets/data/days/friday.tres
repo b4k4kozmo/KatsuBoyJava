@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="DayEffect" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/DayEffect.gd" id="1_4c0vp"]
+
+[resource]
+script = ExtResource("1_4c0vp")
+display_name = "Friday"
+note = "Friday. Kami Mart has knocked its prices down."
+shop_price_multiplier = 0.75
