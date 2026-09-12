@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adventure of Katsu Boy 2D</title>
+<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+<style>
+/* The game's own palette: kamiblack, kamigreen, kamipink, kamiwhite. */
+:root {
+	--kamiblack: #1a022b;
+	--kamigreen: #86ba86;
+	--kamipink: #c25cb1;
+	--kamiwhite: #f0f2ef;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+	margin: 0;
+	padding: 0;
+	background: var(--kamiblack);
+	color: var(--kamiwhite);
+	font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+	min-height: 100%;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 24px 16px 48px;
+	gap: 18px;
+}
+
+h1 {
+	margin: 0;
+	font-size: clamp(22px, 5vw, 38px);
+	letter-spacing: 0.06em;
+	color: var(--kamiwhite);
+	text-shadow: 3px 3px 0 var(--kamigreen);
+	text-align: center;
+}
+
+.tagline {
+	margin: -8px 0 0;
+	color: var(--kamipink);
+	font-size: 14px;
+	text-align: center;
+}
+
+/* The canvas is the project's exact 960x576. Scaling it in CSS would undo the
+   integer scaling the game does internally, so it only ever shrinks to fit a
+   narrow screen, and stays pixelated when it does. */
+#game-frame {
+	position: relative;
+	width: 960px;
+	max-width: 100%;
+	border: 3px solid var(--kamigreen);
+	border-radius: 10px;
+	background: #000;
+	overflow: hidden;
+	line-height: 0;
+}
+
+#canvas {
+	display: block;
+	width: 960px;
+	height: 576px;
+	max-width: 100%;
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+	border: 0;
+	outline: none;
+}
+
+#status {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	background: var(--kamiblack);
+	line-height: 1.5;
+	text-align: center;
+	padding: 16px;
+}
+
+#status-splash { max-width: 40%; opacity: 0.35; }
+#status-splash.show-image--false { display: none; }
+
+#status-progress {
+	width: 240px;
+	height: 12px;
+	appearance: none;
+	border: 2px solid var(--kamigreen);
+	border-radius: 6px;
+	background: var(--kamiblack);
+}
+#status-progress::-webkit-progress-bar { background: var(--kamiblack); }
+#status-progress::-webkit-progress-value { background: var(--kamigreen); }
+#status-progress::-moz-progress-bar { background: var(--kamigreen); }
+
+#status-notice {
+	color: var(--kamipink);
+	font-size: 14px;
+	max-width: 34em;
+}
+
+.loading-text { color: var(--kamigreen); font-size: 14px; }
+
+#hint {
+	color: var(--kamigreen);
+	font-size: 13px;
+	text-align: center;
+	min-height: 1.2em;
+}
+
+.controls {
+	width: 960px;
+	max-width: 100%;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+	gap: 8px 20px;
+	padding: 16px 20px;
+	border: 2px solid var(--kamigreen);
+	border-radius: 10px;
+	background: rgba(240, 242, 239, 0.04);
+	font-size: 13px;
+}
+
+.controls div { display: flex; justify-content: space-between; gap: 12px; }
+.controls span { color: var(--kamipink); }
+kbd {
+	background: var(--kamiblack);
+	border: 1px solid var(--kamigreen);
+	border-radius: 4px;
+	padding: 1px 6px;
+	font: inherit;
+	font-size: 12px;
+	color: var(--kamiwhite);
+	white-space: nowrap;
+}
+
+footer { color: #8c7f95; font-size: 12px; text-align: center; }
+footer a { color: var(--kamigreen); }
+</style>
+</head>
+<body>
+
+<h1>Adventure of Katsu Boy 2D</h1>
+<p class="tagline">A Godot 4 port of the original Java game &middot; playable demo</p>
+
+<div id="game-frame">
+	<canvas id="canvas" width="960" height="576" tabindex="0">
+		Your browser does not support the canvas tag.
+	</canvas>
+
+	<div id="status">
+		<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+		<progress id="status-progress"></progress>
+		<div class="loading-text">Loading&hellip; (about 9 MB, first load only)</div>
+		<div id="status-notice"></div>
+	</div>
+</div>
+
+<div id="hint">Click the game once to give it keyboard focus and enable sound.</div>
+
+<div class="controls">
+	<div><span>Move</span> <kbd>W A S D</kbd></div>
+	<div><span>Confirm / Attack</span> <kbd>Enter</kbd></div>
+	<div><span>Shoot</span> <kbd>Space</kbd></div>
+	<div><span>Guard / parry</span> <kbd>Ctrl</kbd></div>
+	<div><span>Run (after Boots)</span> <kbd>Shift</kbd></div>
+	<div><span>Inventory</span> <kbd>C</kbd></div>
+	<div><span>Full map</span> <kbd>M</kbd></div>
+	<div><span>Mini map</span> <kbd>X</kbd></div>
+	<div><span>Pause</span> <kbd>P</kbd></div>
+	<div><span>Options</span> <kbd>Esc</kbd></div>
+	<div><span>Dev panel</span> <kbd>F1</kbd></div>
+</div>
+
+<footer>
+	Saves go to your browser&rsquo;s local storage.
+	Day of the week changes what happens &mdash; try the shop on a Friday.
+</footer>
+
+<noscript>This demo needs JavaScript.</noscript>
+
+<script src="index.js"></script>
+<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":1,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":5652916,"index.wasm":38034280},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+}());
+
+// Keyboard input only reaches the game while the canvas has focus.
+(function () {
+	const canvas = document.getElementById('canvas');
+	const hint = document.getElementById('hint');
+	function focusGame() {
+		canvas.focus();
+		hint.textContent = '';
+	}
+	canvas.addEventListener('click', focusGame);
+	window.addEventListener('load', () => setTimeout(focusGame, 500));
+	// Stop the arrow keys and space from scrolling the page out from under it.
+	window.addEventListener('keydown', (e) => {
+		if (document.activeElement === canvas
+				&& [' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+			e.preventDefault();
+		}
+	}, { passive: false });
+}());
+</script>
+</body>
+</html>
+

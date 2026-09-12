@@ -1,0 +1,68 @@
+# Builds the playable web demo and publishes it to GitHub Pages.
+#
+# Before this can work, enable Pages for the repository:
+#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
+#
+# The demo then lands at https://<user>.github.io/<repo>/
+name: Web demo
+
+on:
+  push:
+    branches: [Godot]
+    paths:
+      - 'KatsuBoyGodot/**'
+      - '.github/workflows/web-demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.5.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Godot and the export templates
+        run: |
+          BASE="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          curl -sL -o godot.zip "$BASE/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          chmod +x "Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          curl -sL -o templates.tpz "$BASE/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          TPL="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$TPL"
+          unzip -q -j templates.tpz 'templates/*' -d "$TPL"
+
+      - name: Import assets
+        run: ./Godot_v${GODOT_VERSION}-stable_linux.x86_64 --headless --path KatsuBoyGodot --import
+
+      - name: Export the web build
+        run: |
+          mkdir -p web
+          ./Godot_v${GODOT_VERSION}-stable_linux.x86_64 --headless \
+            --path KatsuBoyGodot --export-release "Web" ../web/index.html
+          ls -lh web
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -4,6 +4,26 @@ This is a GDScript port of the Java (Swing) game in `../KatsuboyV2`, the newer
 of the two versions in this repo. It is built for **Godot 4.5.1** and runs with
 no add-ons.
 
+## Playing it in a browser
+
+There is a built web demo in [`../web/`](../web/). To try it:
+
+```
+cd web && python3 -m http.server 8000
+```
+
+and open <http://localhost:8000/>. (A `file://` URL will not work — browsers
+refuse to fetch the `.wasm` that way.)
+
+To rebuild it: `tools/build_web.sh /path/to/godot`, which needs the Godot 4.5.1
+web export templates installed. The `Web demo` GitHub Actions workflow builds
+and publishes the same thing to GitHub Pages on every push to this branch, once
+Pages is switched to "GitHub Actions" in the repository settings.
+
+The web build is the same code as the desktop build — nothing was changed or
+disabled to make it run in a browser. It exports with threads off, so it works
+on any plain static host.
+
 ## Running it
 
 1. Open Godot 4.5.1 → **Import** → pick `KatsuBoyGodot/project.godot`.
