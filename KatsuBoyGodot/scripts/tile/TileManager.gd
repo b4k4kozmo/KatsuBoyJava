@@ -120,7 +120,7 @@ func load_map(map: int) -> void:
 func draw(g2) -> void:
 
 	if draw_path == true:
-		g2.set_color(Color8(194, 92, 177, 70))  # half transparent kamipink
+		g2.set_color(Color(gp.ui.kamipink, 70.0 / 255.0))  # half transparent kamipink
 
 		for i in range(gp.p_finder.path_list.size()):
 

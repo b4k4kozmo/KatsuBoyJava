@@ -21,10 +21,13 @@ var message_on: bool = false
 var message: Array[String] = []
 var message_counter: Array[int] = []
 
-var kamigreen: Color = Color8(134, 186, 134)
-var kamiblack: Color = Color8(26, 2, 43)
-var kamipink: Color = Color8(194, 92, 177)
-var kamiwhite: Color = Color8(240, 242, 239)
+## The palette, copied from GamePanel's Palette group in the Inspector.
+## (The Zilla class recolours these at run time, which is why they are
+##  variables rather than read straight from gp.)
+var kamigreen: Color
+var kamiblack: Color
+var kamipink: Color
+var kamiwhite: Color
 
 var game_finished: bool = false
 var current_dialogue: String = ""
@@ -50,6 +53,8 @@ var g2
 func _init(gp) -> void:
 	self.gp = gp
 
+	reset_palette()
+
 	maru_monica = load("res://assets/font/x12y16pxMaruMonica.ttf")
 	amari = load("res://assets/font/Amari_Font_15-100VF.ttf")
 
@@ -68,6 +73,14 @@ func _init(gp) -> void:
 	crystal_blank = crystal.image2
 	var kami_coin := OBJ_Coin.new(gp)
 	coin = kami_coin.down1
+
+
+## Put the colours back to what the Inspector says.
+func reset_palette() -> void:
+	kamigreen = gp.color_green
+	kamiblack = gp.color_black
+	kamipink = gp.color_pink
+	kamiwhite = gp.color_white
 
 
 func add_message(text: String) -> void:
@@ -170,28 +183,32 @@ func draw_player_life() -> void:
 		x += 35
 
 
+## Age the on-screen messages. Ticks with the game so a message always lasts
+## the same three seconds, whatever the frame rate.
+func update_messages() -> void:
+
+	var i := 0
+	while i < message.size():
+		message_counter[i] = message_counter[i] + 1
+		if message_counter[i] > 180:
+			message.remove_at(i)
+			message_counter.remove_at(i)
+		else:
+			i += 1
+
+
 func draw_message() -> void:
 
 	var message_x: int = gp.tile_size
 	var message_y: int = gp.tile_size * 4
 	g2.set_font(maru_monica_bold, 32)
 
-	var i := 0
-	while i < message.size():
-
+	for i in range(message.size()):
 		g2.set_color(kamiblack)
 		g2.draw_str(message[i], message_x + 2, message_y + 2)
 		g2.set_color(kamiwhite)
 		g2.draw_str(message[i], message_x, message_y)
-
-		message_counter[i] = message_counter[i] + 1
 		message_y += 50
-
-		if message_counter[i] > 180:
-			message.remove_at(i)
-			message_counter.remove_at(i)
-		else:
-			i += 1
 
 
 func draw_title_screen() -> void:
@@ -208,11 +225,11 @@ func draw_title_screen() -> void:
 		var y: int = gp.tile_size * 3
 
 		# TEXT SHADOW
-		g2.set_color(Color8(134, 186, 134))
+		g2.set_color(kamigreen)
 		g2.draw_str(text, x + 3, y + 3)
 
 		# MAIN COLOR
-		g2.set_color(Color8(240, 242, 239))
+		g2.set_color(kamiwhite)
 		g2.draw_str(text, x, y)
 
 		# TITLE IMAGE
@@ -452,7 +469,7 @@ func draw_inventory(entity, cursor: bool) -> void:
 		if (entity.inventory[i] == entity.current_weapon
 				or entity.inventory[i] == entity.current_shield
 				or entity.inventory[i] == entity.current_light):
-			g2.set_color(Color8(194, 92, 177, 200))  # transparent version of "kamipink"
+			g2.set_color(Color(kamipink, 200.0 / 255.0))  # transparent kamipink
 			g2.fill_round_rect(slot_x, slot_y, gp.tile_size, gp.tile_size, 10, 10)
 
 		g2.draw_img(entity.inventory[i].down1, slot_x, slot_y)
@@ -514,7 +531,7 @@ func draw_inventory(entity, cursor: bool) -> void:
 
 func draw_game_over_screen() -> void:
 
-	g2.set_color(Color8(26, 2, 43, 150))  # transparent kamiblack
+	g2.set_color(Color(kamiblack, 150.0 / 255.0))  # transparent kamiblack
 	g2.fill_rect(0, 0, gp.screen_width, gp.screen_height)
 
 	var x: int
@@ -696,14 +713,16 @@ func option_control(frame_x: int, frame_y: int) -> void:
 	g2.draw_str("Pause", text_x, text_y); text_y += gp.tile_size
 	g2.draw_str("Options", text_x, text_y); text_y += gp.tile_size
 
+	# Read straight from the Input Map, so this screen always tells the truth
+	# even after the keys are rebound in Project Settings.
 	text_x = frame_x + gp.tile_size * 6
 	text_y = frame_y + gp.tile_size * 2
-	g2.draw_str("WASD", text_x, text_y); text_y += gp.tile_size
-	g2.draw_str("ENTER", text_x, text_y); text_y += gp.tile_size
-	g2.draw_str("SPACE", text_x, text_y); text_y += gp.tile_size
-	g2.draw_str("C", text_x, text_y); text_y += gp.tile_size
-	g2.draw_str("P", text_x, text_y); text_y += gp.tile_size
-	g2.draw_str("ESC", text_x, text_y); text_y += gp.tile_size
+	g2.draw_str(Action.movement_keys(), text_x, text_y); text_y += gp.tile_size
+	g2.draw_str(Action.key_name(Action.CONFIRM), text_x, text_y); text_y += gp.tile_size
+	g2.draw_str(Action.key_name(Action.SHOOT), text_x, text_y); text_y += gp.tile_size
+	g2.draw_str(Action.key_name(Action.CHARACTER_SCREEN), text_x, text_y); text_y += gp.tile_size
+	g2.draw_str(Action.key_name(Action.PAUSE), text_x, text_y); text_y += gp.tile_size
+	g2.draw_str(Action.key_name(Action.OPTIONS), text_x, text_y); text_y += gp.tile_size
 
 	# BACK
 	text_x = frame_x + gp.tile_size
@@ -753,11 +772,14 @@ func option_end_game_confirmation(frame_x: int, frame_y: int) -> void:
 			command_num = 4
 
 
-func draw_transition() -> void:
+## Java advanced this inside the draw call, because its draw loop WAS the 60 FPS
+## game loop. Here drawing happens at the monitor's rate, so anything that
+## changes game state has to tick with the game instead - otherwise the fade
+## runs at a different speed on every machine, and stalls completely if the
+## window stops rendering.
+func update_transition() -> void:
 
 	counter += 2
-	g2.set_color(Color8(26, 2, 43, mini(counter * 5, 255)))
-	g2.fill_rect(0, 0, gp.screen_width, gp.screen_height)
 
 	if counter >= 50:
 		counter = 0
@@ -767,6 +789,11 @@ func draw_transition() -> void:
 		gp.player.world_y = gp.tile_size * gp.e_handler.temp_row
 		gp.e_handler.prev_event_x = gp.player.world_x
 		gp.e_handler.prev_event_y = gp.player.world_y
+
+
+func draw_transition() -> void:
+	g2.set_color(Color(kamiblack, mini(counter * 5, 255) / 255.0))
+	g2.fill_rect(0, 0, gp.screen_width, gp.screen_height)
 
 
 func draw_trade_screen() -> void:
@@ -953,7 +980,8 @@ func trade_sell() -> void:
 					gp.play_se(SE.COIN)
 
 
-func draw_sleep_screen() -> void:
+## Ticks with the game, for the same reason as update_transition().
+func update_sleep() -> void:
 
 	counter += 1
 
@@ -973,16 +1001,20 @@ func draw_sleep_screen() -> void:
 			gp.player.get_image()
 
 
+func draw_sleep_screen() -> void:
+	pass  # the screen darkening is the lighting filter, driven by update_sleep()
+
+
 func get_item_index_on_slot(slot_col: int, slot_row: int) -> int:
 	return slot_col + (slot_row * 5)
 
 
 func draw_sub_window(x: int, y: int, width: int, height: int) -> void:
 
-	g2.set_color(Color8(26, 2, 43, 210))
+	g2.set_color(Color(kamiblack, 210.0 / 255.0))
 	g2.fill_round_rect(x, y, width, height, 35, 35)
 
-	g2.set_color(Color8(134, 186, 134, 255))
+	g2.set_color(kamigreen)
 	g2.set_stroke(5)
 	g2.draw_round_rect(x + 5, y + 5, width - 10, height - 10, 25, 25)
 

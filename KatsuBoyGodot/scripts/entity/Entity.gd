@@ -588,9 +588,16 @@ func draw(g2) -> void:
 		g2.change_alpha(1.0)
 
 
-func dying_animation(g2) -> void:
-
+## Advance the death flicker. Called from GamePanel.update() so a monster always
+## takes the same time to vanish, and still finishes if rendering stops.
+func update_dying() -> void:
 	dying_counter += 1
+	if dying_counter > 5 * 8:
+		dying = false
+		alive = false
+
+
+func dying_animation(g2) -> void:
 
 	var i := 5
 
@@ -602,9 +609,6 @@ func dying_animation(g2) -> void:
 	if dying_counter > i * 5 and dying_counter <= i * 6: g2.change_alpha(1.0)
 	if dying_counter > i * 6 and dying_counter <= i * 7: g2.change_alpha(0.0)
 	if dying_counter > i * 7 and dying_counter <= i * 8: g2.change_alpha(1.0)
-	if dying_counter > i * 8:
-		dying = false
-		alive = false
 
 
 ## Java: setup(imagePath, width, height) - load the sprite and pre-scale it.

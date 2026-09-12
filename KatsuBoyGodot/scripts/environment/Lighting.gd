@@ -38,20 +38,23 @@ func set_light_source() -> void:
 	if light != null and light.light_radius <= 0:
 		light = null
 
+	# Darkness colour and strength come from GamePanel's Inspector groups.
+	var dark: float = gp.night_darkness / 255.0
+
 	if light == null:
 		# No light: a flat sheet of darkness over the whole screen.
-		gradient.set_color(0, Color8(26, 2, 43, 240))
-		gradient.set_color(1, Color8(26, 2, 43, 240))
+		gradient.set_color(0, Color(gp.color_black, dark))
+		gradient.set_color(1, Color(gp.color_black, dark))
 		filter_pos = Vector2.ZERO
 	else:
 		# Create a gradation effect within the light circle
 		gradient.offsets = PackedFloat32Array([0.0, 0.25, 0.5, 0.75, 1.0])
 		gradient.colors = PackedColorArray([
-			Color8(26, 2, 43, 25),   # kamiblack at various opacities
-			Color8(26, 2, 43, 75),
-			Color8(26, 2, 43, 150),
-			Color8(26, 2, 43, 225),
-			Color8(26, 2, 43, 240),
+			Color(gp.color_black, dark * 25.0 / 240.0),   # faintest, at the centre
+			Color(gp.color_black, dark * 75.0 / 240.0),
+			Color(gp.color_black, dark * 150.0 / 240.0),
+			Color(gp.color_black, dark * 225.0 / 240.0),
+			Color(gp.color_black, dark),                  # full darkness outside
 		])
 
 		# Get the centre x and y of the light circle
@@ -88,24 +91,24 @@ func update() -> void:
 	# Check the state of the day
 	if day_state == DAY:
 		day_counter += 1
-		if day_counter > 9000:
+		if day_counter > gp.day_length_frames:
 			day_state = DUSK
 			day_counter = 0
 
 	if day_state == DUSK:
-		filter_alpha += 0.001
+		filter_alpha += gp.dusk_fade_speed
 		if filter_alpha > 1.0:
 			filter_alpha = 1.0
 			day_state = NIGHT
 
 	if day_state == NIGHT:
 		day_counter += 1
-		if day_counter > 4800:
+		if day_counter > gp.night_length_frames:
 			day_state = DAWN
 			day_counter = 0
 
 	if day_state == DAWN:
-		filter_alpha -= 0.001
+		filter_alpha -= gp.dawn_fade_speed
 		if filter_alpha < 0.0:
 			filter_alpha = 0.0
 			day_state = DAY

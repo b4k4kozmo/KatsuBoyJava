@@ -42,6 +42,10 @@ const OBJECTS := {
 		["Kami Shield", 97, 98], ["Green Potion", 89, 97], ["Heart", 95, 91],
 		["Kami Axe", 94, 91], ["Door", 85, 97], ["Chest", 91, 92],
 		["Candle", 92, 92], ["Tent", 92, 93],
+		# Not in the Java game: the Boots existed as an item but were never
+		# placed anywhere, and picking them up did nothing. Now they unlock
+		# running, so there is one on open grass near the start.
+		["Boots", 93, 92],
 	],
 }
 
@@ -179,7 +183,6 @@ func build_map(index: int, tile_set: TileSet) -> void:
 	events.owner = root
 	for entry in EVENTS.get(index, []):
 		var m := EventMarker.new()
-		m.name = "%s_%d_%d" % [entry[0], entry[1], entry[2]]
 		m.kind = entry[0]
 		m.required_direction = entry[3]
 		m.target_map = entry[4]
@@ -188,8 +191,17 @@ func build_map(index: int, tile_set: TileSet) -> void:
 		if entry[7] != "":
 			m.speak_npc = NodePath(entry[7])
 		m.position = Vector2(entry[1] * TILE, entry[2] * TILE)
-		events.add_child(m)
+		m.name = entry[0]
+		events.add_child(m, true)
 		m.owner = root
+
+	# where a new game begins
+	if index == 0:
+		var start := PlayerStartMarker.new()
+		start.name = "PlayerStart"
+		start.position = Vector2(94 * TILE, 94 * TILE)
+		root.add_child(start)
+		start.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)
@@ -207,7 +219,8 @@ func add_group(root: Node2D, group_name: String, entries: Array, make: Callable)
 
 	for entry in entries:
 		var m: PlacementMarker = make.call(entry)
-		m.name = "%s_%d_%d" % [entry[0].replace(" ", ""), entry[1], entry[2]]
 		m.position = Vector2(entry[1] * TILE, entry[2] * TILE)
-		group.add_child(m)
+		# Plain readable names - Godot appends 2, 3, ... for repeats.
+		m.name = str(entry[0]).replace(" ", "")
+		group.add_child(m, true)
 		m.owner = root

@@ -1,3 +1,4 @@
+@icon("res://assets/npc/oldman_down_01.png")
 @tool
 class_name NpcMarker
 extends PlacementMarker

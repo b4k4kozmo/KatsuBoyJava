@@ -1,33 +1,332 @@
 # Working on Katsu Boy
 
-How to add and change things in the game. Most of it is done in the Godot
-editor with no code at all — this walks through each kind of change, then lists
-honestly what still needs a script.
+Everything you can change without writing code, and exactly where it lives in
+the Godot editor. Godot 4.5.1 — open `KatsuBoyGodot/project.godot`, press **F5**
+to play.
 
-Written for Godot 4.5.1. Open `KatsuBoyGodot/project.godot` and press **F5**.
+- [Where things are](#where-things-are)
+- [Where the tile editor is](#where-the-tile-editor-is)
+- [Painting maps](#painting-maps)
+- [Placing things on a map](#placing-things-on-a-map)
+- [Node reference](#node-reference)
+- [Building a new map or dungeon](#building-a-new-map-or-dungeon)
+- [Settings you can tune](#settings-you-can-tune)
+- [Controls and rebinding](#controls-and-rebinding)
+- [Dev tools](#dev-tools)
+- [What still needs code](#what-still-needs-code)
+- [Running the tests](#running-the-tests)
 
 ---
 
-## 0. The shape of the project
+## Where things are
+
+| I want to change... | Open |
+|---|---|
+| the terrain of a map | `scenes/maps/<Map>.tscn` → select **Tiles** |
+| what's on a map (items, monsters, NPCs, doors) | `scenes/maps/<Map>.tscn` → the group nodes |
+| which tiles block movement | `assets/tiles/katsuboy_tileset.tres` |
+| monster stats | `assets/data/monsters/*.tres` |
+| the player's starting stats and speeds | `assets/data/player.tres` |
+| sounds and music | `assets/data/sound_bank.tres` |
+| the list of maps, colours, day/night length | `main.tscn` → select **GamePanel** |
+| key bindings | Project Settings → Input Map |
+| dialogue | `scripts/entity/NPC_*.gd` (code) |
+
+---
+
+## Where the tile editor is
+
+This trips everyone up once.
+
+**The TileMap editor only appears when you select a TileMapLayer node.** And you
+have to open the map's own scene to do that — in `main.tscn` the maps are
+*instances*, and Godot won't let you edit an instance in place.
+
+1. **FileSystem** dock (bottom left) → `scenes/maps/` → double-click
+   **`WorldMap.tscn`**.
+2. In the **Scene** dock (top left), click the **`Tiles`** node.
+3. A **TileMap** panel appears along the bottom of the window, with the tile
+   palette in it. If you don't see it, drag the bottom panel upwards — it can
+   be collapsed to nothing.
+4. Pick a tile from the palette and paint on the canvas. **Ctrl+S** to save.
+
+To edit the TileSet itself (which tiles block movement, adding tiles), click
+the **Tile Set** property in the Inspector while `Tiles` is selected — the
+bottom panel switches to a **TileSet** tab.
+
+---
+
+## Painting maps
+
+With `Tiles` selected, the bottom panel gives you the usual tools: pencil,
+line, rectangle, bucket fill, and an eraser (hold right mouse button). Rectangle
+select and copy/paste work for moving chunks of a map around.
+
+The maps are 100×100 tiles. The player sees about 20×12 at a time.
+
+> **Paint every cell.** An unpainted cell counts as tile 0 (grass) and is
+> walkable. For a dungeon, fill the whole rectangle with wall first, then carve
+> the rooms out of it.
+
+### Which tiles block movement
+
+Collision belongs to the *tile*, not the map, so a tree blocks everywhere at
+once.
+
+1. Select **Tiles** → in the Inspector click the **Tile Set** resource.
+2. Bottom panel → **TileSet** tab → **Select** mode → click a tile.
+3. In the Inspector, **Custom Data → collision**, tick or untick.
+
+That one flag is read by both the collision checker and the pathfinder, so
+monsters immediately stop trying to walk through anything you mark solid.
+
+### Adding a new tile
+
+All tiles live in one atlas image, because that's what the TileSet paints from.
+
+1. Put your 16×16 PNG in `assets/tiles/`.
+2. Add its filename to the **end** of `TILE_NAMES` in `tools/build_tileset.gd`.
+   **Never reorder that list** — a tile's position in it is its ID, and every
+   map already refers to those IDs.
+3. Run, from the project folder:
+   ```
+   godot --headless --path . --script res://tools/build_tileset.gd
+   godot --headless --path . --import
+   ```
+4. Open the TileSet, select the atlas source, and click the new square (or use
+   **Setup → auto-create tiles**) so Godot knows it exists. Set its `collision`.
+
+---
+
+## Placing things on a map
+
+Each map scene has group nodes to put markers under:
 
 ```
-main.tscn                     the game. GamePanel + DevTools.
-scenes/maps/*.tscn            one scene per map - tiles and everything on them
-assets/tiles/                 the atlas image + katsuboy_tileset.tres
-assets/data/                  sound_bank.tres, monsters/*.tres
-scripts/                      the game code (see README.md for the Java mapping)
-scripts/authoring/            the marker nodes you place in map scenes
-tests/SmokeTest.tscn          the regression test
-tools/                        one-off conversion scripts, not used at run time
+WorldMap
+├── Tiles                (TileMapLayer — the terrain)
+├── Objects              items, chests, doors
+├── NPCs
+├── Monsters
+├── InteractiveTiles     the dry tree you chop
+├── Events               pits, save points, doorways between maps
+└── PlayerStart          where a new game begins
 ```
 
-`GamePanel` is the whole game. Its **Map Scenes** property (Inspector) is the
-list of maps, in order — map 0 is the first one. Its **Sound Bank** property is
-where audio comes from.
+**The markers are real node types.** You don't attach scripts by hand:
 
-### Dev tools
+1. Select the group (say **Monsters**).
+2. **Add Child Node** (the **+** button, or **Ctrl+A**).
+3. Type the node's name in the search box — `MonsterMarker`, `ObjectMarker`,
+   `NpcMarker`, `InteractiveTileMarker`, `EventMarker`, `PlayerStartMarker`.
+   They have their own icons in the list.
+4. Pick what it is from the dropdown in the Inspector.
+5. Drag it onto a tile.
 
-Press **F1** in game for a panel with live stats and cheats:
+**Turn on grid snapping** so things land on tiles: the magnet icon in the
+toolbar, then **Configure Snap → Grid Step 48 × 48**, and enable **Use Grid
+Snap**. (A marker that's slightly off-grid still snaps to the nearest tile at
+run time, so this is for your eyes, not correctness.)
+
+Each marker draws its real sprite in the editor, so you can see what you placed.
+Markers never draw in game — at startup `AssetSetter` reads them and builds the
+actual entities.
+
+**Per-map limits:** 20 objects, 10 NPCs, 30 monsters, 50 interactive tiles.
+Going over is ignored with a warning in the **Output** panel. To raise one,
+change the matching number in `GamePanel._ready()` (`_new_entity_array(20)`).
+
+**Monsters respawn** from their markers whenever the map resets — on death, on
+restart, and when the player rests at a healing pool. Objects the player picked
+up come back on a full restart.
+
+---
+
+## Node reference
+
+### `MonsterMarker`
+Under **Monsters**. Spawns one monster.
+
+| Property | What it does |
+|---|---|
+| **Monster** | Slime / Snome / Kamijack / Shadow |
+
+Its numbers come from `assets/data/monsters/<name>.tres`.
+
+### `NpcMarker`
+Under **NPCs**. Spawns a character you can talk to.
+
+| Property | What it does |
+|---|---|
+| **Npc** | OldMan / NanaMan / Merchant |
+
+The Merchant opens the shop. Dialogue is in that NPC's script.
+
+### `ObjectMarker`
+Under **Objects**. An item, chest or door.
+
+| Property | What it does |
+|---|---|
+| **Item** | which item — coins, keys, weapons, Boots, Chest, Door… |
+| **Chest Loot** | only used when Item is `Chest`: what's inside |
+
+Pickup-only items (coins, hearts, mana, Boots) are used the moment you walk over
+them. Weapons, shields, keys and potions go into the inventory. `Door` and
+`Chest` are obstacles you interact with using the Confirm key.
+
+### `InteractiveTileMarker`
+Under **InteractiveTiles**. Scenery you can destroy.
+
+| Property | What it does |
+|---|---|
+| **Kind** | DryTree — chop it with the Kami Axe, it becomes a stump |
+
+The pathfinder treats these as solid until they're destroyed.
+
+### `EventMarker`
+Under **Events**. Fires when the player steps on its tile.
+
+| Property | What it does |
+|---|---|
+| **Kind** | see the table below |
+| **Required Direction** | `any`, or the way the player must be walking for it to fire |
+| **Target Map** | `ChangeMap` only — index into GamePanel's Map Scenes |
+| **Target Col / Row** | the tile the player arrives on (`Teleport` and `ChangeMap`) |
+| **Speak Npc** | `Speak` only — drag the NpcMarker to talk to |
+
+| Kind | Does |
+|---|---|
+| `ChangeMap` | moves the player to another map |
+| `Teleport` | moves the player elsewhere on the same map |
+| `DamagePit` | costs 1 life |
+| `HealingPool` | full heal, respawns monsters, **saves the game** |
+| `Speak` | starts a conversation |
+
+Markers are checked top to bottom in the scene tree and the **first match
+wins**, so if two overlap, move the one you want higher up.
+
+**Linking two maps** needs a marker on *both* sides, or the player walks through
+and is immediately sent back:
+
+- In `WorldMap`, at the door tile: `ChangeMap`, Target Map `1`, Target Col/Row =
+  where they arrive inside.
+- In `MushroomHut`, at *that arrival tile*: `ChangeMap`, Target Map `0`, Target
+  Col/Row = the tile just outside the door.
+
+The existing hut door is set up exactly like this — copy it as a template.
+
+### `PlayerStartMarker`
+Anywhere in any map scene. Where a new game begins and where the player
+respawns. Put exactly one in the whole project. No properties — just its
+position. Without one, the game falls back to tile 94,94 on map 0.
+
+---
+
+## Building a new map or dungeon
+
+1. **Scene → New Scene → 2D Scene**. Rename the root, e.g. `CryptLevel1`.
+2. **Add Child Node → TileMapLayer**. Name it exactly **`Tiles`**.
+3. Select it. In the Inspector, drag `assets/tiles/katsuboy_tileset.tres` into
+   the **Tile Set** slot.
+4. Paint the level (bucket-fill wall first, then carve).
+5. Add empty **Node2D** children named exactly `Objects`, `NPCs`, `Monsters`,
+   `InteractiveTiles`, `Events` — only the ones you need.
+6. Save into `scenes/maps/`.
+7. Open `main.tscn`, select **GamePanel**, find **Map Scenes** in the Inspector,
+   press **+**, and drop your scene in. **Its position in that list is its map
+   number** — that's what an EventMarker's Target Map refers to.
+8. Add `ChangeMap` events on both sides to connect it to an existing map.
+
+> The names `Tiles`, `Objects`, `NPCs`, `Monsters`, `InteractiveTiles` and
+> `Events` are how the game finds things. They must match exactly.
+
+Also add the new scene to **`tests/SmokeTest.tscn`**'s Map Scenes, so the tests
+cover it.
+
+---
+
+## Settings you can tune
+
+### `main.tscn` → GamePanel (Inspector)
+
+| Group | Property | What it does |
+|---|---|---|
+| | **Map Scenes** | the maps, in order. Index = map number |
+| | **Sound Bank** | which audio set to use |
+| Day / night | **Day Length Frames** | daylight before dusk (60 frames = 1 second) |
+| Day / night | **Night Length Frames** | darkness before dawn |
+| Day / night | **Dusk / Dawn Fade Speed** | how fast the light changes |
+| Day / night | **Night Darkness** | 0 = no night, 255 = pitch black |
+| Palette | **Color Green / Black / Pink / White** | the four colours the whole UI is drawn from |
+
+### `assets/data/player.tres`
+
+Starting level, life, mana, ammo, strength, dexterity, coins and exp curve;
+starting weapon, shield and projectile; and movement:
+
+| Property | What it does |
+|---|---|
+| **Walk Speed** | pixels per frame normally |
+| **Boots Walk Speed** | pixels per frame once you have the Boots |
+| **Run Speed** | while holding the Run key |
+| **Requires Boots To Run** | off = the player can sprint from the start |
+
+> Running used to be unreachable: the Boots item existed but did nothing, so the
+> Run key only worked if you picked the Ninja or Zilla class. Picking up the
+> Boots now unlocks it, and there's a pair on the grass near the start. Untick
+> **Requires Boots To Run** if you'd rather sprint from the beginning.
+
+### `assets/data/monsters/*.tres`
+
+Life, attack, defense, exp reward, speed, knockback, hitbox, and melee reach
+and timing. Applies to every monster of that type everywhere.
+
+Not in here: which sprites it uses and how it behaves (chase? shoot? swing?).
+Those are too different between monsters to be data — they live in
+`scripts/monster/MON_*.gd`.
+
+### `assets/data/sound_bank.tres`
+
+A list of audio streams. Drag a different `.wav` into a slot to change that
+sound everywhere. `scripts/data/SE.gd` names the slots.
+
+> One effects channel plays at a time, so a new sound cuts off the previous one —
+> that's how the Java version behaved. Overlapping hits would mean a small pool
+> of `AudioStreamPlayer`s in `scripts/main/Sound.gd`.
+
+---
+
+## Controls and rebinding
+
+Keys live in **Project Settings → Input Map**. Nothing in the game refers to a
+key code, so you can rebind there, add a second key, or add a gamepad button,
+and the in-game Controls screen updates to match.
+
+| Action | Default |
+|---|---|
+| `move_up` / `down` / `left` / `right` | W A S D, and the arrow keys |
+| `confirm` | Enter |
+| `shoot` | Space |
+| `guard` | Ctrl |
+| `run` | Shift |
+| `pause` | P |
+| `character_screen` | C |
+| `options` | Esc |
+| `world_map` | M |
+| `mini_map` | X |
+| `debug_overlay` | T |
+
+To add an action the game reacts to, add it in Project Settings, then add a
+constant to `scripts/data/Action.gd` (including in `ALL`) and handle it in
+`scripts/main/KeyHandler.gd`.
+
+---
+
+## Dev tools
+
+Press **F1** in game. The DevTools node lives in `main.tscn`; untick **Enabled**
+in the Inspector (or delete the node) for a release build — nothing depends on
+it.
 
 | Key | Does |
 |---|---|
@@ -42,263 +341,65 @@ Press **F1** in game for a panel with live stats and cheats:
 | F10 | +1000 coins, +500 exp |
 | left click | teleport to that tile |
 
-Untick **Enabled** on the DevTools node (or delete it) to switch all of that off
-for a release build. Nothing else depends on it.
+The dev keys are raw key codes on purpose, so they can't clash with anything a
+player rebinds.
 
 ---
 
-## 1. Painting a map
+## What still needs code
 
-1. Open `scenes/maps/WorldMap.tscn`.
-2. Select the **Tiles** node.
-3. The TileMap panel opens at the bottom. Pick a tile, paint on the canvas.
-4. Save (Ctrl+S) and press F5.
+Honest limits of the current design. Each is small and contained.
 
-That's it — no conversion step. The game reads the painted layer directly.
+**A new item** — three steps:
+1. Copy a script in `scripts/object/`; change `OBJ_NAME`, the sprite path and
+   the numbers.
+2. Add one line to `scripts/main/EntityGenerator.gd`.
+3. Add the name to the `@export_enum(...)` list in
+   `scripts/authoring/ObjectMarker.gd`, and a preview sprite to `PREVIEWS`.
 
-**Empty cells count as tile 0 (grass).** For a dungeon where the outside should
-be solid, paint the whole rectangle rather than leaving holes.
+Then it's placeable from the editor like anything else. **Skipping step 2 is the
+one mistake that crashes the game** — it's what broke the Carbuncle in the Java
+version.
 
-### Which tiles block movement
+**A new monster** — same shape: a script in `scripts/monster/` (behaviour and
+sprites), a `.tres` in `assets/data/monsters/` (numbers), one line in
+`EntityGenerator.get_monster()`, one entry in `MonsterMarker.gd`.
 
-Collision is a property of the *tile*, not the map, so a tree blocks everywhere.
-
-1. Select **Tiles**, then in the Inspector click the **Tile Set** resource.
-2. The TileSet panel opens at the bottom. Go to **Select** mode and click a tile.
-3. In the Inspector, under **Custom Data**, tick or untick **collision**.
-
-That flag is what the collision checker *and* the pathfinder read, so monsters
-immediately stop trying to walk through anything you mark solid.
-
-### Adding a new tile
-
-Tiles live in one atlas image because that is what the TileSet paints from.
-
-1. Put your 16×16 PNG in `assets/tiles/`.
-2. Add its filename to the end of `TILE_NAMES` in `tools/build_tileset.gd`.
-   **Never reorder that list** — position in it is the tile's ID, and every map
-   already refers to those IDs.
-3. Run:
-   ```
-   godot --headless --path . --script res://tools/build_tileset.gd
-   godot --headless --path . --import
-   ```
-4. Open the TileSet, select the atlas source, and use **Setup → auto-create
-   tiles** (or click the new square) so Godot knows the tile exists. Set its
-   `collision` custom data.
-
----
-
-## 2. Placing things on a map
-
-Every map scene has group nodes to drop markers under:
-
-```
-WorldMap
-├── Tiles                (TileMapLayer - the terrain)
-├── Objects              (items, chests, doors)
-├── NPCs
-├── Monsters
-├── InteractiveTiles     (the dry tree you chop)
-├── Events               (pits, save points, doorways between maps)
-└── PlayerStart          (where a new game begins)
-```
-
-To add something:
-
-1. Right-click the group (say **Monsters**) → **Add Child Node** → **Node2D**.
-2. In the Inspector, click the **Script** slot → **Quick Load** →
-   `scripts/authoring/MonsterMarker.gd`.
-3. Pick what it is from the dropdown that appears (Slime / Snome / …).
-4. Drag it onto the map. Turn on grid snapping so it lands on a tile —
-   **Configure Snap**, step 48 × 48, then toggle **Use Grid Snap**.
-
-The marker draws the real sprite in the editor so you can see what you placed.
-It never draws in game; at startup `AssetSetter` reads the markers and builds
-the actual entities from them.
-
-Copy-paste (Ctrl+D) is the fast way to place a lot of the same thing.
-
-| Group | Script | Inspector fields |
-|---|---|---|
-| Objects | `ObjectMarker.gd` | **Item**; plus **Chest Loot** when Item is Chest |
-| NPCs | `NpcMarker.gd` | **Npc** |
-| Monsters | `MonsterMarker.gd` | **Monster** |
-| InteractiveTiles | `InteractiveTileMarker.gd` | **Kind** |
-| Events | `EventMarker.gd` | see below |
-| (anywhere) | `PlayerStartMarker.gd` | none — just its position |
-
-**Per-map limits.** Each map has a fixed number of slots: 20 objects, 10 NPCs,
-30 monsters, 50 interactive tiles. Go over and the extras are ignored with a
-warning in the Output panel. To raise a limit, change the matching number in
-`GamePanel._ready()` (`_new_entity_array(20)` and friends).
-
-**Monsters respawn** from their markers whenever the map resets — on death, on
-restart, and when the player rests at the healing pool. Objects the player
-picked up come back on a full restart.
-
----
-
-## 3. Events: doors, traps, save points
-
-An **EventMarker** fires when the player walks onto its tile.
-
-| Kind | What it does | Fields it uses |
-|---|---|---|
-| `ChangeMap` | moves the player to another map | Target Map, Target Col, Target Row |
-| `Teleport` | moves the player elsewhere on the same map | Target Col, Target Row |
-| `DamagePit` | costs 1 life | — |
-| `HealingPool` | full heal, respawns monsters, **saves the game** | — |
-| `Speak` | starts a conversation | Speak Npc |
-
-**Required Direction** makes the event only fire when the player walks onto it
-facing that way — use `up` for a doorway you enter from below, `any` for a trap.
-
-For `Speak`, drag the NpcMarker into the **Speak Npc** field (or click the
-field and pick the node).
-
-Markers are checked top to bottom in the scene tree and the first match wins, so
-if two overlap, move the one you want to win higher up.
-
-### Linking two maps
-
-A doorway needs a marker on **both** sides, otherwise the player walks through
-and is immediately sent back.
-
-- In `WorldMap`, an event at the door tile: `ChangeMap`, target map 1,
-  target col/row = where they should arrive in the hut.
-- In `MushroomHut`, an event at *that arrival tile*: `ChangeMap`, target map 0,
-  target col/row = the tile just outside the door.
-
-That is how the existing hut door works — copy it as a template.
-
----
-
-## 4. Making a new map or dungeon
-
-1. **Scene → New Scene → 2D Scene**, rename the root (e.g. `CryptLevel1`).
-2. Add a child **TileMapLayer** and name it exactly **`Tiles`**.
-3. Select it, and in the Inspector drag `assets/tiles/katsuboy_tileset.tres`
-   into its **Tile Set** slot.
-4. Paint your level.
-5. Add empty **Node2D** children named exactly `Objects`, `NPCs`, `Monsters`,
-   `InteractiveTiles`, `Events` (only the ones you need).
-6. Save it in `scenes/maps/`.
-7. Open `main.tscn`, select **GamePanel**, and in **Map Scenes** press the +
-   and drop your new scene in. Its index in that list is its map number.
-8. Add `ChangeMap` events on both sides to connect it to an existing map.
-
-The names `Tiles`, `Objects`, `NPCs`, `Monsters`, `InteractiveTiles` and
-`Events` are how the game finds things — they must match exactly.
-
-Also add the new scene to `tests/SmokeTest.tscn`'s **Map Scenes** so the tests
-exercise it.
-
----
-
-## 5. Balancing monsters
-
-Open `assets/data/monsters/slime.tres` (or snome / kamijack / shadow_katsu).
-Everything is in the Inspector: life, attack, defense, exp reward, speed,
-knockback, hitbox, and melee reach and timing.
-
-Changes apply to every monster of that type, everywhere, on the next run.
-
-What is *not* in the resource: which sprites it uses and how it behaves (does it
-chase? shoot? swing?). Those differ too much between monsters to be data, so
-they live in `scripts/monster/MON_*.gd`.
-
----
-
-## 6. Sound and music
-
-Open `assets/data/sound_bank.tres`. It is a list of audio streams; drag a
-different `.wav` into any slot to change that sound everywhere.
-
-`scripts/data/SE.gd` names the slots, so code reads `gp.play_se(SE.COIN)`
-rather than `gp.play_se(1)`. To add a new sound: drop the wav in
-`assets/sound/`, append it to the bank, and add a constant to `SE.gd`.
-
-Volume steps (0–5) and their decibel values are in `scripts/main/Sound.gd`.
-
-> One effects channel plays at a time, so a new sound cuts off the previous one.
-> That is how the Java version behaved. If you want overlapping hits, that means
-> a small pool of `AudioStreamPlayer`s in `Sound.gd`.
-
----
-
-## 7. Dialogue
-
-Dialogue is still in code, in each character's `set_dialogue()`:
-`scripts/entity/NPC_OldMan.gd`, `NPC_NanaMan.gd`, `NPC_Merchant.gd`.
+**Dialogue** — in each character's `set_dialogue()`:
 
 ```gdscript
 dialogues[0][0] = "Hello, Katsu boy!\nAre you ready for your adventure?"
 dialogues[0][1] = "There's something useful in the\nforest."
 ```
 
-The first index is the **conversation set**, the second is the **line**. `\n`
-breaks a line in the box; keep lines short enough to fit.
+First index is the conversation set, second is the line, `\n` breaks a line. The
+old man cycles sets 0 → 1 → 2 on repeat talks. The merchant's sets have fixed
+meanings: 0 greeting, 1 goodbye, 2 too expensive, 3 purchase, 4 pockets full,
+5 can't sell equipped, 6 night price, 7 day price, 8 refuses a cursed player.
+Event dialogue is in `EventHandler.set_dialogue()`.
 
-The old man walks through set 0, then set 1, then set 2 on repeat talks. The
-merchant's sets are fixed meanings: 0 greeting, 1 goodbye, 2 too expensive,
-3 purchase, 4 pockets full, 5 can't sell equipped, 6 night price, 7 day price,
-8 refuses a cursed player.
-
-Event dialogue ("Ouch! You fell down") is in `EventHandler.set_dialogue()`.
-
----
-
-## 8. Player starting stats
-
-`scripts/entity/Player.gd`, `set_default_values()` — level, life, mana, coins,
-starting weapon and shield.
-
-The starting *position* is the **PlayerStart** marker, not code.
+**Also code:** UI layout, trading rules, the level-up curve, and the entities'
+own drawing. Entities are plain objects rather than nodes — they're drawn and
+depth-sorted by hand in `GamePanel._draw()`, which is what keeps this code a
+line-for-line match with the original Java. Making them nodes would mean
+rewriting collision, draw order and the entity arrays.
 
 ---
 
-## 9. What still needs code
-
-These are honest limits of the current design. Each is a small, contained edit.
-
-**A new item** — three steps:
-1. Copy an existing script in `scripts/object/`, change `OBJ_NAME`, the sprite
-   path, and its numbers.
-2. Add one line to the matching function in `scripts/main/EntityGenerator.gd`.
-3. Add its name to the `@export_enum(...)` list in
-   `scripts/authoring/ObjectMarker.gd`, and a preview sprite to `PREVIEWS`.
-
-After that it is placeable from the editor like anything else. *Skipping step 2
-is the one mistake that crashes the game* — it is what broke the Carbuncle in
-the Java version.
-
-**A new monster** — same shape: a script in `scripts/monster/` (behaviour and
-sprites), a `.tres` in `assets/data/monsters/` (numbers), one line in
-`EntityGenerator.get_monster()`, one entry in `MonsterMarker.gd`.
-
-**Anything else:** dialogue, UI layout, the day/night cycle, trading rules,
-level-up curve, and the entities' own drawing. The entities are plain objects
-rather than nodes — they are drawn and sorted by hand in `GamePanel._draw()`,
-which is what keeps the code a line-for-line match with the original Java. Making
-them nodes would mean rewriting collision, the draw order and the entity arrays.
-
----
-
-## 10. Before you commit: run the tests
+## Running the tests
 
 ```
 godot --headless --path . res://tests/SmokeTest.tscn
 ```
 
 It plays the game — title screen, pickups, chests, a key on a door, chopping the
-tree, a kill, a shuriken, map transitions, trading, save/load, death and restart
-— and prints `47 passed, 0 failed`. It exits non-zero on failure, so it works in
-CI.
+tree, a kill, a shuriken, map transitions via event markers, trading, save/load,
+death and restart, the Boots and running, and the world edges — and prints
+`53 passed, 0 failed`. It exits non-zero on failure, so it works in CI.
 
-It is fast and it has already caught real breakage. If you add a system, add a
-check for it in `tests/SmokeTest.gd`.
+It's fast and it has already caught real breakage. If you add a system, add a
+check to `tests/SmokeTest.gd`.
 
-**Gotcha when writing tests:** the runner ticks from `_physics_process`, so one
-test "frame" is one game update. An axe swing is a 50 frame cycle — give actions
-enough frames to finish before asserting.
+> **Writing tests:** the runner ticks from `_physics_process`, so one test
+> "frame" is one game update. An axe swing is a 50-frame cycle — give actions
+> enough frames to finish before you assert.

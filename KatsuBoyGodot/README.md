@@ -24,7 +24,7 @@ godot --headless --path . res://tests/SmokeTest.tscn
 
 | Action | Key |
 |---|---|
-| Move | `W` `A` `S` `D` |
+| Move | `W` `A` `S` `D` or the arrow keys |
 | Confirm / Attack / Talk | `Enter` |
 | Shoot (shuriken, costs mana) | `Space` |
 | Guard / parry | `Ctrl` |
@@ -35,6 +35,9 @@ godot --headless --path . res://tests/SmokeTest.tscn
 | Full map | `M` |
 | Mini map on/off | `X` |
 | Debug overlay (coords, A\* path, day state) | `T` |
+
+All of those are named actions in **Project Settings → Input Map**, so they can
+be rebound (or given gamepad bindings) without touching code.
 
 ## How the port is laid out
 
@@ -82,6 +85,7 @@ for a Java name with an underscore in it will find the same code here.
 | `java.awt.Color` | `Color8(r, g, b, a)` | Same 0–255 values. |
 | `RadialGradientPaint` | `GradientTexture2D` (radial fill) | Same five colour stops. It is drawn from a square texture centred on the player so the light stays a circle. |
 | `javax.sound.sampled.Clip` | `AudioStreamPlayer` | Same 0–5 volume steps and the same dB values. Looping restarts the stream on `finished`. Which file each slot plays is a `SoundBank` resource, and `SE.gd` names the slots so calls read `play_se(SE.COIN)`. |
+| `KeyEvent.VK_*` codes in `KeyHandler` | named actions in the Input Map | `KeyHandler` keeps its per-game-state structure but dispatches on `Action.MOVE_UP` instead of `KEY_W`, so bindings are editor data. |
 | `ObjectOutputStream` → `save.dat` | `FileAccess.store_var` → `user://save.dat` | GDScript has no object serialisation, so `DataStorage` gained `to_dict()`/`from_dict()`. `config.txt` moved to `user://` too, because `res://` is read-only in an exported game. |
 | `ai/Node.java` | `ai/PathNode.gd` | `Node` is Godot's own base class. |
 | `object/SuperObject.java` | dropped | Dead code — nothing referenced it. |
@@ -125,6 +129,10 @@ GDScript.
 - Slimes and Kamijacks set `speed` but never `defaultSpeed`, so the first time
   one was knocked back it recovered to speed 0 and stopped moving for good.
   `MonsterStats` sets both.
+- **The Boots did nothing.** The item existed with the description "Gotta go
+  fast!", but had no `use()` and was never placed on a map, so the Run key only
+  worked at all if you happened to pick the Ninja or Zilla class. Picking them
+  up now unlocks running, and a pair sits on the grass near the start.
 
 **Performance** (this is what made the Java build stutter)
 

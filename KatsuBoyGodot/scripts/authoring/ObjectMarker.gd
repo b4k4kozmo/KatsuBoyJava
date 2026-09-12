@@ -1,3 +1,4 @@
+@icon("res://assets/objects/chest.png")
 @tool
 class_name ObjectMarker
 extends PlacementMarker

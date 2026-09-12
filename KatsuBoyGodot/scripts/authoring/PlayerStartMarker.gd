@@ -1,3 +1,4 @@
+@icon("res://assets/player/boy_down_1.png")
 @tool
 class_name PlayerStartMarker
 extends PlacementMarker

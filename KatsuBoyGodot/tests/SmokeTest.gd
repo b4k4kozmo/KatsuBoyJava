@@ -44,12 +44,12 @@ func objects_on(map := 0) -> int:
 	return n
 
 
-func press(key: int) -> void:
-	gp.key_h.key_pressed(key)
+func press(action: StringName) -> void:
+	gp.key_h.action_pressed(action)
 
 
-func release(key: int) -> void:
-	gp.key_h.key_released(key)
+func release(action: StringName) -> void:
+	gp.key_h.action_released(action)
 
 
 ## Driven from _physics_process, not _process, so one "frame" here is exactly
@@ -60,8 +60,8 @@ func _physics_process(_d: float) -> void:
 	# keep swinging during the two combat phases (the axe swing is a 50 frame
 	# cycle, so a few hundred frames are needed to land three hits)
 	if (frame >= 72 and frame < 280) or (frame >= 560 and frame < 760):
-		if frame % 6 == 0: press(KEY_ENTER)
-		if frame % 6 == 3: release(KEY_ENTER)
+		if frame % 6 == 0: press(Action.CONFIRM)
+		if frame % 6 == 3: release(Action.CONFIRM)
 
 	match frame:
 		2:
@@ -71,12 +71,18 @@ func _physics_process(_d: float) -> void:
 			check("tree tile collides", gp.tile_m.tile[16].collision == true)
 			check("grass tile does not collide", gp.tile_m.tile[0].collision == false)
 			check("map 0 tiles read", gp.tile_m.map_tile_num[0][94][94] >= 0)
-			check("objects placed from markers", objects_on(0) == 14, str(objects_on(0)))
+			check("objects placed from markers", objects_on(0) == 15, str(objects_on(0)))
 			check("monsters placed from markers", monsters_alive(0) == 23, str(monsters_alive(0)))
 			check("npc on map 0", gp.npc[0][0] != null)
 			check("merchant on map 1", gp.npc[1][1] is NPC_Merchant)
 			check("interactive tile placed", gp.i_tile[0][0] != null)
 			check("events collected", gp.e_handler.events.size() == 8, str(gp.e_handler.events.size()))
+			var missing_actions: Array[String] = []
+			for a in Action.ALL:
+				if not InputMap.has_action(a):
+					missing_actions.append(a)
+			check("all input actions exist in Project Settings",
+				missing_actions.is_empty(), str(missing_actions))
 			check("player start read from its marker",
 				gp.player.world_x == gp.tile_size * 94 and gp.player.world_y == gp.tile_size * 94,
 				"%d,%d" % [gp.player.world_x, gp.player.world_y])
@@ -84,10 +90,10 @@ func _physics_process(_d: float) -> void:
 		4:
 			print("\n-- title screen --")
 			check("starts on title", gp.game_state == gp.TITLE_STATE)
-			press(KEY_ENTER); release(KEY_ENTER)
+			press(Action.CONFIRM); release(Action.CONFIRM)
 		8:
 			check("new game -> class select", gp.ui.title_screen_state == 1)
-			press(KEY_ENTER); release(KEY_ENTER)
+			press(Action.CONFIRM); release(Action.CONFIRM)
 		12:
 			check("class picked -> play state", gp.game_state == gp.PLAY_STATE)
 			check("samurai got the bokken", gp.player.search_item_in_inventory("Kami no Bokken") != 999)
@@ -97,28 +103,28 @@ func _physics_process(_d: float) -> void:
 			gp.player.world_x = gp.tile_size * 52
 			gp.player.world_y = gp.tile_size * 97
 			gp.player.direction = "down"
-			press(KEY_S)
+			press(Action.MOVE_DOWN)
 		26:
 			# the Carbuncle crashed the Java build on pickup
-			check("carbuncle picked up", objects_on(0) == 13, str(objects_on(0)))
-			release(KEY_S)
+			check("carbuncle picked up", objects_on(0) == 14, str(objects_on(0)))
+			release(Action.MOVE_DOWN)
 			gp.player.world_x = gp.tile_size * 50
 			gp.player.world_y = gp.tile_size * 96
-			press(KEY_S)
+			press(Action.MOVE_DOWN)
 		36:
 			check("coin picked up (coin +1)", gp.player.coin == 1000, str(gp.player.coin))
-			release(KEY_S)
+			release(Action.MOVE_DOWN)
 
 		40:
 			print("\n-- chest and door --")
 			gp.player.world_x = gp.tile_size * 91
 			gp.player.world_y = gp.tile_size * 91
 			gp.player.direction = "down"
-			press(KEY_S)
+			press(Action.MOVE_DOWN)
 		50:
-			press(KEY_ENTER)
+			press(Action.CONFIRM)
 		52:
-			release(KEY_ENTER); release(KEY_S)
+			release(Action.CONFIRM); release(Action.MOVE_DOWN)
 		56:
 			check("chest opened", gp.obj[0][11].opened == true)
 			check("key in inventory", gp.player.search_item_in_inventory("Key") != 999)
@@ -148,9 +154,9 @@ func _physics_process(_d: float) -> void:
 			gp.player.direction = "down"
 			check("dry tree present", gp.i_tile[0][0] is IT_DryTree)
 		71:
-			press(KEY_S)
+			press(Action.MOVE_DOWN)
 		285:
-			release(KEY_S); release(KEY_ENTER)
+			release(Action.MOVE_DOWN); release(Action.CONFIRM)
 			check("dry tree became a trunk", gp.i_tile[0][0] is IT_Trunk)
 
 		290:
@@ -190,9 +196,9 @@ func _physics_process(_d: float) -> void:
 			gp.player.world_x = gp.tile_size * 8
 			gp.player.world_y = gp.tile_size * 45
 			gp.player.direction = "down"
-			press(KEY_S)
+			press(Action.MOVE_DOWN)
 		360:
-			release(KEY_S)
+			release(Action.MOVE_DOWN)
 			check("walking onto a ChangeMap marker started a transition",
 				gp.game_state == gp.TRANSITION_STATE or gp.current_map == 1)
 		400:
@@ -222,18 +228,18 @@ func _physics_process(_d: float) -> void:
 			gp.monster[0][1].speed = 0
 			gp.monster[0][1].on_path = false
 		558:
-			press(KEY_S)
+			press(Action.MOVE_DOWN)
 		762:
-			release(KEY_S); release(KEY_ENTER)
+			release(Action.MOVE_DOWN); release(Action.CONFIRM)
 			check("monster killed", gp.monster[0][1] == null)
 			check("exp gained", gp.player.exp > 0, str(gp.player.exp))
 		766:
 			gp.player.mana = 99
 			gp.player.max_mana = 99
 			gp.player.direction = "right"
-			press(KEY_SPACE)
+			press(Action.SHOOT)
 		770:
-			release(KEY_SPACE)
+			release(Action.SHOOT)
 			check("shuriken cost mana", gp.player.mana == 98, str(gp.player.mana))
 		774:
 			for m in gp.monster[0]:
@@ -249,14 +255,14 @@ func _physics_process(_d: float) -> void:
 			print("\n-- world edges (crashed the Java build) --")
 			gp.player.world_x = 0
 			gp.player.world_y = 0
-			press(KEY_W); press(KEY_A)
+			press(Action.MOVE_UP); press(Action.MOVE_LEFT)
 		840:
-			release(KEY_W); release(KEY_A)
+			release(Action.MOVE_UP); release(Action.MOVE_LEFT)
 			gp.player.world_x = gp.tile_size * (gp.max_world_col - 1)
 			gp.player.world_y = gp.tile_size * (gp.max_world_row - 1)
-			press(KEY_S); press(KEY_D)
+			press(Action.MOVE_DOWN); press(Action.MOVE_RIGHT)
 		860:
-			release(KEY_S); release(KEY_D)
+			release(Action.MOVE_DOWN); release(Action.MOVE_RIGHT)
 			check("survived the world edges", gp.game_state == gp.PLAY_STATE)
 
 		870:
@@ -302,7 +308,7 @@ func _physics_process(_d: float) -> void:
 		916:
 			check("game over triggered", gp.game_state == gp.GAME_OVER_STATE)
 			gp.ui.command_num = 1
-			press(KEY_ENTER); release(KEY_ENTER)
+			press(Action.CONFIRM); release(Action.CONFIRM)
 		922:
 			check("restart returned to title", gp.game_state == gp.TITLE_STATE)
 			check("monsters respawned from markers", monsters_alive(0) == 23, str(monsters_alive(0)))
@@ -312,9 +318,46 @@ func _physics_process(_d: float) -> void:
 				gp.monster[0][0].world_x == gp.tile_size * 82
 				and gp.monster[0][0].world_y == gp.tile_size * 95,
 				"%d,%d" % [gp.monster[0][0].world_x, gp.monster[0][0].world_y])
-			check("objects reset from markers", objects_on(0) == 14, str(objects_on(0)))
+			check("objects reset from markers", objects_on(0) == 15, str(objects_on(0)))
 
 		930:
+			print("\n-- boots and running --")
+			gp.game_state = gp.PLAY_STATE
+			gp.player.has_boots = false
+			gp.player.speed = gp.player.default_speed
+			# open ground, well away from the Boots pickup
+			gp.player.world_x = gp.tile_size * 60
+			gp.player.world_y = gp.tile_size * 60
+			gp.player.direction = "down"
+			check("starts without the boots", gp.player.has_boots == false)
+			press(Action.MOVE_DOWN)
+			press(Action.RUN)
+		938:
+			check("cannot run before the boots",
+				gp.player.speed == Player.STATS.walk_speed, str(gp.player.speed))
+			release(Action.RUN)
+			release(Action.MOVE_DOWN)
+		942:
+			# now walk into the Boots pickup that sits on the map
+			gp.player.world_x = gp.tile_size * 94
+			gp.player.world_y = gp.tile_size * 92
+			gp.player.direction = "left"
+			press(Action.MOVE_LEFT)
+		975:
+			# walked into the Boots pickup placed on the map
+			check("picked up the boots", gp.player.has_boots == true)
+		978:
+			press(Action.RUN)
+		982:
+			check("Run key sprints once you have the boots",
+				gp.player.speed == Player.STATS.run_speed, str(gp.player.speed))
+			release(Action.RUN)
+		986:
+			check("walking speed with boots",
+				gp.player.speed == Player.STATS.boots_walk_speed, str(gp.player.speed))
+			release(Action.MOVE_LEFT)
+
+		1000:
 			print("\n================================")
 			print("%d passed, %d failed" % [passed, failed.size()])
 			for f in failed:

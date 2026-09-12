@@ -2,6 +2,9 @@ class_name Player
 extends Entity
 ## Java: entity/Player.java
 
+## Starting numbers and speeds, editable in assets/data/player.tres.
+const STATS := preload("res://assets/data/player.tres")
+
 var key_h: KeyHandler
 var screen_x: int
 var screen_y: int
@@ -36,28 +39,25 @@ func _init(gp, key_h: KeyHandler) -> void:
 func set_default_values() -> void:
 
 	set_default_positions()
-	default_speed = 4
+	default_speed = STATS.walk_speed
 	speed = default_speed
 
-	# PLAYER STATUS
-	level = 1
-	max_life = 6
+	# PLAYER STATUS - all of this comes from assets/data/player.tres
+	level = STATS.level
+	max_life = STATS.max_life
 	life = max_life
-	max_mana = 4
+	max_mana = STATS.max_mana
 	mana = max_mana
-	ammo = 10
-	strength = 1   # the more strength he has the more damage he gives
-	dexterity = 1  # the more dexterity he has, the less damage he receives
+	ammo = STATS.ammo
+	strength = STATS.strength   # the more strength he has the more damage he gives
+	dexterity = STATS.dexterity # the more dexterity he has, the less damage he receives
 	exp = 0
-	next_level_exp = 5
-	coin = 999
-	current_weapon = OBJ_Sword_Normal.new(gp)
-	current_shield = OBJ_Shield_Puffa.new(gp)
+	next_level_exp = STATS.next_level_exp
+	coin = STATS.coin
+	current_weapon = gp.e_generator.get_object(STATS.starting_weapon)
+	current_shield = gp.e_generator.get_object(STATS.starting_shield)
 	current_light = null
-	# runs on mana
-	projectile = OBJ_Shuriken.new(gp)
-	# runs on ammo
-#	projectile = OBJ_Snowball.new(gp)
+	projectile = gp.e_generator.get_object(STATS.starting_projectile)
 	attack = get_attack()    # the total attack value is decided by strength and weapon
 	defense = get_defense()  # the total defense value is decided by dexterity and shield
 
@@ -237,11 +237,12 @@ func update() -> void:
 		elif key_h.right_pressed == true:
 			direction = "right"
 
-		# Shift run
-		if key_h.shift_pressed == true and has_boots == true:
-			speed = 10
-		elif key_h.shift_pressed == false and has_boots == true:
-			speed = 6
+		# Run. Speeds and whether the Boots are required come from player.tres.
+		var can_run: bool = has_boots or not STATS.requires_boots_to_run
+		if can_run:
+			speed = STATS.run_speed if key_h.shift_pressed else STATS.boots_walk_speed
+		else:
+			speed = STATS.walk_speed
 
 		# CHECK TILE COLLISION
 		collision_on = false

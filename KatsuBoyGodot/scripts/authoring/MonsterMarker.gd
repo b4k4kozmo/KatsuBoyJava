@@ -1,3 +1,4 @@
+@icon("res://assets/monster/slime_down01.png")
 @tool
 class_name MonsterMarker
 extends PlacementMarker

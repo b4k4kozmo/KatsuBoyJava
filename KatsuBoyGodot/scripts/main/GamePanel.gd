@@ -38,6 +38,25 @@ var map_node: Array[Node2D] = []
 ## Every sound and piece of music, editable in the Inspector.
 ## See scripts/data/SE.gd for the slot names.
 @export var sound_bank: SoundBank
+
+@export_group("Day / night cycle")
+## Frames of daylight before dusk starts. 60 frames = 1 second.
+@export var day_length_frames: int = 9000
+## Frames of darkness before dawn starts.
+@export var night_length_frames: int = 4800
+## How fast dusk falls, per frame. Bigger = quicker.
+@export var dusk_fade_speed: float = 0.001
+## How fast dawn breaks, per frame.
+@export var dawn_fade_speed: float = 0.001
+## How dark full night gets, 0 (none) to 255 (pitch black).
+@export_range(0, 255) var night_darkness: int = 240
+
+@export_group("Palette")
+## The four colours the whole UI is drawn from.
+@export var color_green: Color = Color8(134, 186, 134)
+@export var color_black: Color = Color8(26, 2, 43)
+@export var color_pink: Color = Color8(194, 92, 177)
+@export var color_white: Color = Color8(240, 242, 239)
 ## Holds the map scenes and scrolls them with the player. Sits behind
 ## everything GamePanel draws itself (z_index -1), so tiles render under the
 ## entities exactly like they did when we blitted them by hand.
@@ -173,10 +192,7 @@ func reset_game(restart: bool) -> void:
 		a_setter.set_interactive_tile()
 		e_manager.lighting.reset_day()
 
-		ui.kamigreen = Color8(134, 186, 134)
-		ui.kamiblack = Color8(26, 2, 43)
-		ui.kamipink = Color8(194, 92, 177)
-		ui.kamiwhite = Color8(240, 242, 239)
+		ui.reset_palette()
 		player.has_boots = false
 
 
@@ -208,14 +224,21 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 
+## Turn raw input into the named actions from Project Settings -> Input Map and
+## hand them to KeyHandler. Because the actions carry the key bindings, nothing
+## in the game refers to a key code.
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey:
-		if event.is_echo():
-			return  # ignore OS key repeat, menus behave much better without it
-		if event.pressed:
-			key_h.key_pressed(event.keycode)
-		else:
-			key_h.key_released(event.keycode)
+
+	if event is InputEventKey and event.is_echo():
+		return  # ignore OS key repeat, menus behave much better without it
+
+	for action in Action.ALL:
+		# exact_match false, so Shift+W still counts as "move up" while also
+		# counting as "run" - the same way the raw key handler behaved.
+		if event.is_action_pressed(action, false, false):
+			key_h.action_pressed(action)
+		elif event.is_action_released(action, false):
+			key_h.action_released(action)
 
 
 func update() -> void:
@@ -233,6 +256,8 @@ func update() -> void:
 			if monster[current_map][i] != null:
 				if monster[current_map][i].alive == true and monster[current_map][i].dying == false:
 					monster[current_map][i].update()
+				if monster[current_map][i].dying == true:
+					monster[current_map][i].update_dying()
 				if monster[current_map][i].alive == false:
 					monster[current_map][i].check_drop()
 					monster[current_map][i] = null
@@ -259,9 +284,17 @@ func update() -> void:
 				i_tile[current_map][j].update()
 
 		e_manager.update()
+		ui.update_messages()
 
 	if game_state == PAUSE_STATE:
 		pass  # DO NOTHING
+
+	# These change game state (which map you are on, what time of day it is), so
+	# they tick with the game rather than with the frame rate.
+	if game_state == TRANSITION_STATE:
+		ui.update_transition()
+	if game_state == SLEEP_STATE:
+		ui.update_sleep()
 
 
 ## Java: drawToTempScreen(). drawToScreen() is gone - the engine presents the

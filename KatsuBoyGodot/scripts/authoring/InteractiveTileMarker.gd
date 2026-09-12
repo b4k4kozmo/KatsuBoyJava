@@ -1,3 +1,4 @@
+@icon("res://assets/tiles_interactive/drytree.png")
 @tool
 class_name InteractiveTileMarker
 extends PlacementMarker

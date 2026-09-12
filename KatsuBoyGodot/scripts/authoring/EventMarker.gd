@@ -1,3 +1,4 @@
+@icon("res://assets/objects/door.png")
 @tool
 class_name EventMarker
 extends PlacementMarker
