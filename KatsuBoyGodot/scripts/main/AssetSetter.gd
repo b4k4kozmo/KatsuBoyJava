@@ -1,104 +1,155 @@
 class_name AssetSetter
 extends RefCounted
-## Java: main/AssetSetter.java - places everything on the maps.
+## Java: main/AssetSetter.java
+##
+## Java listed every object, NPC and monster in code. Now each one is a marker
+## node you place in a map scene (scenes/maps/*.tscn), and this walks those
+## scenes and builds the real entities from them.
+##
+## To add something to a map: open the map scene, add the matching marker under
+## Objects / NPCs / Monsters / InteractiveTiles, pick what it is in the
+## Inspector, drag it onto a tile. Nothing here needs changing.
 
 var gp
+
+## Which entity came from which NpcMarker, so Speak events can find their NPC.
+var npc_by_marker: Dictionary = {}
 
 
 func _init(gp) -> void:
 	self.gp = gp
 
 
-## Small helper so the long "gp.obj[map][i] = ...; worldX = ...; worldY = ..."
-## blocks below stay one readable line each.
-func _place(array: Array, map_num: int, i: int, entity: Entity, col: int, row: int) -> void:
-	array[map_num][i] = entity
-	entity.world_x = col * gp.tile_size
-	entity.world_y = row * gp.tile_size
+## The marker nodes under one group of one map, e.g. markers(0, "Monsters").
+func markers(map_num: int, group_name: String) -> Array:
+	if map_num < 0 or map_num >= gp.map_node.size() or gp.map_node[map_num] == null:
+		return []
+	var group: Node = gp.map_node[map_num].get_node_or_null(group_name)
+	if group == null:
+		return []
+	return group.get_children()
+
+
+## Blank out the slots nothing was placed in, so a respawn or a restart does not
+## leave the previous run's entities behind.
+func _clear_rest(array: Array, map_num: int, from: int) -> void:
+	var i := from
+	while i < array[map_num].size():
+		array[map_num][i] = null
+		i += 1
+
+
+func _place(entity: Entity, marker) -> void:
+	entity.world_x = marker.tile_col() * gp.tile_size
+	entity.world_y = marker.tile_row() * gp.tile_size
+
+
+## Where the player starts: Vector3i(map, col, row).
+## Looks for a PlayerStartMarker anywhere in any map scene; falls back to the
+## original hardcoded spot when there isn't one.
+func player_start() -> Vector3i:
+
+	for map_num in range(gp.map_node.size()):
+		if gp.map_node[map_num] == null:
+			continue
+		var found: PlayerStartMarker = _find_player_start(gp.map_node[map_num])
+		if found != null:
+			return Vector3i(map_num, found.tile_col(), found.tile_row())
+
+	return Vector3i(0, 94, 94)
+
+
+func _find_player_start(node: Node) -> PlayerStartMarker:
+	if node is PlayerStartMarker:
+		return node as PlayerStartMarker
+	for child in node.get_children():
+		var found: PlayerStartMarker = _find_player_start(child)
+		if found != null:
+			return found
+	return null
 
 
 func set_object() -> void:
 
-	var map_num := 0
-	var i := 0
-	_place(gp.obj, map_num, i, OBJ_Coin.new(gp), 50, 97); i += 1
-	_place(gp.obj, map_num, i, OBJ_Carbo.new(gp), 52, 98); i += 1
-	_place(gp.obj, map_num, i, OBJ_Key.new(gp), 96, 96); i += 1
-	_place(gp.obj, map_num, i, OBJ_Coin.new(gp), 96, 97); i += 1
-	_place(gp.obj, map_num, i, OBJ_Coin.new(gp), 97, 90); i += 1
-	_place(gp.obj, map_num, i, OBJ_Kamibokken.new(gp), 98, 98); i += 1
-	_place(gp.obj, map_num, i, OBJ_Kami_Shield.new(gp), 97, 98); i += 1
-	_place(gp.obj, map_num, i, OBJ_Potion_Green.new(gp), 89, 97); i += 1
-	_place(gp.obj, map_num, i, OBJ_Heart.new(gp), 95, 91); i += 1
-	_place(gp.obj, map_num, i, OBJ_Kamiaxe.new(gp), 94, 91); i += 1
-	_place(gp.obj, map_num, i, OBJ_Door.new(gp), 85, 97); i += 1
-
-	var chest := OBJ_Chest.new(gp)
-	chest.set_loot(OBJ_Key.new(gp))
-	_place(gp.obj, map_num, i, chest, 91, 92); i += 1
-
-	_place(gp.obj, map_num, i, OBJ_Candle.new(gp), 92, 92); i += 1
-	_place(gp.obj, map_num, i, OBJ_Tent.new(gp), 92, 93); i += 1
-
-	# Clear any slot the previous game left behind (restart / load).
-	while i < gp.obj[map_num].size():
-		gp.obj[map_num][i] = null
-		i += 1
+	for map_num in range(gp.max_map):
+		var i := 0
+		for m in markers(map_num, "Objects"):
+			if not (m is ObjectMarker):
+				continue
+			if i >= gp.obj[map_num].size():
+				push_warning("Map %d has more objects than slots (%d)." % [map_num, gp.obj[map_num].size()])
+				break
+			var entity: Entity = gp.e_generator.get_object(m.item)
+			if entity == null:
+				push_warning("Unknown object '%s' on map %d." % [m.item, map_num])
+				continue
+			if m.item == OBJ_Chest.OBJ_NAME:
+				entity.set_loot(gp.e_generator.get_object(m.chest_loot))
+			_place(entity, m)
+			gp.obj[map_num][i] = entity
+			i += 1
+		_clear_rest(gp.obj, map_num, i)
 
 
 func set_npc() -> void:
 
-	var map_num := 0
-	var i := 0
-	_place(gp.npc, map_num, i, NPC_OldMan.new(gp), 96, 95); i += 1
+	npc_by_marker.clear()
 
-	map_num = 1
-	i = 0
-	_place(gp.npc, map_num, i, NPC_NanaMan.new(gp), 11, 23); i += 1
-	_place(gp.npc, map_num, i, NPC_Merchant.new(gp), 26, 18); i += 1
+	for map_num in range(gp.max_map):
+		var i := 0
+		for m in markers(map_num, "NPCs"):
+			if not (m is NpcMarker):
+				continue
+			if i >= gp.npc[map_num].size():
+				push_warning("Map %d has more NPCs than slots (%d)." % [map_num, gp.npc[map_num].size()])
+				break
+			var entity: Entity = gp.e_generator.get_npc(m.npc)
+			if entity == null:
+				push_warning("Unknown NPC '%s' on map %d." % [m.npc, map_num])
+				continue
+			_place(entity, m)
+			gp.npc[map_num][i] = entity
+			npc_by_marker[m] = entity
+			i += 1
+		_clear_rest(gp.npc, map_num, i)
 
 
 func set_monster() -> void:
 
-	var map_num := 0
-	var i := 0
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 82, 95); i += 1
-	_place(gp.monster, map_num, i, MON_Slime.new(gp), 58, 79); i += 1
-	_place(gp.monster, map_num, i, MON_Slime.new(gp), 8, 55); i += 1
-	_place(gp.monster, map_num, i, MON_Slime.new(gp), 8, 51); i += 1
-	_place(gp.monster, map_num, i, MON_Slime.new(gp), 8, 46); i += 1
-	_place(gp.monster, map_num, i, MON_Slime.new(gp), 8, 35); i += 1
-	_place(gp.monster, map_num, i, MON_Slime.new(gp), 84, 93); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 80, 90); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 80, 88); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 80, 87); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 79, 87); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 78, 87); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 77, 87); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 77, 86); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 76, 86); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 77, 85); i += 1
-	_place(gp.monster, map_num, i, MON_Snome.new(gp), 76, 87); i += 1
-	_place(gp.monster, map_num, i, MON_KamiJack.new(gp), 88, 77); i += 1
-	_place(gp.monster, map_num, i, MON_KamiJack.new(gp), 92, 73); i += 1
-	_place(gp.monster, map_num, i, MON_KamiJack.new(gp), 27, 79); i += 1
-	_place(gp.monster, map_num, i, MON_KamiJack.new(gp), 79, 52); i += 1
-	_place(gp.monster, map_num, i, MON_KamiJack.new(gp), 66, 45); i += 1
-	_place(gp.monster, map_num, i, MON_ShadowKatsu.new(gp), 7, 59); i += 1
-
-	# Respawning wipes the slots the previous wave left behind.
-	while i < gp.monster[map_num].size():
-		gp.monster[map_num][i] = null
-		i += 1
+	for map_num in range(gp.max_map):
+		var i := 0
+		for m in markers(map_num, "Monsters"):
+			if not (m is MonsterMarker):
+				continue
+			if i >= gp.monster[map_num].size():
+				push_warning("Map %d has more monsters than slots (%d)." % [map_num, gp.monster[map_num].size()])
+				break
+			var entity: Entity = gp.e_generator.get_monster(m.monster)
+			if entity == null:
+				push_warning("Unknown monster '%s' on map %d." % [m.monster, map_num])
+				continue
+			_place(entity, m)
+			gp.monster[map_num][i] = entity
+			i += 1
+		_clear_rest(gp.monster, map_num, i)
 
 
 func set_interactive_tile() -> void:
-	var map_num := 0
-	var i := 0
-	gp.i_tile[map_num][i] = IT_DryTree.new(gp, 86, 97); i += 1
 
-	while i < gp.i_tile[map_num].size():
-		gp.i_tile[map_num][i] = null
-		i += 1
+	for map_num in range(gp.max_map):
+		var i := 0
+		for m in markers(map_num, "InteractiveTiles"):
+			if not (m is InteractiveTileMarker):
+				continue
+			if i >= gp.i_tile[map_num].size():
+				push_warning("Map %d has more interactive tiles than slots (%d)." % [map_num, gp.i_tile[map_num].size()])
+				break
+			var entity = gp.e_generator.get_interactive_tile(m.kind, m.tile_col(), m.tile_row())
+			if entity == null:
+				push_warning("Unknown interactive tile '%s' on map %d." % [m.kind, map_num])
+				continue
+			gp.i_tile[map_num][i] = entity
+			i += 1
+		_clear_rest(gp.i_tile, map_num, i)
 
 	gp.p_finder.solid_dirty = true

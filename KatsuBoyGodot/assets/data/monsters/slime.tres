@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MonsterStats" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/MonsterStats.gd" id="1_vfbna"]
+
+[resource]
+script = ExtResource("1_vfbna")
+display_name = "Slime"
+max_life = 3
+attack = 5
+solid_area = Rect2i(3, 18, 42, 30)

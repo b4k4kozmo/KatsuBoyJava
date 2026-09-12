@@ -3,24 +3,14 @@ extends Entity
 ## Java: monster/MON_Slime.java
 
 
+const STATS := preload("res://assets/data/monsters/slime.tres")
+
+
 func _init(gp) -> void:
 	super(gp)
 
-	type = TYPE_MONSTER
-	name = "Slime"
-	speed = 1
-	max_life = 3
-	life = max_life
-	attack = 5
-	defense = 0
-	exp = 1
-
-	solid_area.x = 3
-	solid_area.y = 18
-	solid_area.width = 42
-	solid_area.height = 30
-	solid_area_default_x = solid_area.x
-	solid_area_default_y = solid_area.y
+	# Numbers live in the resource so they can be tuned in the Inspector.
+	STATS.apply_to(self)
 
 	get_image()
 

@@ -3,31 +3,15 @@ extends Entity
 ## Java: monster/MON_ShadowKatsu.java
 
 
+const STATS := preload("res://assets/data/monsters/shadow_katsu.tres")
+
+
 func _init(gp) -> void:
 	super(gp)
 
-	type = TYPE_MONSTER
-	name = "Shadow"
-	default_speed = 1
-	speed = default_speed
-	max_life = 200
-	life = max_life
-	attack = 7
-	defense = 4
-	exp = 600
+	# Numbers live in the resource so they can be tuned in the Inspector.
+	STATS.apply_to(self)
 	projectile = OBJ_Shuriken.new(gp)
-	knock_back_power = 5
-
-	solid_area.x = 4
-	solid_area.y = 4
-	solid_area.width = 40
-	solid_area.height = 44
-	solid_area_default_x = solid_area.x
-	solid_area_default_y = solid_area.y
-	attack_area.width = 48
-	attack_area.height = 48
-	motion1_duration = 40
-	motion2_duration = 85
 
 	get_image()
 	get_attack_image()

@@ -866,18 +866,18 @@ func trade_buy() -> void:
 				if npc.inventory[item_index].price > gp.player.coin:
 					sub_state = 0
 					npc.start_dialogue(npc, 2)
-					gp.play_se(7)
+					gp.play_se(SE.RECEIVE_DAMAGE)
 				else:
 					if gp.player.can_obtain_item(npc.inventory[item_index]) == true:
 						sub_state = 0
 						gp.player.coin -= npc.inventory[item_index].price
 						npc.start_dialogue(npc, 3)
-						gp.play_se(1)
+						gp.play_se(SE.COIN)
 					else:
 						command_num = 0
 						sub_state = 0
 						npc.start_dialogue(npc, 4)
-						gp.play_se(7)
+						gp.play_se(SE.RECEIVE_DAMAGE)
 
 
 func trade_sell() -> void:
@@ -934,7 +934,7 @@ func trade_sell() -> void:
 				command_num = 0
 				sub_state = 0
 				npc.start_dialogue(npc, 5)
-				gp.play_se(7)
+				gp.play_se(SE.RECEIVE_DAMAGE)
 			else:
 				sub_state = 0
 				if gp.player.inventory[item_index].amount > 1:
@@ -946,11 +946,11 @@ func trade_sell() -> void:
 						and gp.player.is_cursed == false):
 					gp.player.coin += (price * 10)
 					npc.start_dialogue(npc, 6)
-					gp.play_se(1)
+					gp.play_se(SE.COIN)
 				else:
 					gp.player.coin += price
 					npc.start_dialogue(npc, 7)
-					gp.play_se(1)
+					gp.play_se(SE.COIN)
 
 
 func draw_sleep_screen() -> void:

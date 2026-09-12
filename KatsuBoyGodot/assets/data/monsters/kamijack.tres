@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MonsterStats" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/MonsterStats.gd" id="1_kn72r"]
+
+[resource]
+script = ExtResource("1_kn72r")
+display_name = "Kamijack"
+max_life = 111
+attack = 20
+defense = 6
+exp_reward = 250
+speed = 12
+solid_area = Rect2i(3, 18, 42, 30)

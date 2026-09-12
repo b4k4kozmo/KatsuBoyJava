@@ -39,7 +39,7 @@ func interact() -> void:
 	sound_number = 20
 	set_sound()
 	if opened == false:
-		gp.play_se(3)
+		gp.play_se(SE.UNLOCK)
 
 		if gp.player.can_obtain_item(loot) == false:
 			start_dialogue(self, 0)

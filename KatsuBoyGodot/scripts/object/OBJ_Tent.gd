@@ -18,7 +18,7 @@ func _init(gp) -> void:
 
 func use(_entity) -> bool:
 	gp.game_state = gp.SLEEP_STATE
-	gp.play_se(14)
+	gp.play_se(SE.SLEEP)
 	gp.player.life = gp.player.max_life
 	gp.player.mana = gp.player.max_mana
 	gp.player.is_cursed = false

@@ -477,7 +477,7 @@ func damage_player(atk: int) -> void:
 			# Parry
 			if gp.player.guard_counter < 10:
 				damage = 0
-				gp.play_se(16)
+				gp.play_se(SE.PARRY)
 				set_knock_back(self, gp.player, knock_back_power)
 				off_balance = true
 				sprite_counter = -60
@@ -485,13 +485,13 @@ func damage_player(atk: int) -> void:
 				# Normal Guard
 				@warning_ignore("integer_division")
 				damage = damage / 3
-				gp.play_se(15)
+				gp.play_se(SE.BLOCK)
 				@warning_ignore("integer_division")
 				set_knock_back(gp.player, self, knock_back_power / 5)
 
 		else:
 			# Not guarding
-			gp.play_se(7)
+			gp.play_se(SE.RECEIVE_DAMAGE)
 			if damage < 1:
 				damage = 1
 

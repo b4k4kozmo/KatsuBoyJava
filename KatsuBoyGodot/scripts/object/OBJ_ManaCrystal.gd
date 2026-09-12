@@ -19,7 +19,7 @@ func _init(gp) -> void:
 func use(_entity) -> bool:
 	sound_number = 20
 	set_sound()
-	gp.play_se(2)
+	gp.play_se(SE.POWER_UP)
 	gp.ui.add_message("Mana +" + str(value))
 	gp.player.mana += value
 	return true

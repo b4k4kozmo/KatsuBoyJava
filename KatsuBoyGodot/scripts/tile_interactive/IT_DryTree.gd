@@ -22,7 +22,7 @@ func is_correct_item(entity) -> bool:
 
 
 func play_se() -> void:
-	gp.play_se(8)
+	gp.play_se(SE.SWING_WEAPON)
 
 
 func get_destroyed_form() -> InteractiveTile:

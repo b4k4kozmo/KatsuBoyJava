@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MonsterStats" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/MonsterStats.gd" id="1_p3fy3"]
+
+[resource]
+script = ExtResource("1_p3fy3")
+display_name = "Shadow"
+max_life = 200
+attack = 7
+defense = 4
+exp_reward = 600
+knock_back_power = 5
+solid_area = Rect2i(4, 4, 40, 44)
+attack_area = Rect2i(0, 0, 48, 48)
+motion1_duration = 40
+motion2_duration = 85

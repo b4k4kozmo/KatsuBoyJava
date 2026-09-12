@@ -2,12 +2,14 @@ class_name Sound
 extends RefCounted
 ## Java: main/Sound.java
 ##
-## One AudioStreamPlayer stands in for the javax.sound Clip. volume_scale keeps
-## the original 0-5 steps and the same decibel values.
+## One AudioStreamPlayer stands in for the javax.sound Clip. Which file each
+## slot plays now comes from a SoundBank resource you can edit in the Inspector
+## (assets/data/sound_bank.tres) rather than a hardcoded list of paths.
+## volume_scale keeps the original 0-5 steps and the same decibel values.
 
 var gp
 var player: AudioStreamPlayer
-var sound_url: Array[String] = []
+var bank: SoundBank
 var volume_scale: int = 3
 var volume: float
 ## loop() in Java used Clip.LOOP_CONTINUOUSLY; here we just restart the stream
@@ -15,41 +17,19 @@ var volume: float
 var looping: bool = false
 
 
-func _init(gp) -> void:
+func _init(gp, bank: SoundBank = null) -> void:
 	self.gp = gp
+	self.bank = bank
 
 	player = AudioStreamPlayer.new()
 	gp.add_child(player)
 	player.finished.connect(_on_finished)
 
-	sound_url.resize(30)
-	sound_url[0] = "KatsuBoySong"
-	sound_url[1] = "coin"
-	sound_url[2] = "powerup"
-	sound_url[3] = "unlock"
-	sound_url[4] = "fanfare"
-	sound_url[5] = "nightbeat"
-	sound_url[6] = "hitmonster"
-	sound_url[7] = "receivedamage"
-	sound_url[8] = "swingweapon"
-	sound_url[9] = "enemydeath"
-	sound_url[10] = "dialogue"
-	sound_url[11] = "cursormove"
-	sound_url[12] = "death"
-	sound_url[13] = "door"
-	sound_url[14] = "sleep"
-	sound_url[15] = "block"
-	sound_url[16] = "parry"
-	sound_url[17] = "text"
-	sound_url[18] = "text2"
-	sound_url[19] = "text3"
-	sound_url[20] = "text4"
-
 
 func set_file(i: int) -> void:
-	if i < 0 or i >= sound_url.size() or sound_url[i] == null or sound_url[i] == "":
+	if bank == null:
 		return
-	var stream: AudioStream = load("res://assets/sound/" + sound_url[i] + ".wav")
+	var stream: AudioStream = bank.get_stream(i)
 	if stream == null:
 		return
 	# Java made a fresh Clip every time, so a sound always restarts from 0 and

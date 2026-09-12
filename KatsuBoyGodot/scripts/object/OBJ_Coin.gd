@@ -15,7 +15,7 @@ func _init(gp) -> void:
 
 
 func use(_entity) -> bool:
-	gp.play_se(1)
+	gp.play_se(SE.COIN)
 	gp.ui.add_message("You found " + str(value) + " shiny " + name + "!")
 	gp.player.coin += value
 	return true

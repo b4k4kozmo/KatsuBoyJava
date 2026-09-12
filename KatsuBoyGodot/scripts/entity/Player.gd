@@ -35,11 +35,9 @@ func _init(gp, key_h: KeyHandler) -> void:
 
 func set_default_values() -> void:
 
-	world_x = gp.tile_size * 94
-	world_y = gp.tile_size * 94
+	set_default_positions()
 	default_speed = 4
 	speed = default_speed
-	direction = "down"
 
 	# PLAYER STATUS
 	level = 1
@@ -69,9 +67,12 @@ func set_default_values() -> void:
 	set_items()
 
 
+## Drop a PlayerStartMarker in a map scene to move the starting point.
 func set_default_positions() -> void:
-	world_x = gp.tile_size * 94
-	world_y = gp.tile_size * 94
+	var start: Vector3i = gp.a_setter.player_start()
+	gp.current_map = start.x
+	world_x = gp.tile_size * start.y
+	world_y = gp.tile_size * start.z
 	direction = "down"
 
 
@@ -273,7 +274,7 @@ func update() -> void:
 				"right": world_x += speed
 
 		if key_h.enter_pressed == true and attack_canceled == false:
-			gp.play_se(8)
+			gp.play_se(SE.SWING_WEAPON)
 			attacking = true
 			sprite_counter = 0
 
@@ -315,7 +316,7 @@ func update() -> void:
 
 		shot_available_counter = 0
 
-		gp.play_se(8)
+		gp.play_se(SE.SWING_WEAPON)
 
 	# This needs to be outside the key if statement!
 	if invincible == true:
@@ -338,7 +339,7 @@ func update() -> void:
 		gp.ui.command_num = -1
 		gp.stop_se()
 		gp.stop_music()
-		gp.play_se(12)
+		gp.play_se(SE.DEATH)
 
 
 func pick_up_object(i: int) -> void:
@@ -360,7 +361,7 @@ func pick_up_object(i: int) -> void:
 		else:
 			var text: String
 			if can_obtain_item(gp.obj[gp.current_map][i]) == true:
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				text = "Got a " + gp.obj[gp.current_map][i].name + "!"
 			else:
 				text = "Your inventory is full!"
@@ -373,7 +374,7 @@ func interact_npc(i: int) -> void:
 		if gp.key_h.enter_pressed == true:
 			attack_canceled = true
 			gp.stop_se()
-			gp.play_se(10)
+			gp.play_se(SE.DIALOGUE)
 			gp.npc[gp.current_map][i].speak()
 			gp.key_h.enter_pressed = false
 
@@ -383,7 +384,7 @@ func contact_monster(i: int) -> void:
 	if i != 999:
 		if invincible == false:
 			if gp.monster[gp.current_map][i].life > 0:
-				gp.play_se(7)
+				gp.play_se(SE.RECEIVE_DAMAGE)
 
 				var damage: int = gp.monster[gp.current_map][i].attack - defense
 				if damage < 1:
@@ -402,7 +403,7 @@ func damage_monster(i: int, atkr, atk: int, knock_back_power: int) -> void:
 
 		if gp.monster[gp.current_map][i].invincible == false:
 
-			gp.play_se(6)
+			gp.play_se(SE.HIT_MONSTER)
 			if knock_back_power > 0:
 				set_knock_back(gp.monster[gp.current_map][i], atkr, knock_back_power)
 
@@ -422,7 +423,7 @@ func damage_monster(i: int, atkr, atk: int, knock_back_power: int) -> void:
 			if gp.monster[gp.current_map][i].life <= 0:
 				gp.monster[gp.current_map][i].dying = true
 				gp.stop_se()
-				gp.play_se(9)
+				gp.play_se(SE.ENEMY_DEATH)
 				gp.ui.add_message("Killed the " + gp.monster[gp.current_map][i].name + "!")
 				gp.ui.add_message("Gained " + str(gp.monster[gp.current_map][i].exp) + " exp!")
 				exp += gp.monster[gp.current_map][i].exp
@@ -469,7 +470,7 @@ func check_level_up() -> void:
 		attack = get_attack()
 		defense = get_defense()  # Java had get_attack() here - clearly a typo
 		gp.stop_se()
-		gp.play_se(4)
+		gp.play_se(SE.FANFARE)
 
 		set_dialogue()
 		start_dialogue(self, 0)

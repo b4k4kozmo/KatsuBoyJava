@@ -27,5 +27,5 @@ func use(entity) -> bool:
 	set_dialogue()
 	start_dialogue(self, 0)
 	entity.mana += entity.max_mana
-	gp.play_se(2)
+	gp.play_se(SE.POWER_UP)
 	return true

@@ -1,7 +1,14 @@
 class_name EntityGenerator
 extends RefCounted
-## Java: main/EntityGenerator.java - builds an item from its name, used by
-## inventory pickups and by the save file loader.
+## Java: main/EntityGenerator.java - builds an entity from its name.
+##
+## Used by inventory pickups, the save file loader, and AssetSetter when it
+## reads the placement markers out of a map scene.
+##
+## ADDING A NEW ITEM / MONSTER / NPC: write its script in scripts/object/,
+## scripts/monster/ or scripts/entity/, add one line to the matching function
+## below, then add its name to the @export_enum list in the matching marker
+## script in scripts/authoring/. After that it is placeable in the editor.
 
 var gp
 
@@ -35,3 +42,39 @@ func get_object(item_name: String) -> Entity:
 		OBJ_Snowball.OBJ_NAME: obj = OBJ_Snowball.new(gp)
 
 	return obj
+
+
+func get_monster(monster_name: String) -> Entity:
+
+	var monster: Entity = null
+
+	match monster_name:
+		"Slime": monster = MON_Slime.new(gp)
+		"Snome": monster = MON_Snome.new(gp)
+		"Kamijack": monster = MON_KamiJack.new(gp)
+		"Shadow": monster = MON_ShadowKatsu.new(gp)
+
+	return monster
+
+
+func get_npc(npc_name: String) -> Entity:
+
+	var npc: Entity = null
+
+	match npc_name:
+		"OldMan": npc = NPC_OldMan.new(gp)
+		"NanaMan": npc = NPC_NanaMan.new(gp)
+		"Merchant": npc = NPC_Merchant.new(gp)
+
+	return npc
+
+
+func get_interactive_tile(kind: String, col: int, row: int) -> InteractiveTile:
+
+	var tile: InteractiveTile = null
+
+	match kind:
+		"DryTree": tile = IT_DryTree.new(gp, col, row)
+		"Trunk": tile = IT_Trunk.new(gp, col, row)
+
+	return tile

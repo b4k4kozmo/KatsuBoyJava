@@ -20,7 +20,7 @@ func _init(gp) -> void:
 func use(entity) -> bool:
 	sound_number = 20
 	set_sound()
-	gp.play_se(2)
+	gp.play_se(SE.POWER_UP)
 	gp.ui.add_message("Life +" + str(value))
 	entity.life += value
 	return true

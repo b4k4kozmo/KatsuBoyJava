@@ -1,6 +1,16 @@
-[gd_scene load_steps=2 format=3 uid="uid://bkatsuboymain"]
+[gd_scene load_steps=6 format=3 uid="uid://bkatsuboymain"]
 
 [ext_resource type="Script" path="res://scripts/main/GamePanel.gd" id="1_gamepanel"]
+[ext_resource type="PackedScene" path="res://scenes/maps/WorldMap.tscn" id="2_worldmap"]
+[ext_resource type="PackedScene" path="res://scenes/maps/MushroomHut.tscn" id="3_mushroomhut"]
+[ext_resource type="PackedScene" path="res://scenes/maps/TestMap.tscn" id="4_testmap"]
+[ext_resource type="Script" path="res://scripts/dev/DevTools.gd" id="5_devtools"]
 
 [node name="GamePanel" type="Node2D"]
 script = ExtResource("1_gamepanel")
+map_scenes = Array[PackedScene]([ExtResource("2_worldmap"), ExtResource("3_mushroomhut"), ExtResource("4_testmap")])
+
+[node name="DevTools" type="Node2D" parent="."]
+script = ExtResource("5_devtools")
+enabled = true
+panel_visible_on_start = false

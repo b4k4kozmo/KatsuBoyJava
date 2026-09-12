@@ -29,7 +29,7 @@ func use(entity) -> bool:
 
 	if obj_index != 999:
 		start_dialogue(self, 0)
-		gp.play_se(3)
+		gp.play_se(SE.UNLOCK)
 		gp.obj[gp.current_map][obj_index] = null
 		return true
 	else:

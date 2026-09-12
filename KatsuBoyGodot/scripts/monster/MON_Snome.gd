@@ -3,26 +3,15 @@ extends Entity
 ## Java: monster/MON_Snome.java
 
 
+const STATS := preload("res://assets/data/monsters/snome.tres")
+
+
 func _init(gp) -> void:
 	super(gp)
 
-	type = TYPE_MONSTER
-	name = "Snome"
-	default_speed = 1
-	speed = default_speed
-	max_life = 12
-	life = max_life
-	attack = 2
-	defense = 2
-	exp = 3
+	# Numbers live in the resource so they can be tuned in the Inspector.
+	STATS.apply_to(self)
 	projectile = OBJ_Snowball.new(gp)
-
-	solid_area.x = 3
-	solid_area.y = 18
-	solid_area.width = 42
-	solid_area.height = 30
-	solid_area_default_x = solid_area.x
-	solid_area_default_y = solid_area.y
 
 	get_image()
 

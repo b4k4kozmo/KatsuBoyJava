@@ -24,8 +24,24 @@ var screen_height: int = tile_size * max_screen_row  # 576 pixels
 # WORLD SETTINGS
 var max_world_col: int = 100
 var max_world_row: int = 100
-var max_map: int = 10
+## Set from map_scenes in _ready(). Add a map scene to the list and this grows.
+var max_map: int = 1
 var current_map: int = 0
+
+## The maps, in order. Map 0 is where the player starts. Drop a new map scene
+## in here from the Inspector and it becomes map 3, 4, ... - no code needed.
+@export var map_scenes: Array[PackedScene] = []
+## The instantiated map scenes, one per index. Live in the scene tree so you
+## can inspect them while the game runs (Debugger -> Remote tree).
+var map_node: Array[Node2D] = []
+
+## Every sound and piece of music, editable in the Inspector.
+## See scripts/data/SE.gd for the slot names.
+@export var sound_bank: SoundBank
+## Holds the map scenes and scrolls them with the player. Sits behind
+## everything GamePanel draws itself (z_index -1), so tiles render under the
+## entities exactly like they did when we blitted them by hand.
+var world: Node2D
 
 # FOR FULL SCREEN
 # (Java kept a BufferedImage "tempScreen" and stretched it onto the window.
@@ -74,11 +90,28 @@ const MAP_STATE := 10
 
 
 func _ready() -> void:
+	# --- the maps come first: everything else reads tiles and markers off them
+	max_map = maxi(map_scenes.size(), 1)
+	world = Node2D.new()
+	world.name = "World"
+	world.z_index = -1
+	add_child(world)
+
+	map_node.resize(max_map)
+	for i in range(map_scenes.size()):
+		if map_scenes[i] == null:
+			continue
+		var m: Node2D = map_scenes[i].instantiate()
+		world.add_child(m)
+		map_node[i] = m
+
 	# --- Java: the GamePanel field initialisers, in the same order ---
 	tile_m = TileManager.new(self)
 	key_h = KeyHandler.new(self)
-	music = Sound.new(self)
-	se = Sound.new(self)
+	if sound_bank == null:
+		sound_bank = load("res://assets/data/sound_bank.tres")
+	music = Sound.new(self, sound_bank)
+	se = Sound.new(self, sound_bank)
 	c_checker = CollisionChecker.new(self)
 	a_setter = AssetSetter.new(self)
 	ui = UI.new(self)
@@ -123,7 +156,7 @@ func setup_game() -> void:
 	a_setter.set_monster()
 	a_setter.set_interactive_tile()
 	e_manager.setup()
-#	play_music(0)
+#	play_music(SE.MUSIC_MAIN)
 	game_state = TITLE_STATE
 
 
@@ -163,6 +196,15 @@ func _physics_process(_delta: float) -> void:
 
 
 func _process(_delta: float) -> void:
+	# Scroll the tile layers to match the hand-computed screen positions the
+	# entity drawing uses, and show only the map we are standing on.
+	if world != null and player != null:
+		world.position = Vector2(-player.world_x + player.screen_x,
+				-player.world_y + player.screen_y)
+		for i in range(map_node.size()):
+			if map_node[i] != null:
+				map_node[i].visible = (i == current_map and game_state != MAP_STATE)
+
 	queue_redraw()
 
 

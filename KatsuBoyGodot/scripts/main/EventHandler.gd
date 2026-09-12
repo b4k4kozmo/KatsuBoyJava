@@ -1,6 +1,12 @@
 class_name EventHandler
 extends RefCounted
 ## Java: main/EventHandler.java
+##
+## Java had one hardcoded line per event in checkEvent(). Now every event is an
+## EventMarker node you drop under a map scene's "Events" group and configure in
+## the Inspector. This walks those markers in tree order and runs the first one
+## the player is standing on - so if two overlap, the one higher in the tree
+## wins, exactly like the old if/else-if chain.
 
 var gp
 ## Java allocated an EventRect for every tile of every map - 10 x 100 x 100 =
@@ -15,6 +21,8 @@ var can_touch_event: bool = true
 var temp_map: int
 var temp_col: int
 var temp_row: int
+## Every EventMarker in the game: {"marker": EventMarker, "map": int}
+var events: Array[Dictionary] = []
 
 
 func _init(gp) -> void:
@@ -22,7 +30,24 @@ func _init(gp) -> void:
 
 	event_master = Entity.new(gp)
 
+	collect_events()
 	set_dialogue()
+
+
+## Gather the EventMarker nodes out of every map scene.
+func collect_events() -> void:
+
+	events.clear()
+
+	for map_num in range(gp.max_map):
+		if map_num >= gp.map_node.size() or gp.map_node[map_num] == null:
+			continue
+		var group: Node = gp.map_node[map_num].get_node_or_null("Events")
+		if group == null:
+			continue
+		for m in group.get_children():
+			if m is EventMarker:
+				events.append({"marker": m, "map": map_num})
 
 
 func get_event_rect(map: int, col: int, row: int) -> EventRect:
@@ -62,15 +87,43 @@ func check_event() -> void:
 
 	if can_touch_event == true:
 
-		if hit(0, 95, 95, "any") == true: damage_pit(gp.DIALOGUE_STATE)
-		elif hit(0, 5, 71, "down") == true: healing_pool(gp.DIALOGUE_STATE)
-		elif hit(0, 97, 97, "any") == true: teleport(gp.DIALOGUE_STATE, 5, 70)
-		elif hit(0, 8, 46, "any") == true: change_map(1, 26, 32)
-		elif hit(1, 26, 32, "any") == true: change_map(0, 8, 46)
-		elif hit(1, 26, 20, "up") == true: speak(gp.npc[1][1])
+		for e in events:
+			var marker: EventMarker = e["marker"]
+			if e["map"] != gp.current_map:
+				continue
+			if hit(e["map"], marker.tile_col(), marker.tile_row(), marker.required_direction) == true:
+				run_event(marker)
+				break
 
-		elif hit(0, 10, 9, "up") == true: change_map(2, 82, 67)
-		elif hit(2, 82, 67, "any") == true: change_map(0, 10, 9)
+
+func run_event(marker: EventMarker) -> void:
+
+	match marker.kind:
+		"DamagePit":
+			damage_pit(gp.DIALOGUE_STATE)
+		"HealingPool":
+			healing_pool(gp.DIALOGUE_STATE)
+		"Teleport":
+			teleport(gp.DIALOGUE_STATE, marker.target_col, marker.target_row)
+		"ChangeMap":
+			change_map(marker.target_map, marker.target_col, marker.target_row)
+		"Speak":
+			var entity := resolve_speak_target(marker)
+			if entity != null:
+				speak(entity)
+
+
+## Turn an EventMarker's "Speak Npc" NodePath into the live NPC entity that
+## AssetSetter built from that marker.
+func resolve_speak_target(marker: EventMarker) -> Entity:
+
+	if marker.speak_npc.is_empty():
+		return null
+	var npc_marker: Node = marker.get_node_or_null(marker.speak_npc)
+	if npc_marker == null:
+		push_warning("Speak event '%s' points at a node that is not there." % marker.name)
+		return null
+	return gp.a_setter.npc_by_marker.get(npc_marker)
 
 
 func hit(map: int, col: int, row: int, req_direction: String) -> bool:
@@ -103,7 +156,7 @@ func hit(map: int, col: int, row: int, req_direction: String) -> bool:
 
 func teleport(game_state: int, x: int, y: int) -> void:
 	gp.game_state = game_state
-	gp.play_se(4)
+	gp.play_se(SE.FANFARE)
 	event_master.start_dialogue(event_master, 0)
 	gp.player.world_x = gp.tile_size * x
 	gp.player.world_y = gp.tile_size * y
@@ -111,7 +164,7 @@ func teleport(game_state: int, x: int, y: int) -> void:
 
 func damage_pit(game_state: int) -> void:
 	gp.game_state = game_state
-	gp.play_se(7)
+	gp.play_se(SE.RECEIVE_DAMAGE)
 	event_master.start_dialogue(event_master, 1)
 	gp.player.life -= 1
 	can_touch_event = false
@@ -123,7 +176,7 @@ func healing_pool(game_state: int) -> void:
 		gp.game_state = game_state
 		gp.player.attack_canceled = true
 		gp.stop_se()
-		gp.play_se(2)
+		gp.play_se(SE.POWER_UP)
 		event_master.start_dialogue(event_master, 2)
 		gp.player.life = gp.player.max_life
 		gp.player.mana = gp.player.max_mana
@@ -138,7 +191,7 @@ func change_map(current_map: int, x: int, y: int) -> void:
 	temp_col = x
 	temp_row = y
 	can_touch_event = false
-	gp.play_se(13)
+	gp.play_se(SE.DOOR)
 
 
 func speak(entity) -> void:

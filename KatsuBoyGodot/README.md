@@ -9,6 +9,17 @@ no add-ons.
 1. Open Godot 4.5.1 → **Import** → pick `KatsuBoyGodot/project.godot`.
 2. Let it import the assets once (a few seconds), then press **F5**.
 
+**If you want to add maps, monsters, items or sounds, read
+[AUTHORING.md](AUTHORING.md)** — most of that is done in the editor without
+touching code. This file is about how the port works.
+
+Press **F1** in game for the dev panel (cheats, live stats, click-to-teleport).
+Run the regression tests with:
+
+```
+godot --headless --path . res://tests/SmokeTest.tscn
+```
+
 ### Controls
 
 | Action | Key |
@@ -44,6 +55,17 @@ side by side. Java package → Godot folder, one class per file:
 | `src/data/*.java` | `scripts/data/*.gd` |
 | `res/*` | `assets/*` |
 
+Two parts are no longer code, because they are things you edit rather than read:
+
+| Java | Here |
+|---|---|
+| `res/maps/*.txt` + the tile list in `TileManager` | a Godot **TileSet** (`assets/tiles/katsuboy_tileset.tres`) painted onto **TileMapLayer** nodes in `scenes/maps/*.tscn`. Tile collision is the TileSet's `collision` custom data layer. |
+| `AssetSetter` / `EventHandler`'s hardcoded placements | **marker nodes** in those same map scenes (`scripts/authoring/*.gd`). `AssetSetter` walks them at startup and builds the same entities it always did. |
+
+`TileManager` still fills in `tile[id].image`, `tile[id].collision` and
+`map_tile_num[map][col][row]`, so collision, pathfinding and the mini map read
+exactly what they read before — only the source of that data changed.
+
 Method and field names are the same, just in GDScript's `snake_case`
 (`worldX` → `world_x`, `checkCollision()` → `check_collision()`), so searching
 for a Java name with an underscore in it will find the same code here.
@@ -59,7 +81,7 @@ for a Java name with an underscore in it will find the same code here.
 | `java.awt.Rectangle` | `scripts/util/Rect.gd` | Godot's `Rect2i` is a value type; the game relies on rectangles being mutable objects that get aliased and temporarily shifted, so this is a tiny reference-type stand-in with the same `intersects()` rules. |
 | `java.awt.Color` | `Color8(r, g, b, a)` | Same 0–255 values. |
 | `RadialGradientPaint` | `GradientTexture2D` (radial fill) | Same five colour stops. It is drawn from a square texture centred on the player so the light stays a circle. |
-| `javax.sound.sampled.Clip` | `AudioStreamPlayer` | Same 0–5 volume steps and the same dB values. Looping restarts the stream on `finished`. |
+| `javax.sound.sampled.Clip` | `AudioStreamPlayer` | Same 0–5 volume steps and the same dB values. Looping restarts the stream on `finished`. Which file each slot plays is a `SoundBank` resource, and `SE.gd` names the slots so calls read `play_se(SE.COIN)`. |
 | `ObjectOutputStream` → `save.dat` | `FileAccess.store_var` → `user://save.dat` | GDScript has no object serialisation, so `DataStorage` gained `to_dict()`/`from_dict()`. `config.txt` moved to `user://` too, because `res://` is read-only in an exported game. |
 | `ai/Node.java` | `ai/PathNode.gd` | `Node` is Godot's own base class. |
 | `object/SuperObject.java` | dropped | Dead code — nothing referenced it. |
@@ -100,6 +122,9 @@ GDScript.
   `load` restored **mana from maxMana**.
 - Every monster's `checkDrop` had `if (i >= 50 && 1 < 75)` — a typo for
   `i < 75` that made two drop branches fire at once.
+- Slimes and Kamijacks set `speed` but never `defaultSpeed`, so the first time
+  one was knocked back it recovered to speed 0 and stopped moving for good.
+  `MonsterStats` sets both.
 
 **Performance** (this is what made the Java build stutter)
 
@@ -131,9 +156,9 @@ artificial worst case of all 23 monsters pathfinding at once.
   project — `%APPDATA%\Godot\app_userdata\Adventure of Katsu Boy 2D\` on
   Windows, `~/.local/share/godot/app_userdata/…` on Linux,
   `~/Library/Application Support/Godot/app_userdata/…` on macOS.
-- **If you export the game**, add `*.txt` to *Filters to export non-resource
-  files/folders* in the export preset. The maps in `assets/maps/` are plain
-  text and Godot does not bundle non-resource files by default. Running from
-  the editor needs no such step.
-- Maps 3–9 exist but are empty; only `worldmap`, `mushroomhut` and `testmap`
-  are loaded, same as the Java version.
+- The number of maps comes from GamePanel's **Map Scenes** list, so Java's
+  fixed `maxMap = 10` (seven of which were empty) is now however many maps you
+  actually have.
+- `assets/maps/*.txt` are the original text maps. Nothing reads them at run time
+  any more — they are kept only so `tools/build_maps.gd` can redo the
+  conversion. The `tools/` scripts never run in game.

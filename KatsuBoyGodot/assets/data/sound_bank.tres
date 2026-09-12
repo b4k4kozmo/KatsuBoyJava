@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="SoundBank" load_steps=23 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/SoundBank.gd" id="1_q5axy"]
+[ext_resource type="AudioStream" path="res://assets/sound/KatsuBoySong.wav" id="2_hf8g4"]
+[ext_resource type="AudioStream" path="res://assets/sound/coin.wav" id="3_7w16x"]
+[ext_resource type="AudioStream" path="res://assets/sound/powerup.wav" id="4_33kkg"]
+[ext_resource type="AudioStream" path="res://assets/sound/unlock.wav" id="5_r78ig"]
+[ext_resource type="AudioStream" path="res://assets/sound/fanfare.wav" id="6_hrm3p"]
+[ext_resource type="AudioStream" path="res://assets/sound/nightbeat.wav" id="7_1ux8v"]
+[ext_resource type="AudioStream" path="res://assets/sound/hitmonster.wav" id="8_vcqv8"]
+[ext_resource type="AudioStream" path="res://assets/sound/receivedamage.wav" id="9_fh08e"]
+[ext_resource type="AudioStream" path="res://assets/sound/swingweapon.wav" id="10_7fj7t"]
+[ext_resource type="AudioStream" path="res://assets/sound/enemydeath.wav" id="11_3bavm"]
+[ext_resource type="AudioStream" path="res://assets/sound/dialogue.wav" id="12_yctbe"]
+[ext_resource type="AudioStream" path="res://assets/sound/cursormove.wav" id="13_dhkx1"]
+[ext_resource type="AudioStream" path="res://assets/sound/death.wav" id="14_wigup"]
+[ext_resource type="AudioStream" path="res://assets/sound/door.wav" id="15_llvo4"]
+[ext_resource type="AudioStream" path="res://assets/sound/sleep.wav" id="16_plbtp"]
+[ext_resource type="AudioStream" path="res://assets/sound/block.wav" id="17_yiwps"]
+[ext_resource type="AudioStream" path="res://assets/sound/parry.wav" id="18_y75qj"]
+[ext_resource type="AudioStream" path="res://assets/sound/text.wav" id="19_rx45f"]
+[ext_resource type="AudioStream" path="res://assets/sound/text2.wav" id="20_pse30"]
+[ext_resource type="AudioStream" path="res://assets/sound/text3.wav" id="21_5s34g"]
+[ext_resource type="AudioStream" path="res://assets/sound/text4.wav" id="22_324nd"]
+
+[resource]
+script = ExtResource("1_q5axy")
+sounds = Array[AudioStream]([ExtResource("2_hf8g4"), ExtResource("3_7w16x"), ExtResource("4_33kkg"), ExtResource("5_r78ig"), ExtResource("6_hrm3p"), ExtResource("7_1ux8v"), ExtResource("8_vcqv8"), ExtResource("9_fh08e"), ExtResource("10_7fj7t"), ExtResource("11_3bavm"), ExtResource("12_yctbe"), ExtResource("13_dhkx1"), ExtResource("14_wigup"), ExtResource("15_llvo4"), ExtResource("16_plbtp"), ExtResource("17_yiwps"), ExtResource("18_y75qj"), ExtResource("19_rx45f"), ExtResource("20_pse30"), ExtResource("21_5s34g"), ExtResource("22_324nd")])

@@ -59,40 +59,40 @@ func title_state(code: int) -> void:
 	if gp.ui.title_screen_state == 0:
 		if code == KEY_W:
 			gp.ui.command_num -= 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num < 0:
 				gp.stop_se()
 				gp.ui.command_num = 0
 		if code == KEY_S:
 			gp.ui.command_num += 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num > 2:
 				gp.stop_se()
 				gp.ui.command_num = 2
 		if code == KEY_ENTER:
 			if gp.ui.command_num == 0:
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				gp.ui.title_screen_state = 1
-				gp.play_music(0)
+				gp.play_music(SE.MUSIC_MAIN)
 			if gp.ui.command_num == 1:
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				gp.save_load.load_game()
 				gp.game_state = gp.PLAY_STATE
-				gp.play_music(0)
+				gp.play_music(SE.MUSIC_MAIN)
 			if gp.ui.command_num == 2:
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				gp.get_tree().quit()
 
 	elif gp.ui.title_screen_state == 1:
 		if code == KEY_W:
 			gp.ui.command_num -= 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num < 0:
 				gp.stop_se()
 				gp.ui.command_num = 0
 		if code == KEY_S:
 			gp.ui.command_num += 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num > 3:
 				gp.stop_se()
 				gp.ui.command_num = 3
@@ -100,22 +100,22 @@ func title_state(code: int) -> void:
 
 			if gp.ui.command_num == 0:
 				# Do some samurai specific stuff
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				gp.game_state = gp.PLAY_STATE
 				gp.player.inventory.append(OBJ_Kamibokken.new(gp))
 
 			if gp.ui.command_num == 1:
 				# Do some Ninja specific stuff
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				gp.game_state = gp.PLAY_STATE
 				gp.player.has_boots = true
 				gp.ui.command_num = 0
 
 			if gp.ui.command_num == 2:
 				# Do some Zilla specific stuff
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				gp.stop_music()
-				gp.play_music(5)
+				gp.play_music(SE.MUSIC_NIGHT)
 				gp.ui.kamiwhite = gp.ui.kamigreen
 				gp.ui.kamipink = gp.ui.kamigreen
 				gp.game_state = gp.PLAY_STATE
@@ -123,7 +123,7 @@ func title_state(code: int) -> void:
 				gp.ui.command_num = 0
 
 			if gp.ui.command_num == 3:
-				gp.play_se(1)
+				gp.play_se(SE.COIN)
 				gp.ui.title_screen_state = 0
 				gp.stop_music()
 				gp.ui.command_num = 0
@@ -146,15 +146,15 @@ func play_state(code: int) -> void:
 		gp.game_state = gp.OPTION_STATE
 	if code == KEY_P:
 		gp.game_state = gp.PAUSE_STATE
-		gp.play_se(1)
+		gp.play_se(SE.COIN)
 	if code == KEY_C:
 		gp.game_state = gp.CHARACTER_STATE
-		gp.play_se(1)
+		gp.play_se(SE.COIN)
 	if code == KEY_ENTER:
 		enter_pressed = true
 	if code == KEY_M:
 		gp.game_state = gp.MAP_STATE
-		gp.play_se(1)
+		gp.play_se(SE.COIN)
 	if code == KEY_X:
 		gp.map.mini_map_on = not gp.map.mini_map_on
 	if code == KEY_CTRL:
@@ -173,7 +173,7 @@ func play_state(code: int) -> void:
 func pause_state(code: int) -> void:
 	if code == KEY_P:
 		gp.game_state = gp.PLAY_STATE
-		gp.play_se(1)
+		gp.play_se(SE.COIN)
 
 
 func dialogue_state(code: int) -> void:
@@ -184,7 +184,7 @@ func dialogue_state(code: int) -> void:
 func character_state(code: int) -> void:
 	if code == KEY_C:
 		gp.game_state = gp.PLAY_STATE
-		gp.play_se(1)
+		gp.play_se(SE.COIN)
 
 	if code == KEY_ENTER:
 		gp.player.select_item()
@@ -198,7 +198,7 @@ func option_state(code: int) -> void:
 		gp.game_state = gp.PLAY_STATE
 	if code == KEY_ENTER:
 		enter_pressed = true
-		gp.play_se(1)
+		gp.play_se(SE.COIN)
 
 	var max_command_num := 0
 	match gp.ui.sub_state:
@@ -207,13 +207,13 @@ func option_state(code: int) -> void:
 
 	if code == KEY_W:
 		gp.ui.command_num -= 1
-		gp.play_se(11)
+		gp.play_se(SE.CURSOR_MOVE)
 		if gp.ui.command_num < 0:
 			gp.ui.command_num = 0
 			gp.stop_se()
 	if code == KEY_S:
 		gp.ui.command_num += 1
-		gp.play_se(11)
+		gp.play_se(SE.CURSOR_MOVE)
 		if gp.ui.command_num > max_command_num:
 			gp.ui.command_num = max_command_num
 			gp.stop_se()
@@ -222,33 +222,33 @@ func option_state(code: int) -> void:
 			if gp.ui.command_num == 1 and gp.music.volume_scale > 0:
 				gp.music.volume_scale -= 1
 				gp.music.check_volume()
-				gp.play_se(11)
+				gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num == 2 and gp.se.volume_scale > 0:
 				gp.se.volume_scale -= 1
-				gp.play_se(11)
+				gp.play_se(SE.CURSOR_MOVE)
 	if code == KEY_D:
 		if gp.ui.sub_state == 0:
 			if gp.ui.command_num == 1 and gp.music.volume_scale < 5:
 				gp.music.volume_scale += 1
 				gp.music.check_volume()
-				gp.play_se(11)
+				gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num == 2 and gp.se.volume_scale < 5:
 				gp.se.volume_scale += 1
-				gp.play_se(11)
+				gp.play_se(SE.CURSOR_MOVE)
 
 
 func game_over_state(code: int) -> void:
 
 	if code == KEY_W:
 		gp.ui.command_num -= 1
-		gp.play_se(11)
+		gp.play_se(SE.CURSOR_MOVE)
 		if gp.ui.command_num < 0:
 			gp.ui.command_num = 0
 			gp.stop_se()
 
 	if code == KEY_S:
 		gp.ui.command_num += 1
-		gp.play_se(11)
+		gp.play_se(SE.CURSOR_MOVE)
 		if gp.ui.command_num > 1:
 			gp.ui.command_num = 1
 			gp.stop_se()
@@ -257,7 +257,7 @@ func game_over_state(code: int) -> void:
 		if gp.ui.command_num == 0:
 			gp.game_state = gp.PLAY_STATE
 			gp.reset_game(false)
-			gp.play_music(0)
+			gp.play_music(SE.MUSIC_MAIN)
 		elif gp.ui.command_num == 1:
 			gp.game_state = gp.TITLE_STATE
 			gp.ui.title_screen_state = 0
@@ -273,13 +273,13 @@ func trade_state(code: int) -> void:
 	if gp.ui.sub_state == 0:
 		if code == KEY_W:
 			gp.ui.command_num -= 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num < 0:
 				gp.ui.command_num = 0
 				gp.stop_se()
 		if code == KEY_S:
 			gp.ui.command_num += 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num > 2:
 				gp.ui.command_num = 2
 				gp.stop_se()
@@ -305,19 +305,19 @@ func player_inventory(code: int) -> void:
 	if code == KEY_W:
 		if gp.ui.player_slot_row != 0:
 			gp.ui.player_slot_row -= 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 	if code == KEY_A:
 		if gp.ui.player_slot_col != 0:
 			gp.ui.player_slot_col -= 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 	if code == KEY_S:
 		if gp.ui.player_slot_row != 3:
 			gp.ui.player_slot_row += 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 	if code == KEY_D:
 		if gp.ui.player_slot_col != 4:
 			gp.ui.player_slot_col += 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 
 
 func npc_inventory(code: int) -> void:
@@ -325,19 +325,19 @@ func npc_inventory(code: int) -> void:
 	if code == KEY_W:
 		if gp.ui.npc_slot_row != 0:
 			gp.ui.npc_slot_row -= 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 	if code == KEY_A:
 		if gp.ui.npc_slot_col != 0:
 			gp.ui.npc_slot_col -= 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 	if code == KEY_S:
 		if gp.ui.npc_slot_row != 3:
 			gp.ui.npc_slot_row += 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 	if code == KEY_D:
 		if gp.ui.npc_slot_col != 4:
 			gp.ui.npc_slot_col += 1
-			gp.play_se(11)
+			gp.play_se(SE.CURSOR_MOVE)
 
 
 func key_released(code: int) -> void:

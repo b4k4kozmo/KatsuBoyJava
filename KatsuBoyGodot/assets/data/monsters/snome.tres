@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MonsterStats" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/MonsterStats.gd" id="1_aspj2"]
+
+[resource]
+script = ExtResource("1_aspj2")
+display_name = "Snome"
+max_life = 12
+attack = 2
+defense = 2
+exp_reward = 3
+solid_area = Rect2i(3, 18, 42, 30)
