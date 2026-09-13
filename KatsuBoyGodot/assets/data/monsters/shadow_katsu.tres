@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1_p3fy3")
 display_name = "Shadow"
-max_life = 200
-attack = 7
-defense = 4
-exp_reward = 600
+max_life = 64
+attack = 14
+defense = 10
+exp_reward = 60
 knock_back_power = 5
 solid_area = Rect2i(4, 4, 40, 44)
 attack_area = Rect2i(0, 0, 48, 48)

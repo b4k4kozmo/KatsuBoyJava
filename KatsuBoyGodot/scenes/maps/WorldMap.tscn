@@ -315,19 +315,18 @@ monster = "Snome"
 [node name="Kamijack" type="Node2D" parent="Monsters"]
 position = Vector2(4224, 3696)
 script = ExtResource("4_41b5e")
-monster = "Kamijack"
+monster = "Snome"
 
 [node name="Kamijack2" type="Node2D" parent="Monsters"]
 position = Vector2(4416, 3504)
 script = ExtResource("4_41b5e")
-monster = "Kamijack"
+monster = "Snome"
 
-[node name="Kamijack3" type="Node2D" parent="Monsters"]
+[node name="Slime7" type="Node2D" parent="Monsters"]
 position = Vector2(1296, 3792)
 script = ExtResource("4_41b5e")
-monster = "Kamijack"
 
-[node name="Kamijack4" type="Node2D" parent="Monsters"]
+[node name="KamijackLandmark" type="Node2D" parent="Monsters"]
 position = Vector2(3792, 2496)
 script = ExtResource("4_41b5e")
 monster = "Kamijack"
@@ -335,12 +334,12 @@ monster = "Kamijack"
 [node name="Kamijack5" type="Node2D" parent="Monsters"]
 position = Vector2(3168, 2160)
 script = ExtResource("4_41b5e")
-monster = "Kamijack"
+monster = "Snome"
 
 [node name="Shadow" type="Node2D" parent="Monsters"]
 position = Vector2(336, 2832)
 script = ExtResource("4_41b5e")
-monster = "Shadow"
+monster = "Snome"
 
 [node name="InteractiveTiles" type="Node2D" parent="."]
 

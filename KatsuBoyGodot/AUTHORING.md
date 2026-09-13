@@ -36,6 +36,7 @@ to play.
 | which tiles block movement | `assets/tiles/katsuboy_tileset.tres` |
 | monster stats | `assets/data/monsters/*.tres` |
 | the player's starting stats and speeds | `assets/data/player.tres` |
+| the exp curve and what a level gives you | `assets/data/player.tres` → Levelling |
 | sounds and music | `assets/data/sound_bank.tres` |
 | the list of maps, colours, day/night length | `main.tscn` → select **GamePanel** |
 | key bindings | Project Settings → Input Map |
@@ -196,6 +197,7 @@ Under **Monsters**. Spawns one monster.
 | Property | What it does |
 |---|---|
 | **Monster** | Slime / Snome / Kamijack / Shadow / Boss |
+| **Boss Stats** | `Boss` only — drag in a `MonsterStats` from `assets/data/monsters/` (`boss_cave.tres`, `boss_deep.tres`). Without one the boss is a Kamijack with six times the health, which is a placeholder, not a fight. |
 | **Boss Dungeon Id** | `Boss` only — the `DungeonInfo` id this boss guards. Killing it clears that dungeon. |
 | **Reward Ticket** | `Boss` only — the `ticket_id` of the route its death opens. Leave empty if it opens nothing. |
 

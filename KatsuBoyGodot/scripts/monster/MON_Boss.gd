@@ -29,10 +29,9 @@ var _phase_two: bool = false
 func _init(gp) -> void:
 	super(gp)
 
+	# Placeholder numbers: a Kamijack scaled up. A boss that matters gets its
+	# own MonsterStats dropped onto its marker - see apply_stats().
 	STATS.apply_to(self)
-
-	# A boss should not die like a slime. Tune per boss in a subclass, or give
-	# it its own .tres.
 	max_life = STATS.max_life * 6
 	life = max_life
 	attack = STATS.attack * 2
@@ -40,6 +39,14 @@ func _init(gp) -> void:
 	exp = STATS.exp_reward * 8
 	name = "Boss"
 
+	get_image()
+
+
+## Take this boss's numbers from its own stat sheet. Called by AssetSetter when
+## the marker has one.
+func apply_stats(stats: MonsterStats) -> void:
+	stats.apply_to(self)
+	life = max_life
 	get_image()
 
 

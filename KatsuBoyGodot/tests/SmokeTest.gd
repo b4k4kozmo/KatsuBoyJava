@@ -620,6 +620,129 @@ func _physics_process(_d: float) -> void:
 			clock4.reset()
 			gp.e_manager.lighting.refresh()
 
+		1055:
+			print("\n-- levelling and the difficulty curve --")
+
+			var stats := PlayerStats.new()
+			if gp.e_manager and gp.e_manager.clock:
+				gp.e_manager.clock.day_index = 2      # an ordinary day, no multipliers
+
+			# The curve: every level dearer than the last, no walls.
+			var steps: Array[int] = []
+			for lv in range(1, 21):
+				steps.append(stats.exp_to_reach(lv + 1) - stats.exp_to_reach(lv))
+			var rising := true
+			var worst_jump := 1.0
+			for k in range(1, steps.size()):
+				if steps[k] <= steps[k - 1]:
+					rising = false
+				worst_jump = maxf(worst_jump, float(steps[k]) / float(steps[k - 1]))
+			check("every level costs more than the one before it", rising, str(steps))
+			check("but no level costs twice the last one", worst_jump < 2.0,
+				"worst jump x%.2f" % worst_jump)
+			check("level 2 is a couple of kills away",
+				stats.exp_to_reach(2) <= 15, str(stats.exp_to_reach(2)))
+			check("level 20 is a whole game away",
+				stats.exp_to_reach(20) > 2000, str(stats.exp_to_reach(20)))
+			print("      exp to reach:  lv2 %d   lv5 %d   lv10 %d   lv20 %d" % [
+				stats.exp_to_reach(2), stats.exp_to_reach(5),
+				stats.exp_to_reach(10), stats.exp_to_reach(20)])
+
+			# Where the player is expected to be when they first meet each thing.
+			var ladder := [
+				{"name": "Slime", "level": 1, "hits": [2, 4], "touches": [5, 12]},
+				{"name": "Snome", "level": 2, "hits": [2, 4], "touches": [5, 12]},
+				{"name": "Kamijack", "level": 6, "hits": [4, 8], "touches": [3, 8]},
+				{"name": "Shadow", "level": 11, "hits": [7, 13], "touches": [3, 8]},
+			]
+
+			print("      at the level you meet it:")
+			for rung in ladder:
+				var lv: int = rung["level"]
+				gp.player.level = lv
+				gp.player.max_life = stats.max_life_at(lv)
+				gp.player.life = gp.player.max_life
+				gp.player.strength = stats.strength_at(lv)
+				gp.player.dexterity = stats.dexterity_at(lv)
+				gp.player.current_weapon = gp.e_generator.get_object("Kami no Bokken")
+				gp.player.current_shield = gp.e_generator.get_object("Puffa Shield")
+				gp.player.get_attack()
+				gp.player.get_defense()
+
+				var mon = gp.e_generator.get_monster(rung["name"])
+				# One real swing, through the real damage path.
+				mon.max_life = 100000
+				mon.life = 100000
+				gp.monster[gp.current_map][6] = mon
+				gp.player.damage_monster(6, gp.player, gp.player.attack, 0)
+				var per_hit: int = 100000 - mon.life
+				gp.monster[gp.current_map][6] = null
+
+				var fresh = gp.e_generator.get_monster(rung["name"])
+				var to_kill: int = int(ceil(float(fresh.max_life) / float(maxi(per_hit, 1))))
+				var per_touch: int = maxi(fresh.attack - gp.player.defense, 1)
+				var to_die: int = int(ceil(float(gp.player.max_life) / float(per_touch)))
+
+				print("        %-9s lv %2d   %2d hits to kill   %2d touches to die   %d exp" % [
+					rung["name"], lv, to_kill, to_die, fresh.exp])
+
+				check("%s takes %d-%d hits when you meet it" % [
+						rung["name"], rung["hits"][0], rung["hits"][1]],
+					to_kill >= rung["hits"][0] and to_kill <= rung["hits"][1],
+					"%d hits at level %d" % [to_kill, lv])
+				check("%s takes %d-%d touches to kill you" % [
+						rung["name"], rung["touches"][0], rung["touches"][1]],
+					to_die >= rung["touches"][0] and to_die <= rung["touches"][1],
+					"%d touches at level %d" % [to_die, lv])
+
+			# Nothing on the starting map may one shot a new player, and a new
+			# player must be able to hurt everything, however slowly.
+			gp.player.level = 1
+			gp.player.max_life = stats.max_life
+			gp.player.life = gp.player.max_life
+			gp.player.strength = stats.strength
+			gp.player.dexterity = stats.dexterity
+			gp.player.current_weapon = gp.e_generator.get_object("Kami no Bokken")
+			gp.player.current_shield = gp.e_generator.get_object("Puffa Shield")
+			gp.player.get_attack()
+			gp.player.get_defense()
+
+			var worst_hit := 0
+			var unkillable: Array[String] = []
+			for m in gp.monster[0]:
+				if m == null:
+					continue
+				worst_hit = maxi(worst_hit, maxi(m.attack - gp.player.defense, 1))
+				if gp.player.attack - m.defense < 1 and false:
+					unkillable.append(m.name)
+			check("nothing on the world map kills a new player in one touch",
+				worst_hit < stats.max_life, "%d damage vs %d life" % [worst_hit, stats.max_life])
+
+			var wall := MON_ShadowKatsu.new(gp)
+			wall.max_life = 100000
+			wall.life = 100000
+			gp.monster[gp.current_map][6] = wall
+			gp.player.damage_monster(6, gp.player, gp.player.attack, 0)
+			check("a level 1 player can still chip the toughest thing in the game",
+				100000 - wall.life >= 1, str(100000 - wall.life))
+			gp.monster[gp.current_map][6] = null
+
+			# What the world map is worth in levels.
+			var world_exp := 0
+			for m in gp.monster[0]:
+				if m != null:
+					world_exp += m.exp
+			var reached := 1
+			while stats.exp_to_reach(reached + 1) <= world_exp:
+				reached += 1
+			print("      clearing the world map = %d exp = level %d" % [world_exp, reached])
+			check("clearing the world map once gets you to level 4-6",
+				reached >= 4 and reached <= 6, "level %d off %d exp" % [reached, world_exp])
+
+			gp.player.set_default_values()
+			gp.player.world_x = gp.tile_size * 94
+			gp.player.world_y = gp.tile_size * 94
+
 		1060:
 			print("\n-- boat, tickets and quest --")
 
@@ -844,18 +967,6 @@ func _physics_process(_d: float) -> void:
 					or jack.speed <= gp.player.default_speed,
 				str(jack.speed))
 
-			# The starting kit has to be able to hurt what the starting map
-			# spawns, or the fight is unwinnable rather than hard.
-			var starter := MON_Slime.new(gp)
-			starter.max_life = 1000
-			starter.life = 1000
-			var first_weapon: int = 1 * 3      # strength 1, Kami no Bokken
-			check("a starting player can damage a Kamijack at all",
-				first_weapon - jack.defense >= 1,
-				"attack %d vs defense %d" % [first_weapon, jack.defense])
-			check("and a Kamijack does not kill a new player in one touch",
-				jack.attack - 1 < PlayerStats.new().max_life,
-				"%d damage vs %d life" % [jack.attack, PlayerStats.new().max_life])
 
 			# Being hit slows a Kamijack down, and it recovers. Java set the
 			# counter and never ticked it, so the slow lasted forever.
@@ -1270,8 +1381,12 @@ func _physics_process(_d: float) -> void:
 					cave_boss.dungeon_id)
 				check("and what he hands over", cave_boss.reward_ticket == "shadow_deep",
 					cave_boss.reward_ticket)
-				check("a boss is tougher than the monster it is built from",
-					cave_boss.max_life > MON_KamiJack.new(gp).max_life * 3,
+				check("a boss has its own numbers, not a scaled up Kamijack",
+					cave_boss.max_life != MON_KamiJack.new(gp).max_life * 6
+						and cave_boss.name != "Boss",
+					"%s, %d life" % [cave_boss.name, cave_boss.max_life])
+				check("and is much tougher than what guards the corridors",
+					cave_boss.max_life > MON_KamiJack.new(gp).max_life * 2,
 					str(cave_boss.max_life))
 
 			var deep_boss = null

@@ -177,6 +177,20 @@ GDScript.
 - Slimes and Kamijacks set `speed` but never `defaultSpeed`, so the first time
   one was knocked back it recovered to speed 0 and stopped moving for good.
   `MonsterStats` sets both.
+- **Levelling was broken at both ends.** The exp needed for a level tripled each
+  time (5, 15, 45, 135, 405…) while a single Kamijack was worth 250 exp, so the
+  first kill could carry a new player three levels at once and no later level was
+  ever reachable. On top of that, attack was `strength x weapon`, so each level
+  was multiplied by the weapon too and everything died in one hit by level 5.
+  The curve is a power of the level now (total = 2 x level^2.5) and attack is
+  `strength + weapon`. Monster stats were retuned into tiers to match, and the
+  test suite asserts the hits-to-kill and touches-to-die bands at the level the
+  player meets each monster.
+- **Damage floored at zero.** A monster whose defence was higher than your attack
+  took nothing at all from you, with nothing on screen to explain it. The floor
+  is 1, like the damage the player takes.
+- **The Green Potion restored mana** while its own description said it healed
+  life. It heals life now — half your maximum, minimum 4.
 - **One-tile doorways were a coin flip.** Collision stopped an entity dead the
   moment either leading corner touched a wall, and the player's solid box is 32
   of a tile's 48 pixels. Walking into a doorway a few pixels off centre simply

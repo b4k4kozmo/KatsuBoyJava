@@ -11,7 +11,7 @@ func _init(gp) -> void:
 	type = TYPE_AXE
 	name = OBJ_NAME
 	down1 = setup("/objects/axe", gp.tile_size, gp.tile_size)
-	attack_value = 4
+	attack_value = 8
 	attack_area.width = 24
 	attack_area.height = 24
 	description = "[" + name + "]\nA strong axe forged\nby dreams."

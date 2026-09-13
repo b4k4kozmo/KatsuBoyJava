@@ -43,6 +43,7 @@ const TILE := 48
 ##   file          where the scene goes
 ##   dungeon_id    the DungeonInfo id, so the dock knows where it is
 ##   reward_ticket what the boss hands over (a DungeonInfo ticket_id)
+##   boss_stats    path to the boss's MonsterStats .tres
 ##   cols/rows     how many rooms across and down
 ##   room_min/max  room size in tiles
 ##   cell          spacing between room origins, must exceed room_max
@@ -55,12 +56,15 @@ const DUNGEONS := [
 		"name": "MushroomCave",
 		"dungeon_id": "mushroom_cave",
 		"reward_ticket": "shadow_deep",
+		"boss_stats": "res://assets/data/monsters/boss_cave.tres",
 		"seed": 8801,
 		"cols": 3, "rows": 2,
 		"room_min": 6, "room_max": 10,
 		"cell": 13,
 		"origin": Vector2i(34, 40),
-		"monsters": ["Slime", "Snome"],
+		# Tier 2. The world map is slimes and snomes; the cave is where the
+		# Kamijacks start, which is the whole point of leaving home.
+		"monsters": ["Snome", "Kamijack"],
 		"monsters_per_room": 2,
 		"chests": 2,
 		"chest_loot": ["Green Potion", "Kami Shield"],
@@ -70,13 +74,15 @@ const DUNGEONS := [
 		"name": "ShadowDeep",
 		"dungeon_id": "shadow_deep",
 		"reward_ticket": "",
+		"boss_stats": "res://assets/data/monsters/boss_deep.tres",
 		"seed": 4407,
 		"cols": 5, "rows": 5,
 		"room_min": 8, "room_max": 14,
 		"cell": 17,
 		"origin": Vector2i(6, 6),
-		"monsters": ["Snome", "Kamijack", "Shadow"],
-		"monsters_per_room": 3,
+		# Tier 3. No trash at all down here.
+		"monsters": ["Kamijack", "Shadow"],
+		"monsters_per_room": 2,
 		"chests": 4,
 		"chest_loot": ["Green Potion", "Kami Axe", "Green Potion", "Tent"],
 	},
@@ -205,11 +211,17 @@ func _build(spec: Dictionary, tile_set: TileSet) -> void:
 
 	# The boss is in the last room, as far from the dock as the layout gets.
 	var boss_room: Rect2i = rooms[rooms.size() - 1]
-	var boss := _marker("monster", {
+	var boss_props := {
 		"monster": "Boss",
 		"boss_dungeon_id": spec["dungeon_id"],
 		"reward_ticket": spec["reward_ticket"],
-	}, boss_room.position + Vector2i(boss_room.size.x / 2, boss_room.size.y / 2))
+	}
+	# Its own numbers, so the fight can be tuned against the level the player
+	# arrives at rather than being a Kamijack with six times the health.
+	if spec.has("boss_stats") and ResourceLoader.exists(spec["boss_stats"]):
+		boss_props["boss_stats"] = load(spec["boss_stats"])
+	var boss := _marker("monster", boss_props,
+			boss_room.position + Vector2i(boss_room.size.x / 2, boss_room.size.y / 2))
 	boss.name = "Boss"
 	groups["Monsters"].add_child(boss)
 	boss.owner = root

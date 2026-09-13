@@ -11,7 +11,7 @@ func _init(gp) -> void:
 	type = TYPE_SWORD
 	name = OBJ_NAME
 	down1 = setup("/objects/kamibokken", gp.tile_size, gp.tile_size)
-	attack_value = 3
+	attack_value = 6
 	attack_area.width = 48
 	attack_area.height = 52
 	description = "[" + name + "]\nWooden training sword.\nStronger than it looks."

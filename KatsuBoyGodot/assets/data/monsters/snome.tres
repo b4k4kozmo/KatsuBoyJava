@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_aspj2")
 display_name = "Snome"
-max_life = 12
-attack = 2
+max_life = 18
+attack = 3
 defense = 2
-exp_reward = 3
+exp_reward = 9
 solid_area = Rect2i(3, 18, 42, 30)

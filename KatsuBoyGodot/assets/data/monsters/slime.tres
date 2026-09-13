@@ -5,6 +5,9 @@
 [resource]
 script = ExtResource("1_vfbna")
 display_name = "Slime"
-max_life = 3
-attack = 5
+max_life = 18
+attack = 3
 solid_area = Rect2i(3, 18, 42, 30)
+defense = 0
+exp_reward = 6
+speed = 1

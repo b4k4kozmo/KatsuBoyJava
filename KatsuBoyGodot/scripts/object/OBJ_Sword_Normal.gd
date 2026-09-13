@@ -11,7 +11,7 @@ func _init(gp) -> void:
 	type = TYPE_SWORD
 	name = OBJ_NAME
 	down1 = setup("/objects/sword", gp.tile_size, gp.tile_size)
-	attack_value = 1
+	attack_value = 2
 	attack_area.width = 36
 	attack_area.height = 36
 	description = "[" + name + "]\nKatsu boy's sword."

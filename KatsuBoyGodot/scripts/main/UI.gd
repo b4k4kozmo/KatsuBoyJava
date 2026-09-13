@@ -151,24 +151,31 @@ func draw(g2) -> void:
 
 func draw_player_life() -> void:
 
-	@warning_ignore("integer_division")
-	var x: int = gp.tile_size / 2
-	@warning_ignore("integer_division")
-	var y: int = gp.tile_size / 2
+	# Hearts wrap after ten. A level 20 player has 22 of them, which is two and
+	# a bit screens wide in one row.
+	const HEARTS_PER_ROW := 10
+	@warning_ignore_start("integer_division")
+	var left: int = gp.tile_size / 2
+	var top: int = gp.tile_size / 2
+	var row_height: int = int(gp.tile_size * 0.62)
+
+	var x: int = left
+	var y: int = top
 	var i := 0
 
 	# DRAW MAX LIFE
-	@warning_ignore("integer_division")
 	while i < gp.player.max_life / 2:
 		g2.draw_img(heart_empty, x, y)
 		i += 1
-		x += gp.tile_size
+		if i % HEARTS_PER_ROW == 0:
+			x = left
+			y += row_height
+		else:
+			x += gp.tile_size
 
 	# RESET
-	@warning_ignore("integer_division")
-	x = gp.tile_size / 2
-	@warning_ignore("integer_division")
-	y = gp.tile_size / 2
+	x = left
+	y = top
 	i = 0
 
 	# DRAW CURRENT LIFE
@@ -178,12 +185,22 @@ func draw_player_life() -> void:
 		if i < gp.player.life:
 			g2.draw_img(heart_full, x, y)
 		i += 1
-		x += gp.tile_size
+		if (i / 2) % HEARTS_PER_ROW == 0:
+			x = left
+			y += row_height
+		else:
+			x += gp.tile_size
+	@warning_ignore_restore("integer_division")
+
+	# Mana sits under however many rows of hearts there turned out to be.
+	@warning_ignore("integer_division")
+	var heart_rows: int = int(ceil((gp.player.max_life / 2.0) / float(HEARTS_PER_ROW)))
+	var mana_y: int = top + heart_rows * row_height + 4
 
 	# DRAW MAX MANA
 	@warning_ignore("integer_division")
 	x = (gp.tile_size / 2) - 5
-	y = int(gp.tile_size * 1.5)
+	y = mana_y
 	i = 0
 	while i < gp.player.max_mana:
 		g2.draw_img(crystal_blank, x, y)
@@ -193,7 +210,7 @@ func draw_player_life() -> void:
 	# DRAW MANA
 	@warning_ignore("integer_division")
 	x = (gp.tile_size / 2) - 5
-	y = int(gp.tile_size * 1.5)
+	y = mana_y
 	i = 0
 	while i < gp.player.mana:
 		g2.draw_img(crystal_full, x, y)

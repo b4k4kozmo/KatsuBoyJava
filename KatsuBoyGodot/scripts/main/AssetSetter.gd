@@ -175,6 +175,8 @@ func set_monster_on(map_num: int) -> void:
 		if entity is MON_Boss:
 			entity.dungeon_id = m.boss_dungeon_id
 			entity.reward_ticket = m.reward_ticket
+			if m.boss_stats != null:
+				entity.apply_stats(m.boss_stats)
 		gp.monster[map_num][i] = entity
 		i += 1
 	_clear_rest(gp.monster, map_num, i)

@@ -17,6 +17,16 @@ const PREVIEWS := {
 }
 
 
+## Boss only. Its numbers, as a MonsterStats resource - drag one in from
+## assets/data/monsters/ (boss_cave.tres, boss_deep.tres). Leave it empty and
+## the boss falls back to a beefed up Kamijack, which is fine for a placeholder
+## and wrong for a real fight: a boss wants its own sheet so its life and
+## damage can be tuned against the level the player reaches it at.
+@export var boss_stats: MonsterStats:
+	set(value):
+		boss_stats = value
+		refresh()
+
 ## Boss only. Which dungeon this boss guards, by DungeonInfo id - clearing it
 ## is what ticks the dungeon off in the quest log.
 @export var boss_dungeon_id: String = "":

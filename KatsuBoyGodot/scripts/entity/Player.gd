@@ -52,7 +52,7 @@ func set_default_values() -> void:
 	strength = STATS.strength   # the more strength he has the more damage he gives
 	dexterity = STATS.dexterity # the more dexterity he has, the less damage he receives
 	exp = 0
-	next_level_exp = STATS.next_level_exp
+	next_level_exp = STATS.exp_to_reach(level + 1)
 	coin = STATS.coin
 	current_weapon = gp.e_generator.get_object(STATS.starting_weapon)
 	current_shield = gp.e_generator.get_object(STATS.starting_shield)
@@ -98,16 +98,22 @@ func set_items() -> void:
 	inventory.append(current_shield)
 
 
+## Strength PLUS the weapon, not strength TIMES the weapon.
+##
+## Multiplying meant every level was multiplied by the weapon too, so damage ran
+## away: a level 10 player with the axe hit for 40 against monsters with 45
+## life. Adding keeps the weapon a real upgrade - the bokken is worth four
+## levels of strength - without the curve exploding.
 func get_attack() -> int:
 	attack_area = current_weapon.attack_area
 	motion1_duration = current_weapon.motion1_duration
 	motion2_duration = current_weapon.motion2_duration
-	attack = strength * current_weapon.attack_value
+	attack = strength + current_weapon.attack_value
 	return attack
 
 
 func get_defense() -> int:
-	defense = dexterity * current_shield.defense_value
+	defense = dexterity + current_shield.defense_value
 	return defense
 
 
@@ -421,9 +427,13 @@ func damage_monster(i: int, atkr, atk: int, knock_back_power: int) -> void:
 			# Saturday hits harder, and so on - see assets/data/days/
 			atk = DayEffect.apply(atk, gp.today().damage_dealt_multiplier)
 
+			# Always at least one. A monster whose defence is higher than your
+			# attack used to be literally unkillable - you could swing at a
+			# Kamijack all day at level 1 and do nothing at all, with no way to
+			# tell that was what was happening.
 			var damage: int = atk - gp.monster[gp.current_map][i].defense
-			if damage < 0:
-				damage = 0
+			if damage < 1:
+				damage = 1
 
 			gp.monster[gp.current_map][i].life -= damage
 			gp.ui.add_message(str(damage) + " damage!")
@@ -470,21 +480,31 @@ func damage_projectile(i: int) -> void:
 		generate_particle(proj, proj)
 
 
+## Every number a level changes comes from PlayerStats, so the curve can be
+## retuned in the Inspector without touching code - and so the character screen
+## and the tests read the same table this does.
+##
+## Java tripled the exp requirement each level while handing out 250 exp for a
+## single monster, so the first kill could carry a new player three levels at
+## once and nothing after that was ever reachable. The curve is a power of the
+## level now: each level costs a little more than the last.
 func check_level_up() -> void:
 
 	while exp >= next_level_exp:
-		gp.ui.add_message("Level up!")
 		level += 1
-		next_level_exp *= 3
-		max_life += 2
-		if level % 2 == 0:
-			max_mana += 1
+
+		max_life = STATS.max_life_at(level)
+		max_mana = STATS.max_mana_at(level)
+		strength = STATS.strength_at(level)
+		dexterity = STATS.dexterity_at(level)
+		next_level_exp = STATS.exp_to_reach(level + 1)
+
 		life = max_life
 		mana = max_mana
-		strength += 1
-		dexterity += 1
 		attack = get_attack()
 		defense = get_defense()  # Java had get_attack() here - clearly a typo
+
+		gp.ui.add_message("Level %d!" % level)
 		gp.stop_se()
 		gp.play_se(SE.FANFARE)
 

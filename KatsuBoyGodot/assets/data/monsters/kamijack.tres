@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1_kn72r")
 display_name = "Kamijack"
-max_life = 45
-attack = 6
-defense = 2
-exp_reward = 80
+max_life = 36
+attack = 7
+defense = 6
+exp_reward = 25
 speed = 5
 solid_area = Rect2i(20, 34, 56, 52)

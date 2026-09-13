@@ -11,6 +11,6 @@ func _init(gp) -> void:
 	type = TYPE_SHIELD
 	name = OBJ_NAME
 	down1 = setup("/objects/kamishield", gp.tile_size, gp.tile_size)
-	defense_value = 2
+	defense_value = 3
 	description = "[" + name + "]\nHeavy shield crafted\nby Kami-mon."
 	price = 100

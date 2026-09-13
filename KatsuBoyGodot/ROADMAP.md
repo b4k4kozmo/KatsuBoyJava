@@ -252,6 +252,64 @@ of the week.
 
 ---
 
+## Levelling and difficulty
+
+The shape of the game's numbers, and why they are what they are.
+
+**The exp curve is a power of the level**, not a multiplier:
+
+```
+total exp to reach level N  =  2 x N^2.5
+```
+
+| level | 2 | 5 | 10 | 15 | 20 |
+|---|---|---|---|---|---|
+| total exp | 11 | 112 | 632 | 1743 | 3578 |
+| that level alone | 11 | 48 | 146 | 276 | 431 |
+
+Each level costs a little more than the last and no level costs twice the
+previous one — both checked by the test suite. The Java version tripled the
+requirement every level while handing out 250 exp for one monster, so a single
+kill could carry a new player three levels and nothing after that was reachable.
+
+**Attack is strength plus the weapon, not strength times the weapon.**
+Multiplying meant every level was multiplied by the weapon as well, which is why
+everything died in one hit by level 5. Added, the Kami no Bokken is worth four
+levels of strength and stays worth that.
+
+**The ladder.** Each rung is a tier, and a tier is a place:
+
+| | where | meet at | hits to kill | touches to die | exp |
+|---|---|---|---|---|---|
+| Slime | world map | lv 1 | 3 | 6 | 6 |
+| Snome | world map | lv 2 | 3 | 8 | 9 |
+| Kamijack | Mushroom Cave | lv 6 | 6 | 6 | 25 |
+| Shadow Katsu | Shadow Deep | lv 11 | 10 | 4 | 60 |
+| Cave Guardian | boss | lv 7 | 20 | 4 | 150 |
+| Deep Guardian | boss | lv 14 | 20 | 4 | 400 |
+
+Those are the numbers the test suite asserts, measured through the real damage
+code at the level the player is expected to arrive at. The bands come from the
+games this one is built after: trash dies in about three hits, a real enemy in
+six, an elite in ten, a boss in twenty; and anything can kill you in four to
+eight touches, so no fight is ever safe to stand still in.
+
+**Clearing the world map once is worth 190 exp, which is level 6.** That is the
+intended pace: the first area levels you enough to survive the first dungeon,
+and the dungeon levels you enough for the next.
+
+**Damage has a floor of 1.** A monster whose defence beat your attack used to
+take literally nothing, with no feedback to say so — you could swing at a
+Kamijack all day at level 1. Now everything can be chipped, slowly, which turns
+an invisible wall into a bad idea the player can feel.
+
+Where to change things: the curve and the per-level gains are exported on
+`PlayerStats` (`assets/data/player.tres`); monster numbers are in
+`assets/data/monsters/*.tres`; a boss takes its own stat sheet, dropped onto its
+`MonsterMarker`.
+
+---
+
 ## The economy
 
 A new game starts with **nothing**. Everything in Kami Mart has to be earned,
