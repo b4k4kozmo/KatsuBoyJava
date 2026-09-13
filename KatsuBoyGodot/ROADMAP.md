@@ -310,6 +310,49 @@ Where to change things: the curve and the per-level gains are exported on
 
 ---
 
+## The three classes
+
+The class screen used to be three names that changed almost nothing: one handed
+you a weapon and the other two handed you the Boots. Now a class is a resource
+in `assets/data/classes/`, and the title screen builds its menu from whatever is
+in GamePanel's **Player Classes** list.
+
+| | Samurai | Ninja | Zilla |
+|---|---|---|---|
+| Starts with | Kami no Bokken | Kami no Bokken, +3 mana, +10 ammo | Kami Axe |
+| Melee | ×1.15 | ×0.75, ignores 2 armour | ×1.0, ×1.4 with the axe |
+| Swing speed | normal | **35% faster** | normal (the axe is slow) |
+| Thrown | ×1.0 | **×1.5** | ×0.75 |
+| At night | — | **×1.35 melee** | — |
+| Knock-back dealt | ×1.0 | ×0.8 | **×1.6** |
+| Knock-back taken | **×0.4** | ×1.0 | ×1.0 |
+| Defence | — | — | **+1 flat** |
+| Life a level | 2 | 2 | **3** |
+| Dexterity | every 2 levels | every 3 | every 2 |
+| Walk speed | 4 | **5** | 3 |
+
+Nobody starts with the Boots — they are a thing you find.
+
+**How they actually play.** Damage per second, measured through the real swing
+and the real damage code:
+
+| | lv 1 vs Snome | lv 6 vs Kamijack | lv 11 vs Shadow | lv 14 vs Shadow |
+|---|---|---|---|---|
+| Samurai | 32.7 | 43.6 | 54.5 | 70.9 |
+| Ninja | **42.9** | 42.9 | 42.9 | 60.0 |
+| Zilla | 30.0 | 38.2 | 46.4 | 57.3 |
+
+The spread never reaches 1.5×, and each one wins somewhere: the Ninja shreds
+unarmoured things and owns the night, the Samurai is the steadiest and hardest
+to stagger, and Zilla hits hardest per swing, shoves what he hits across the
+room, and has half again the health to stand there doing it. The test suite
+asserts all of that — including that nobody kills twice as fast as anybody else,
+which is the line between a class and a difficulty setting.
+
+**Adding a fourth** is a `.tres` and a line in the Inspector. Nothing else.
+
+---
+
 ## The economy
 
 A new game starts with **nothing**. Everything in Kami Mart has to be earned,

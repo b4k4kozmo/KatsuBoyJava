@@ -130,6 +130,11 @@ optional and all documented in [AUTHORING.md](AUTHORING.md):
   your ticket at the quay, and an ending once everything is cleared. A ticket is
   good for one trip; sailing home is free. Destinations are `.tres` files, so
   adding one is authoring rather than coding — see `ROADMAP.md`.
+- **Three classes that mean something.** Samurai, Ninja and Zilla differ in
+  melee power, swing speed, thrown damage, armour penetration, a night bonus,
+  knock-back both ways, defence, walking speed and what each level gives them.
+  Each is a resource in `assets/data/classes/`, and the class screen writes its
+  own summary from those numbers.
 - **An economy.** A new game starts with nothing. Monsters pay by how dangerous
   they are, dry trees pay a little when chopped, coins lie around the map, and
   re-entering a map refills its monsters — so the shop is always reachable
@@ -177,6 +182,17 @@ GDScript.
 - Slimes and Kamijacks set `speed` but never `defaultSpeed`, so the first time
   one was knocked back it recovered to speed 0 and stopped moving for good.
   `MonsterStats` sets both.
+- **The class menu was a lie.** Picking Samurai gave you a second bokken;
+  picking Ninja or Zilla gave you the Boots. That was the whole difference. The
+  three are now genuinely different characters, and the numbers live in
+  `assets/data/classes/`.
+- **The axe was unusable.** Its swing took 50 frames — most of a second — so the
+  hardest-hitting weapon in the game had the worst damage per second by a wide
+  margin. It is 22 now: still the slowest, but worth carrying.
+- **Thrown weapons scaled with the wrong stat.** Projectile damage was
+  `attack × dexterity`, and dexterity is the *defence* stat, so how hard you
+  threw a shuriken depended on how well you took a punch. It scales with
+  strength now, and the class decides whether throwing is your trade.
 - **Levelling was broken at both ends.** The exp needed for a level tripled each
   time (5, 15, 45, 135, 405…) while a single Kamijack was worth 250 exp, so the
   first kill could carry a new player three levels at once and no later level was
@@ -191,6 +207,14 @@ GDScript.
   is 1, like the damage the player takes.
 - **The Green Potion restored mana** while its own description said it healed
   life. It heals life now — half your maximum, minimum 4.
+- **The player was too wide for his own doorways.** His solid box was 32 of a
+  tile's 48 pixels, and the NPCs' were up to 42, so two people could not pass in
+  a corridor and a doorway was a squeeze even with corner correction. Everyone
+  is 24 now.
+- **Things were placed on top of each other.** The candle sat under a dry tree
+  and could never be picked up. The test suite now refuses any marker that
+  shares a tile with something solid, and any two villagers standing on each
+  other.
 - **One-tile doorways were a coin flip.** Collision stopped an entity dead the
   moment either leading corner touched a wall, and the player's solid box is 32
   of a tile's 48 pixels. Walking into a doorway a few pixels off centre simply

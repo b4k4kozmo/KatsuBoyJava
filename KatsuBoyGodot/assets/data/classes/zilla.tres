@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="PlayerClass" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/PlayerClass.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "zilla"
+display_name = "Zilla"
+tagline = "Slow, heavy, and hard to move."
+blurb = "Turns up with an axe and no particular hurry. Everything he hits goes flying, armour barely slows him down, and he can stand in a fight the others would have to run from."
+starting_weapon = "Kami Axe"
+starting_shield = "Puffa Shield"
+starting_projectile = "Snow-ball"
+bonus_mana = 0
+bonus_ammo = 0
+starts_with_boots = false
+melee_multiplier = 1.0
+swing_multiplier = 1.0
+favoured_weapon = "Kami Axe"
+favoured_bonus = 1.4
+defence_pierce = 0
+night_multiplier = 1.0
+ranged_multiplier = 0.75
+knockback_dealt = 1.6
+knockback_taken = 1.0
+bonus_defence = 1
+walk_speed = 3
+life_per_level = 3
+strength_every = 1
+dexterity_every = 2
+mana_every = 2

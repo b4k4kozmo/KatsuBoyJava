@@ -17,5 +17,8 @@ func _init(gp) -> void:
 	description = "[" + name + "]\nA strong axe forged\nby dreams."
 	price = 10
 	knock_back_power = 12
-	motion1_duration = 30
-	motion2_duration = 50
+	# The Java swing took 50 frames - most of a second - which made the axe the
+	# worst weapon in the game however hard it hit. Still the slowest, but a
+	# swing you can survive making.
+	motion1_duration = 10
+	motion2_duration = 22

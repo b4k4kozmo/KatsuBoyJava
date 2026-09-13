@@ -27,12 +27,12 @@ func _init(gp) -> void:
 	speed = 0            # he has stood here for thirty years
 
 	solid_area = Rect.new()
-	solid_area.x = 8
-	solid_area.y = 16
+	solid_area.x = 12
+	solid_area.y = 20
 	solid_area_default_x = solid_area.x
 	solid_area_default_y = solid_area.y
-	solid_area.width = 28
-	solid_area.height = 28
+	solid_area.width = 24
+	solid_area.height = 26
 
 	sound_number = 18
 

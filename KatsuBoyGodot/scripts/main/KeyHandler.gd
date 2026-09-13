@@ -92,45 +92,30 @@ func title_state(action: StringName) -> void:
 				gp.get_tree().quit()
 
 	elif gp.ui.title_screen_state == 1:
+
+		# The menu is however many classes are in GamePanel's list, plus Back.
+		var last: int = gp.player_classes.size()
+
 		if action == Action.MOVE_UP:
 			gp.ui.command_num -= 1
 			gp.play_se(SE.CURSOR_MOVE)
 			if gp.ui.command_num < 0:
 				gp.stop_se()
-				gp.ui.command_num = 0
+				gp.ui.command_num = last
 		if action == Action.MOVE_DOWN:
 			gp.ui.command_num += 1
 			gp.play_se(SE.CURSOR_MOVE)
-			if gp.ui.command_num > 3:
+			if gp.ui.command_num > last:
 				gp.stop_se()
-				gp.ui.command_num = 3
+				gp.ui.command_num = 0
 		if action == Action.CONFIRM:
 
-			if gp.ui.command_num == 0:
-				# Do some samurai specific stuff
+			if gp.ui.command_num >= 0 and gp.ui.command_num < last:
 				gp.play_se(SE.COIN)
-				gp.game_state = gp.PLAY_STATE
-				gp.player.inventory.append(OBJ_Kamibokken.new(gp))
-
-			if gp.ui.command_num == 1:
-				# Do some Ninja specific stuff
-				gp.play_se(SE.COIN)
-				gp.game_state = gp.PLAY_STATE
-				gp.player.has_boots = true
+				gp.start_as(gp.player_classes[gp.ui.command_num])
 				gp.ui.command_num = 0
 
-			if gp.ui.command_num == 2:
-				# Do some Zilla specific stuff
-				gp.play_se(SE.COIN)
-				gp.stop_music()
-				gp.play_music(SE.MUSIC_NIGHT)
-				gp.ui.kamiwhite = gp.ui.kamigreen
-				gp.ui.kamipink = gp.ui.kamigreen
-				gp.game_state = gp.PLAY_STATE
-				gp.player.has_boots = true
-				gp.ui.command_num = 0
-
-			if gp.ui.command_num == 3:
+			elif gp.ui.command_num == last:
 				gp.play_se(SE.COIN)
 				gp.ui.title_screen_state = 0
 				gp.stop_music()

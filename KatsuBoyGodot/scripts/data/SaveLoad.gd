@@ -32,6 +32,7 @@ func save() -> void:
 	ds.dexterity = gp.player.dexterity
 	ds.exp = gp.player.exp
 	ds.next_level_exp = gp.player.next_level_exp
+	ds.player_class_id = gp.player.char_class.id if gp.player.char_class != null else ""
 	ds.coin = gp.player.coin
 
 	ds.has_boots = gp.player.has_boots
@@ -121,6 +122,14 @@ func load_game() -> void:
 	gp.player.dexterity = ds.dexterity
 	gp.player.exp = ds.exp
 	gp.player.next_level_exp = ds.next_level_exp
+
+	# Who you were. A save from before the classes had numbers has no id, and
+	# falls back to the first class rather than losing the game.
+	if not ds.player_class_id.is_empty():
+		for c in gp.player_classes:
+			if c is PlayerClass and c.id == ds.player_class_id:
+				gp.player.char_class = c
+				break
 	gp.player.coin = ds.coin
 	gp.player.has_boots = ds.has_boots
 

@@ -27,15 +27,18 @@ func _init(gp) -> void:
 	super(gp)
 
 	direction = "down"
-	speed = 1
+	# Slower than the player walks, so "follow me" is a follow rather than a
+	# chase, but not so slow that he looks stuck.
+	speed = 2
 
+	# Small enough to squeeze past in a doorway. See Player for why.
 	solid_area = Rect.new()
-	solid_area.x = 8
-	solid_area.y = 16
+	solid_area.x = 12
+	solid_area.y = 20
 	solid_area_default_x = solid_area.x
 	solid_area_default_y = solid_area.y
-	solid_area.width = 28
-	solid_area.height = 28
+	solid_area.width = 24
+	solid_area.height = 26
 
 	# Starts at -1 so that the first speak() lands on dialogue set 0.
 	dialogue_set = -1

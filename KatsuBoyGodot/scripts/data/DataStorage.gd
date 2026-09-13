@@ -17,6 +17,8 @@ var dexterity: int
 @warning_ignore("shadowed_global_identifier")
 var exp: int
 var next_level_exp: int
+## Which class the player picked, by PlayerClass id.
+var player_class_id: String = ""
 var coin: int
 
 var has_boots: bool
@@ -56,6 +58,7 @@ func to_dict() -> Dictionary:
 		"dexterity": dexterity,
 		"exp": exp,
 		"next_level_exp": next_level_exp,
+		"player_class_id": player_class_id,
 		"coin": coin,
 		"has_boots": has_boots,
 		"item_names": item_names,
@@ -84,6 +87,7 @@ static func from_dict(d: Dictionary) -> DataStorage:
 	ds.dexterity = d.get("dexterity", 1)
 	ds.exp = d.get("exp", 0)
 	ds.next_level_exp = d.get("next_level_exp", 5)
+	ds.player_class_id = str(d.get("player_class_id", ""))
 	ds.coin = d.get("coin", 0)
 	ds.has_boots = d.get("has_boots", false)
 	ds.item_names.assign(d.get("item_names", []))

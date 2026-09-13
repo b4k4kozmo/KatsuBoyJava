@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="PlayerClass" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/PlayerClass.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "samurai"
+display_name = "Samurai"
+tagline = "Sword, stance, patience."
+blurb = "Trained to plant his feet and swing true. Nothing knocks him off balance, and nothing he hits gets up quickly. If you are not sure, be this."
+starting_weapon = "Kami no Bokken"
+starting_shield = "Puffa Shield"
+starting_projectile = "Shuriken"
+bonus_mana = 0
+bonus_ammo = 0
+starts_with_boots = false
+melee_multiplier = 1.15
+swing_multiplier = 1.0
+favoured_weapon = ""
+favoured_bonus = 1.0
+defence_pierce = 0
+night_multiplier = 1.0
+ranged_multiplier = 1.0
+knockback_dealt = 1.0
+knockback_taken = 0.4
+bonus_defence = 0
+walk_speed = 4
+life_per_level = 2
+strength_every = 1
+dexterity_every = 2
+mana_every = 2

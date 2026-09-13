@@ -37,6 +37,7 @@ to play.
 | monster stats | `assets/data/monsters/*.tres` |
 | the player's starting stats and speeds | `assets/data/player.tres` |
 | the exp curve and what a level gives you | `assets/data/player.tres` → Levelling |
+| what the three classes are good at | `assets/data/classes/*.tres` |
 | sounds and music | `assets/data/sound_bank.tres` |
 | the list of maps, colours, day/night length | `main.tscn` → select **GamePanel** |
 | key bindings | Project Settings → Input Map |
@@ -431,6 +432,23 @@ starting weapon, shield and projectile; and movement:
 > Run key only worked if you picked the Ninja or Zilla class. Picking up the
 > Boots now unlocks it, and there's a pair on the grass near the start. Untick
 > **Requires Boots To Run** if you'd rather sprint from the beginning.
+
+### `assets/data/classes/*.tres`
+
+One file per playable class, listed in **GamePanel → Player Classes**. The title
+screen builds its menu from that list and writes the one-line summary under each
+name from these numbers, so a class can never advertise something it does not do.
+
+The fields are grouped: starting gear, melee (multiplier, swing speed, favoured
+weapon, armour it ignores, a night bonus), ranged, body (knock-back both ways,
+flat defence, walk speed) and levelling (life, strength, dexterity and mana
+gains). `id` is written into save files — never rename one that exists.
+
+Rule of thumb when tuning: a class may be about 30% better at something as long
+as it is worse at something else, and none of them may be locked out of any
+fight. The test suite checks that no class kills more than twice as fast as
+another, that each is the best at something, and that the tanky one really is
+tankier.
 
 ### `assets/data/monsters/*.tres`
 

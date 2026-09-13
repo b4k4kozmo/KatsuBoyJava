@@ -39,6 +39,11 @@ var current_map: int = 0
 ## can inspect them while the game runs (Debugger -> Remote tree).
 var map_node: Array[Node2D] = []
 
+## The three people you can be, as PlayerClass resources from
+## assets/data/classes/. The title screen builds its class menu from this list,
+## so adding one is dropping a .tres in here.
+@export var player_classes: Array[PlayerClass] = []
+
 ## Every sound and piece of music, editable in the Inspector.
 ## See scripts/data/SE.gd for the slot names.
 @export var sound_bank: SoundBank
@@ -249,6 +254,28 @@ func setup_game() -> void:
 	e_manager.setup()
 #	play_music(SE.MUSIC_MAIN)
 	game_state = TITLE_STATE
+
+
+## Begin a new game as this class. Everything the class touches - stats, gear,
+## the palette - is applied here and nowhere else, so the title screen does not
+## need to know what a class is made of.
+func start_as(chosen: PlayerClass) -> void:
+
+	ui.reset_palette()
+	player.char_class = chosen
+	player.set_default_values()
+	player.restore_status()
+	player.set_items()
+
+	# Zilla sees the world in one colour. It was the only thing the old class
+	# menu actually did, and it is too good a joke to lose.
+	if chosen != null and chosen.id == "zilla":
+		ui.kamiwhite = ui.kamigreen
+		ui.kamipink = ui.kamigreen
+		stop_music()
+		play_music(SE.MUSIC_NIGHT)
+
+	game_state = PLAY_STATE
 
 
 func reset_game(restart: bool) -> void:

@@ -15,6 +15,11 @@ var light_updated: bool = false
 var is_cursed: bool = false
 
 
+## Who you chose on the title screen. Never null once the game starts - see
+## resolve_class(), which falls back to the first class in the list.
+var char_class: PlayerClass
+
+
 func _init(gp, key_h: KeyHandler) -> void:
 	super(gp)
 
@@ -25,39 +30,60 @@ func _init(gp, key_h: KeyHandler) -> void:
 	@warning_ignore("integer_division")
 	screen_y = gp.screen_height / 2 - (gp.tile_size / 2)
 
+	# Katsu Boy's footprint, not his picture. A tile is 48 across and a doorway
+	# is one tile, so a wide box turns every gap into a squeeze - this is 24,
+	# which leaves a comfortable 12 px either side. It is also his hurtbox, so
+	# keeping it around his feet means a sword that passes over his head misses.
 	solid_area = Rect.new()
-	solid_area.x = 8
-	solid_area.y = 16
+	solid_area.x = 12
+	solid_area.y = 22
 	solid_area_default_x = solid_area.x
 	solid_area_default_y = solid_area.y
-	solid_area.width = 32
-	solid_area.height = 32
+	solid_area.width = 24
+	solid_area.height = 24
 
 	set_default_values()
+
+
+## The chosen class, or the first one in the list, or a plain default. Nothing
+## downstream has to null check.
+func resolve_class() -> PlayerClass:
+	if char_class != null:
+		return char_class
+	for c in gp.player_classes:
+		if c is PlayerClass:
+			char_class = c
+			return char_class
+	char_class = PlayerClass.new()
+	return char_class
 
 
 func set_default_values() -> void:
 
 	set_default_positions()
-	default_speed = STATS.walk_speed
-	speed = default_speed
 
-	# PLAYER STATUS - all of this comes from assets/data/player.tres
+	var cls: PlayerClass = resolve_class()
+
+	# PLAYER STATUS - the numbers come from assets/data/player.tres, and the
+	# class in assets/data/classes/ bends them.
+	default_speed = cls.walk_speed
+	speed = default_speed
 	level = STATS.level
 	max_life = STATS.max_life
 	life = max_life
-	max_mana = STATS.max_mana
+	max_mana = STATS.max_mana + cls.bonus_mana
 	mana = max_mana
-	ammo = STATS.ammo
+	ammo = STATS.ammo + cls.bonus_ammo
 	strength = STATS.strength   # the more strength he has the more damage he gives
 	dexterity = STATS.dexterity # the more dexterity he has, the less damage he receives
 	exp = 0
 	next_level_exp = STATS.exp_to_reach(level + 1)
 	coin = STATS.coin
-	current_weapon = gp.e_generator.get_object(STATS.starting_weapon)
-	current_shield = gp.e_generator.get_object(STATS.starting_shield)
+	has_boots = cls.starts_with_boots
+	current_weapon = gp.e_generator.get_object(cls.starting_weapon)
+	current_shield = gp.e_generator.get_object(cls.starting_shield)
 	current_light = null
-	projectile = gp.e_generator.get_object(STATS.starting_projectile)
+	projectile = gp.e_generator.get_object(cls.starting_projectile)
 	attack = get_attack()    # the total attack value is decided by strength and weapon
 	defense = get_defense()  # the total defense value is decided by dexterity and shield
 
@@ -105,15 +131,37 @@ func set_items() -> void:
 ## life. Adding keeps the weapon a real upgrade - the bokken is worth four
 ## levels of strength - without the curve exploding.
 func get_attack() -> int:
+	var cls: PlayerClass = resolve_class()
 	attack_area = current_weapon.attack_area
-	motion1_duration = current_weapon.motion1_duration
-	motion2_duration = current_weapon.motion2_duration
-	attack = strength + current_weapon.attack_value
+	# How fast this class swings this weapon. The axe hits twice as hard as the
+	# bokken and still loses on damage per second, because it is slow.
+	motion1_duration = cls.swing_frames(current_weapon.motion1_duration)
+	motion2_duration = cls.swing_frames(current_weapon.motion2_duration)
+	attack = cls.attack_with(strength, current_weapon, is_night())
 	return attack
 
 
+## What a thrown weapon hits for.
+##
+## Java multiplied the projectile's attack by DEXTERITY, which is the defence
+## stat - so how hard you threw a shuriken depended on how well you took a
+## punch. It scales with strength now, gently, and the class decides whether
+## throwing things is your trade: a Ninja's shuriken eventually hit harder than
+## his sword, which is the whole point of being a Ninja.
+func ranged_attack(thrown) -> int:
+	var raw: float = float(thrown.attack + strength) * resolve_class().ranged_multiplier
+	return maxi(int(round(raw)), 1)
+
+
+## Dark out? The Ninja hits harder when it is.
+func is_night() -> bool:
+	if gp.e_manager == null or gp.e_manager.lighting == null:
+		return false
+	return gp.e_manager.lighting.day_state == gp.e_manager.lighting.NIGHT
+
+
 func get_defense() -> int:
-	defense = dexterity + current_shield.defense_value
+	defense = dexterity + current_shield.defense_value + resolve_class().bonus_defence
 	return defense
 
 
@@ -431,7 +479,11 @@ func damage_monster(i: int, atkr, atk: int, knock_back_power: int) -> void:
 			# attack used to be literally unkillable - you could swing at a
 			# Kamijack all day at level 1 and do nothing at all, with no way to
 			# tell that was what was happening.
-			var damage: int = atk - gp.monster[gp.current_map][i].defense
+			# A Ninja's blade finds the gap in the armour; nobody else gets to
+			# ignore any of it.
+			var armour: int = maxi(gp.monster[gp.current_map][i].defense
+					- resolve_class().defence_pierce, 0)
+			var damage: int = atk - armour
 			if damage < 1:
 				damage = 1
 
@@ -493,10 +545,11 @@ func check_level_up() -> void:
 	while exp >= next_level_exp:
 		level += 1
 
-		max_life = STATS.max_life_at(level)
-		max_mana = STATS.max_mana_at(level)
-		strength = STATS.strength_at(level)
-		dexterity = STATS.dexterity_at(level)
+		var cls: PlayerClass = resolve_class()
+		max_life = cls.max_life_at(level, STATS.max_life)
+		max_mana = cls.max_mana_at(level, STATS.max_mana)
+		strength = cls.strength_at(level, STATS.strength)
+		dexterity = cls.dexterity_at(level, STATS.dexterity)
 		next_level_exp = STATS.exp_to_reach(level + 1)
 
 		life = max_life

@@ -225,7 +225,7 @@ script = ExtResource("3_din4q")
 npc = "TicketMan"
 
 [node name="DockGuide" type="Node2D" parent="NPCs"]
-position = Vector2(4416, 4656)
+position = Vector2(4368, 4512)
 script = ExtResource("3_din4q")
 guide_dungeon_id = "mushroom_cave"
 guide_col = 87
@@ -251,7 +251,7 @@ position = Vector2(384, 2448)
 script = ExtResource("4_41b5e")
 
 [node name="Slime4" type="Node2D" parent="Monsters"]
-position = Vector2(384, 2208)
+position = Vector2(480, 2208)
 script = ExtResource("4_41b5e")
 
 [node name="Slime5" type="Node2D" parent="Monsters"]
@@ -347,20 +347,12 @@ monster = "Snome"
 position = Vector2(4128, 4656)
 script = ExtResource("5_ym87g")
 
-[node name="DryTree2" type="Node2D" parent="InteractiveTiles"]
-position = Vector2(4416, 4416)
-script = ExtResource("5_ym87g")
-
-[node name="DryTree3" type="Node2D" parent="InteractiveTiles"]
-position = Vector2(4608, 4656)
-script = ExtResource("5_ym87g")
-
 [node name="DryTree4" type="Node2D" parent="InteractiveTiles"]
-position = Vector2(4032, 4512)
+position = Vector2(1440, 1056)
 script = ExtResource("5_ym87g")
 
 [node name="DryTree5" type="Node2D" parent="InteractiveTiles"]
-position = Vector2(4656, 4464)
+position = Vector2(2976, 2016)
 script = ExtResource("5_ym87g")
 
 [node name="Events" type="Node2D" parent="."]

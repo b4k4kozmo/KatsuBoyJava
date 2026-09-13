@@ -12,10 +12,10 @@ func _init(gp) -> void:
 	sound_number = 19
 
 	solid_area = Rect.new()
-	solid_area.x = 3
-	solid_area.y = 18
-	solid_area.width = 42
-	solid_area.height = 30
+	solid_area.x = 12
+	solid_area.y = 20
+	solid_area.width = 24
+	solid_area.height = 26
 	solid_area_default_x = solid_area.x
 	solid_area_default_y = solid_area.y
 

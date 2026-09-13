@@ -100,6 +100,40 @@ func _coin_yield(maker: String, samples: int) -> float:
 	return float(total) / float(samples)
 
 
+## Set the player up as `cls` at `level`, exactly as a real playthrough would,
+## and hand back what they hit for and how fast.
+func _as_class(cls: PlayerClass, level: int) -> Dictionary:
+	gp.player.char_class = cls
+	gp.player.set_default_values()
+	gp.player.level = level
+	gp.player.max_life = cls.max_life_at(level, PlayerStats.new().max_life)
+	gp.player.life = gp.player.max_life
+	gp.player.strength = cls.strength_at(level, PlayerStats.new().strength)
+	gp.player.dexterity = cls.dexterity_at(level, PlayerStats.new().dexterity)
+	gp.player.get_attack()
+	gp.player.get_defense()
+	return {
+		"attack": gp.player.attack,
+		"defense": gp.player.defense,
+		"life": gp.player.max_life,
+		"swing": maxi(gp.player.motion2_duration, 1),
+		"speed": gp.player.default_speed,
+	}
+
+
+## Damage per second this class does to a monster, through the real damage path.
+func _dps_against(cls: PlayerClass, level: int, monster_name: String) -> float:
+	var me: Dictionary = _as_class(cls, level)
+	var dummy = gp.e_generator.get_monster(monster_name)
+	dummy.max_life = 1000000
+	dummy.life = 1000000
+	gp.monster[gp.current_map][7] = dummy
+	gp.player.damage_monster(7, gp.player, gp.player.attack, 0)
+	var per_hit: int = 1000000 - dummy.life
+	gp.monster[gp.current_map][7] = null
+	return float(per_hit) * 60.0 / float(me["swing"])
+
+
 func press(action: StringName) -> void:
 	gp.key_h.action_pressed(action)
 
@@ -620,6 +654,338 @@ func _physics_process(_d: float) -> void:
 			clock4.reset()
 			gp.e_manager.lighting.refresh()
 
+		1050:
+			print("\n-- nothing is stacked on anything --")
+
+			# A dry tree, a door or a chest occupies its tile. Anything placed
+			# on the same tile is unreachable: the candle used to sit under a
+			# tree, and no amount of walking at it would ever pick it up.
+			var occupied := {}
+			var stacked: Array[String] = []
+			for map_num in range(gp.max_map):
+				var here := {}
+				for group in ["Objects", "NPCs", "Monsters", "InteractiveTiles", "Events"]:
+					for m in gp.a_setter.markers(map_num, group):
+						var key := "%d:%d" % [m.tile_col(), m.tile_row()]
+						var solid: bool = group == "InteractiveTiles"
+						if m is ObjectMarker and (m.item == "Door" or m.item == "Chest"):
+							solid = true
+						if here.has(key):
+							var other = here[key]
+							if solid or other["solid"]:
+								stacked.append("map %d tile %s: %s + %s" % [
+									map_num, key, other["what"], m.name])
+							elif group == "NPCs" and other["group"] == "NPCs":
+								stacked.append("map %d tile %s: two people, %s + %s" % [
+									map_num, key, other["what"], m.name])
+						here[key] = {"what": m.name, "solid": solid, "group": group}
+				occupied[map_num] = here.size()
+
+			check("nothing shares a tile with something solid", stacked.is_empty(),
+				str(stacked))
+
+			# And the people are not all standing in one doorway.
+			var npc_tiles: Array = []
+			for m in gp.a_setter.markers(0, "NPCs"):
+				npc_tiles.append(Vector2i(m.tile_col(), m.tile_row()))
+			var too_close: Array[String] = []
+			for i in range(npc_tiles.size()):
+				for j in range(i + 1, npc_tiles.size()):
+					var d: Vector2i = npc_tiles[i] - npc_tiles[j]
+					if absi(d.x) <= 1 and absi(d.y) <= 1:
+						too_close.append(str(npc_tiles[i]) + " & " + str(npc_tiles[j]))
+			check("no two villagers are standing on each other", too_close.is_empty(),
+				str(too_close))
+
+			# The starting area is where a new player learns to walk. Keep it
+			# clear: a couple of choppable trees, not a forest.
+			var start_trees := 0
+			for m in gp.a_setter.markers(0, "InteractiveTiles"):
+				if absi(m.tile_col() - 94) <= 10 and absi(m.tile_row() - 94) <= 10:
+					start_trees += 1
+			check("the starting area is not full of dry trees", start_trees <= 2,
+				str(start_trees))
+
+		1052:
+			print("\n-- dialogue fits its window --")
+
+			# The window is 14 tiles wide with a tile of padding either side.
+			var dlg_width: int = (gp.screen_width - gp.tile_size * 6) - gp.tile_size * 2
+			var dlg_font: Font = gp.ui.maru_monica
+
+			# The line that started this: a dungeon hint is written in a text
+			# field by a designer, with no idea how wide the window is.
+			var long_hint := ""
+			for d in gp.dungeons:
+				if d is DungeonInfo and d.hint.length() > long_hint.length():
+					long_hint = d.hint
+			check("there is a hint long enough to be worth wrapping",
+				long_hint.length() > 60, str(long_hint.length()))
+			check("and it does not fit the window as written",
+				dlg_font.get_string_size(long_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x > dlg_width,
+				str(dlg_font.get_string_size(long_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x))
+
+			var wrapped: Array = gp.ui.wrap_text(long_hint, dlg_width, dlg_font, 28)
+			check("wrapping breaks it up", wrapped.size() > 1, str(wrapped.size()))
+			var all_fit := true
+			for line in wrapped:
+				if dlg_font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x > dlg_width:
+					all_fit = false
+			check("and every line it produces fits", all_fit, str(wrapped))
+			check("wrapping loses no words",
+				" ".join(wrapped).replace("\n", " ") == long_hint.replace("\n", " "),
+				" ".join(wrapped))
+
+			# A word with no spaces in it still has to go somewhere.
+			var runon := "Supercalifragilisticexpialidociousandthensomemoreontopofthat"
+			var cut: Array = gp.ui.wrap_text(runon, dlg_width, dlg_font, 28)
+			var runon_fits := true
+			for line in cut:
+				if dlg_font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x > dlg_width:
+					runon_fits = false
+			check("an unbroken run of letters is cut, not lost",
+				runon_fits and "".join(cut) == runon, str(cut))
+
+			# Nothing anywhere in the game may overflow the window.
+			var too_wide: Array[String] = []
+			var speakers: Array = []
+			for map_num in range(gp.max_map):
+				for n in gp.npc[map_num]:
+					if n != null:
+						speakers.append(n)
+			speakers.append(gp.player)
+			for e in speakers:
+				for set_num in range(e.dialogues.size()):
+					for line_num in range(e.dialogues[set_num].size()):
+						var line = e.dialogues[set_num][line_num]
+						if line == null:
+							continue
+						for piece in str(line).split("\n"):
+							if dlg_font.get_string_size(piece, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x > dlg_width:
+								too_wide.append("%s set %d: %s" % [e.name, set_num, piece])
+			check("no hand written line is wider than the window",
+				too_wide.is_empty(), str(too_wide))
+
+			# Pagination: four lines a screen, and it always ends cleanly.
+			var pages: Array = gp.ui.paginate(long_hint, dlg_width, dlg_font, 28)
+			var page_ok := true
+			for page in pages:
+				if page.split("\n").size() > UI.DIALOGUE_LINES:
+					page_ok = false
+			check("no page is taller than the window", page_ok, str(pages))
+			check("a short line is still exactly one page",
+				gp.ui.paginate("Hello.", dlg_width, dlg_font, 28).size() == 1)
+
+			# And the whole thing through the real dialogue loop: the guide says
+			# his piece, the player presses on, and the conversation ends.
+			var talker = null
+			for n in gp.npc[0]:
+				if n is NPC_OldMan and not n.guide_dungeon_id.is_empty():
+					talker = n
+			if talker != null:
+				gp.quest = QuestLog.new()
+				gp.game_state = gp.PLAY_STATE
+				gp.player.direction = "up"
+				talker.speak()
+				gp.ui.npc = talker
+				var guard := 0
+				var pages_seen := 0
+				while gp.game_state == gp.DIALOGUE_STATE and guard < 4000:
+					gp.ui.draw(gp)
+					var page_before: int = gp.ui._dialogue_page
+					gp.key_h.enter_pressed = true
+					gp.ui.draw(gp)
+					if gp.ui._dialogue_page != page_before:
+						pages_seen += 1
+					guard += 1
+				check("the guide's whole speech can be read through",
+					gp.game_state == gp.PLAY_STATE, "stuck after %d presses" % guard)
+
+				# Paging itself, with a line deliberately longer than a window.
+				var epic := ""
+				for _w in range(40):
+					epic += "the old man kept talking and talking "
+				var epic_pages: Array = gp.ui.paginate(epic, dlg_width, dlg_font, 28)
+				check("a speech longer than the window becomes several pages",
+					epic_pages.size() > 1, str(epic_pages.size()))
+
+				talker.dialogues[9][0] = epic
+				talker.dialogues[9][1] = null
+				gp.ui.npc = talker
+				gp.ui._dialogue_source = ""
+				gp.ui._dialogue_pages.clear()
+				talker.dialogue_set = 9
+				talker.dialogue_index = 0
+				gp.key_h.enter_pressed = false
+				gp.game_state = gp.DIALOGUE_STATE
+				var seen := {}
+				var guard2 := 0
+				while gp.game_state == gp.DIALOGUE_STATE and guard2 < 20000:
+					gp.ui.draw(gp)
+					if gp.game_state != gp.DIALOGUE_STATE or gp.ui._dialogue_pages.is_empty():
+						break
+					seen[gp.ui._dialogue_page] = true
+					if gp.ui.char_index >= str(gp.ui._dialogue_pages[gp.ui._dialogue_page]).length():
+						gp.key_h.enter_pressed = true
+						gp.ui.draw(gp)
+						if gp.game_state == gp.DIALOGUE_STATE and not gp.ui._dialogue_pages.is_empty():
+							seen[gp.ui._dialogue_page] = true
+					guard2 += 1
+				check("every page of it gets shown, and then it ends",
+					seen.size() == epic_pages.size() and gp.game_state == gp.PLAY_STATE,
+					"saw %d of %d pages, state %d" % [seen.size(), epic_pages.size(), gp.game_state])
+				gp.game_state = gp.PLAY_STATE
+				gp.key_h.enter_pressed = false
+				gp.quest = QuestLog.new()
+
+		1053:
+			print("\n-- the three classes --")
+
+			var roster: Array = gp.player_classes
+			check("all three classes are loaded", roster.size() == 3, str(roster.size()))
+
+			var ids := {}
+			for c in roster:
+				ids[c.id] = c
+			check("they are samurai, ninja and zilla",
+				ids.has("samurai") and ids.has("ninja") and ids.has("zilla"),
+				str(ids.keys()))
+
+			check("nobody starts with the Boots any more",
+				not ids["samurai"].starts_with_boots and not ids["ninja"].starts_with_boots
+					and not ids["zilla"].starts_with_boots)
+			check("the ninja is the quick one and zilla the slow one",
+				ids["ninja"].walk_speed > ids["samurai"].walk_speed
+					and ids["zilla"].walk_speed < ids["samurai"].walk_speed,
+				"%d %d %d" % [ids["ninja"].walk_speed, ids["samurai"].walk_speed,
+					ids["zilla"].walk_speed])
+
+			if gp.e_manager and gp.e_manager.lighting:
+				gp.e_manager.lighting.day_state = gp.e_manager.lighting.DAY
+			if gp.e_manager and gp.e_manager.clock:
+				gp.e_manager.clock.day_index = 2
+
+			# Damage per second, through the real swing and the real damage
+			# code, against the thing each class will actually be fighting.
+			print("      damage per second, by class and level:")
+			var spread_ok := true
+			for pair in [[1, "Snome"], [6, "Kamijack"], [11, "Shadow"], [14, "Shadow"]]:
+				var lv: int = pair[0]
+				var mon: String = pair[1]
+				var dps := {}
+				for key in ["samurai", "ninja", "zilla"]:
+					dps[key] = _dps_against(ids[key], lv, mon)
+				var best: float = maxf(dps["samurai"], maxf(dps["ninja"], dps["zilla"]))
+				var worst: float = minf(dps["samurai"], minf(dps["ninja"], dps["zilla"]))
+				print("        lv %2d vs %-9s  samurai %5.1f   ninja %5.1f   zilla %5.1f" % [
+					lv, mon, dps["samurai"], dps["ninja"], dps["zilla"]])
+				# Nobody may be twice as good at killing as anybody else.
+				if worst <= 0.0 or best / worst > 2.0:
+					spread_ok = false
+			check("no class kills twice as fast as another", spread_ok,
+				"see the table above")
+
+			# Each one has to be the best at something.
+			var lv_mid := 8
+			var soft: Dictionary = {}
+			var armoured: Dictionary = {}
+			for key in ["samurai", "ninja", "zilla"]:
+				soft[key] = _dps_against(ids[key], lv_mid, "Slime")
+				armoured[key] = _dps_against(ids[key], lv_mid, "Shadow")
+			check("the ninja is the fastest against soft targets",
+				soft["ninja"] > soft["samurai"] and soft["ninja"] > soft["zilla"],
+				"%.1f %.1f %.1f" % [soft["ninja"], soft["samurai"], soft["zilla"]])
+			check("zilla is the best against armour",
+				armoured["zilla"] > armoured["ninja"],
+				"%.1f vs %.1f" % [armoured["zilla"], armoured["ninja"]])
+
+			# Toughness has to go the other way.
+			var tough := {}
+			for key in ["samurai", "ninja", "zilla"]:
+				var me: Dictionary = _as_class(ids[key], lv_mid)
+				tough[key] = int(ceil(float(me["life"]) / float(maxi(14 - me["defense"], 1))))
+			check("zilla can stand in a fight the others cannot",
+				tough["zilla"] > tough["samurai"] and tough["samurai"] >= tough["ninja"],
+				"zilla %d, samurai %d, ninja %d" % [tough["zilla"], tough["samurai"], tough["ninja"]])
+
+			# The ninja's night bonus, through the real attack code.
+			var day_attack: int = _as_class(ids["ninja"], 8)["attack"]
+			if gp.e_manager and gp.e_manager.lighting:
+				gp.e_manager.lighting.day_state = gp.e_manager.lighting.NIGHT
+			var night_attack: int = _as_class(ids["ninja"], 8)["attack"]
+			var samurai_night: int = _as_class(ids["samurai"], 8)["attack"]
+			var samurai_day_attack: int = 0
+			if gp.e_manager and gp.e_manager.lighting:
+				gp.e_manager.lighting.day_state = gp.e_manager.lighting.DAY
+			samurai_day_attack = _as_class(ids["samurai"], 8)["attack"]
+			check("the ninja hits harder after dark", night_attack > day_attack,
+				"%d by day, %d by night" % [day_attack, night_attack])
+			check("and nobody else notices the dark",
+				samurai_night == samurai_day_attack,
+				"%d vs %d" % [samurai_night, samurai_day_attack])
+
+			# Thrown weapons: the ninja's trade, zilla's afterthought.
+			var throw_dmg := {}
+			for key in ["samurai", "ninja", "zilla"]:
+				var _me: Dictionary = _as_class(ids[key], 10)
+				throw_dmg[key] = gp.player.ranged_attack(OBJ_Shuriken.new(gp))
+			check("a ninja's shuriken outdoes everyone else's",
+				throw_dmg["ninja"] > throw_dmg["samurai"] and throw_dmg["samurai"] > throw_dmg["zilla"],
+				str(throw_dmg))
+			check("and eventually beats his own sword",
+				throw_dmg["ninja"] > _as_class(ids["ninja"], 10)["attack"],
+				"%d thrown vs %d melee" % [throw_dmg["ninja"], _as_class(ids["ninja"], 10)["attack"]])
+
+			# Knock-back, both directions.
+			var jack := MON_KamiJack.new(gp)
+			var _s: Dictionary = _as_class(ids["zilla"], 6)
+			jack.speed = 0
+			jack.set_knock_back(jack, gp.player, 10)
+			var zilla_shove: int = jack.speed
+			jack.speed = 0
+			var _s2: Dictionary = _as_class(ids["samurai"], 6)
+			jack.set_knock_back(jack, gp.player, 10)
+			var samurai_shove: int = jack.speed
+			check("zilla hits things further than the samurai does",
+				zilla_shove > samurai_shove, "%d vs %d" % [zilla_shove, samurai_shove])
+
+			gp.player.speed = 0
+			gp.player.set_knock_back(gp.player, jack, 10)
+			var samurai_taken: int = gp.player.speed
+			var _s3: Dictionary = _as_class(ids["ninja"], 6)
+			gp.player.speed = 0
+			gp.player.set_knock_back(gp.player, jack, 10)
+			var ninja_taken: int = gp.player.speed
+			check("the samurai keeps his feet better than the ninja",
+				samurai_taken < ninja_taken, "%d vs %d" % [samurai_taken, ninja_taken])
+
+			# Everyone gets the same number of levels out of the same exp.
+			var stats_ref := PlayerStats.new()
+			var life_at_20 := {}
+			for key in ["samurai", "ninja", "zilla"]:
+				life_at_20[key] = ids[key].max_life_at(20, stats_ref.max_life)
+			check("every class levels on the same exp curve",
+				stats_ref.exp_to_reach(20) == 3578, str(stats_ref.exp_to_reach(20)))
+			check("but they do not all grow the same",
+				life_at_20["zilla"] > life_at_20["samurai"], str(life_at_20))
+
+			# A class survives a save and a load.
+			gp.player.char_class = ids["zilla"]
+			gp.player.set_default_values()
+			gp.save_load.save()
+			gp.player.char_class = ids["ninja"]
+			gp.save_load.load_game()
+			check("the class you picked survives a save",
+				gp.player.char_class != null and gp.player.char_class.id == "zilla",
+				str(gp.player.char_class.id if gp.player.char_class else "none"))
+
+			gp.player.char_class = ids["samurai"]
+			gp.player.set_default_values()
+			gp.player.world_x = gp.tile_size * 94
+			gp.player.world_y = gp.tile_size * 94
+			gp.current_map = 0
+			gp.game_state = gp.PLAY_STATE
+
 		1055:
 			print("\n-- levelling and the difficulty curve --")
 
@@ -898,8 +1264,11 @@ func _physics_process(_d: float) -> void:
 			gp.game_state = gp.PLAY_STATE
 			gp.player.direction = "down"
 			gp.player.speed = 4
-			gp.player.world_x = 1236      # 16 px left of centre - clipping col 25
-			gp.player.world_y = 1486      # bottom edge just above row 32
+			# Eight pixels of the player's box hang into the wall tile beside the
+			# doorway. Derived from the box rather than hard coded, so this still
+			# tests what it says it does if the box is ever resized.
+			gp.player.world_x = (26 * gp.tile_size - 8) - gp.player.solid_area.x
+			gp.player.world_y = 1534 - gp.player.solid_area.y - gp.player.solid_area.height
 
 			var start_y: int = gp.player.world_y
 			var blocked_frames := 0
@@ -917,12 +1286,13 @@ func _physics_process(_d: float) -> void:
 			check("and it took a moment of sliding, not a teleport",
 				blocked_frames > 0 and blocked_frames < 16, str(blocked_frames))
 			check("the slide stopped once the player was inside the doorway",
-				gp.player.world_x >= 1248 - 8 and gp.player.world_x <= 1256,
-				str(gp.player.world_x))
+				gp.player.world_x + gp.player.solid_area.x >= 26 * gp.tile_size
+					and gp.player.world_x + gp.player.solid_area.x < 27 * gp.tile_size,
+				str(gp.player.world_x + gp.player.solid_area.x))
 
 			# Squarely facing a wall must still be a wall: no drift, no move.
 			gp.player.world_x = 1104      # against the left wall of the room
-			gp.player.world_y = 1486
+			gp.player.world_y = 1534 - gp.player.solid_area.y - gp.player.solid_area.height
 			gp.player.direction = "down"
 			var wall_x: int = gp.player.world_x
 			var wall_y: int = gp.player.world_y
@@ -1070,22 +1440,33 @@ func _physics_process(_d: float) -> void:
 				guide.set_action()
 				check("away from the dock he is still walking", guide.on_path == true)
 
-				# He should actually get there. Walk him for a few seconds of
-				# game time with the player standing in his way, which is the
-				# case that used to wedge him against a body forever.
-				gp.player.world_x = 90 * gp.tile_size
-				gp.player.world_y = 97 * gp.tile_size
+				# The real walk: from where he actually stands on the map, all the
+				# way to the dock, with the player following a step behind him
+				# the whole way. That is the case that used to wedge him.
 				guide.on_path = true
-				guide.world_x = 92 * gp.tile_size - guide.solid_area.x
-				guide.world_y = 97 * gp.tile_size - guide.solid_area.y
+				guide.world_x = 91 * gp.tile_size - guide.solid_area.x
+				guide.world_y = 94 * gp.tile_size - guide.solid_area.y
+				gp.player.world_x = guide.world_x + gp.tile_size
+				gp.player.world_y = guide.world_y
 				var guide_start_x: int = guide.world_x
-				for _i in range(600):
+				var stuck_frames := 0
+				var last := Vector2i(guide.world_x, guide.world_y)
+				for _i in range(1200):
 					if not guide.on_path:
 						break
 					guide.update()
+					var now := Vector2i(guide.world_x, guide.world_y)
+					if now == last:
+						stuck_frames += 1
+					last = now
+					# The player follows, one tile behind.
+					gp.player.world_x = guide.world_x + gp.tile_size
+					gp.player.world_y = guide.world_y
+				check("he is not standing still for most of the walk",
+					stuck_frames < 240, "%d frames without moving" % stuck_frames)
 				@warning_ignore("integer_division")
 				var guide_col: int = (guide.world_x + guide.solid_area.x) / gp.tile_size
-				check("he walks around the player instead of pushing at them",
+				check("he makes real progress with the player on his heels",
 					guide.world_x < guide_start_x - gp.tile_size,
 					"moved from %d to %d" % [guide_start_x, guide.world_x])
 				check("and reaches the dock", guide.on_path == false and guide_col <= 88,

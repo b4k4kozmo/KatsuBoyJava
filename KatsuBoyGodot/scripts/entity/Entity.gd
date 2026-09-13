@@ -56,6 +56,13 @@ var on_path: bool = false
 ## search_path().
 var _detour_direction: String = ""
 var _detour_counter: int = 0
+## Frames left before the route is worked out again. The pathfinder treats
+## bodies as walls, so re-running it every single frame meant a follower's route
+## flipped from one side of the player to the other as the player walked, and
+## the follower jittered on the spot. Holding a decision for a few frames is
+## what makes them walk like somebody going somewhere.
+var _path_cooldown: int = 0
+const PATH_RECHECK_FRAMES := 8
 var knock_back: bool = false
 var knock_back_direction: String
 var guarding: bool = false
@@ -550,10 +557,21 @@ func damage_player(atk: int) -> void:
 			gp.effects.add_impact_on(gp.player, flash)
 
 
+## Shove `target` in the attacker's facing direction.
+##
+## The player's class scales it both ways: a Zilla's axe sends things flying,
+## and a Samurai's stance means very little sends him anywhere.
 func set_knock_back(target, atkr, power: int) -> void:
 	self.attacker = atkr
+
+	var scaled: float = float(power)
+	if atkr == gp.player and gp.player.char_class != null:
+		scaled *= gp.player.char_class.knockback_dealt
+	if target == gp.player and gp.player.char_class != null:
+		scaled *= gp.player.char_class.knockback_taken
+
 	target.knock_back_direction = atkr.direction
-	target.speed += power
+	target.speed += maxi(int(round(scaled)), 0)
 	target.knock_back = true
 
 
@@ -683,6 +701,12 @@ func search_path(goal_col: int, goal_row: int) -> bool:
 			direction = _detour_direction
 			return true
 		_detour_counter = 0
+
+	# Keep walking the way we decided a moment ago, as long as it is still open.
+	if _path_cooldown > 0 and not probe_blocked(direction):
+		_path_cooldown -= 1
+		return true
+	_path_cooldown = PATH_RECHECK_FRAMES
 
 	@warning_ignore("integer_division")
 	var start_col: int = (world_x + solid_area.x) / gp.tile_size

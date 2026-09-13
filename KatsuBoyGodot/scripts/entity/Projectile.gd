@@ -24,7 +24,7 @@ func update() -> void:
 	if user == gp.player:
 		var monster_index: int = gp.c_checker.check_entity(self, gp.monster)
 		if monster_index != 999:
-			gp.player.damage_monster(monster_index, self, attack * gp.player.dexterity, knock_back_power)
+			gp.player.damage_monster(monster_index, self, gp.player.ranged_attack(self), knock_back_power)
 			generate_particle(user.projectile, gp.monster[gp.current_map][monster_index])
 			alive = false
 

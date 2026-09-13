@@ -47,6 +47,17 @@ var boat_dock_of: String = ""
 ## agree on what row 2 means.
 var boat_rows: Array[Dictionary] = []
 
+## The dialogue window holds four lines of Maru Monica at 28px. Nothing that
+## writes dialogue should have to know that - a dungeon hint is written by a
+## designer in a text field, and the old man reads it out loud - so the window
+## wraps the text to its own width and pages it, instead of trusting hand
+## placed newlines to land in the right places.
+const DIALOGUE_LINES := 4
+
+var _dialogue_source: String = ""
+var _dialogue_pages: Array = []
+var _dialogue_page: int = 0
+
 var sub_state: int = 0
 var counter: int = 0
 var npc: Entity
@@ -332,41 +343,91 @@ func draw_title_screen() -> void:
 		g2.set_color(kamiblack)
 		g2.fill_rect(0, 0, gp.screen_width, gp.screen_height)
 
+		# Built from GamePanel's "Player Classes" list, so a new class is a
+		# .tres rather than another block of drawing code - and so the screen
+		# can tell you what you are picking instead of just its name.
 		g2.set_color(kamigreen)
 		g2.set_font(maru_monica, 42)
 
-		var text := "Select your class"
+		var text := "Who are you?"
 		var x: int = get_x_for_centered_text(text)
-		var y: int = gp.tile_size * 3
+		var y: int = int(gp.tile_size * 1.6)
 		g2.draw_str(text, x, y)
 
-		text = "Samurai"
-		x = get_x_for_centered_text(text)
-		y += gp.tile_size * 3
-		g2.draw_str(text, x, y)
-		if command_num == 0:
-			g2.draw_str(">", x - gp.tile_size, y)
+		var classes: Array = gp.player_classes
+		var left: int = gp.tile_size * 3
+		y += int(gp.tile_size * 1.2)
 
-		text = "Ninja"
-		x = get_x_for_centered_text(text)
-		y += gp.tile_size
-		g2.draw_str(text, x, y)
-		if command_num == 1:
-			g2.draw_str(">", x - gp.tile_size, y)
+		for i in range(classes.size()):
+			var c: PlayerClass = classes[i]
+			if c == null:
+				continue
+			var chosen: bool = command_num == i
 
-		text = "Zilla"
-		x = get_x_for_centered_text(text)
-		y += gp.tile_size
-		g2.draw_str(text, x, y)
-		if command_num == 2:
-			g2.draw_str(">", x - gp.tile_size, y)
+			g2.set_font(maru_monica, 34)
+			g2.set_color(kamipink if chosen else kamigreen)
+			g2.draw_str(c.display_name, left, y)
+			if chosen:
+				g2.draw_str(">", left - int(gp.tile_size * 0.7), y)
 
-		text = "Back"
-		x = get_x_for_centered_text(text)
-		y += gp.tile_size * 2
-		g2.draw_str(text, x, y)
-		if command_num == 3:
-			g2.draw_str(">", x - gp.tile_size, y)
+			g2.set_font(maru_monica, 22)
+			g2.set_color(kamiwhite if chosen else kamigreen)
+			g2.draw_str(c.tagline, left + gp.tile_size * 4, y - 4)
+			g2.draw_str(class_summary(c), left + gp.tile_size * 4, y + 18)
+			y += int(gp.tile_size * 1.15)
+
+		# The blurb for whoever is highlighted, under the list.
+		if command_num >= 0 and command_num < classes.size() and classes[command_num] != null:
+			g2.set_font(maru_monica, 24)
+			g2.set_color(kamiwhite)
+			var blurb_y: int = y + 10
+			for line in wrap_text(classes[command_num].blurb,
+					gp.screen_width - gp.tile_size * 6, maru_monica, 24):
+				g2.draw_str(line, left, blurb_y)
+				blurb_y += 28
+
+		g2.set_font(maru_monica, 34)
+		g2.set_color(kamipink if command_num == classes.size() else kamigreen)
+		var back_y: int = gp.screen_height - int(gp.tile_size * 0.6)
+		g2.draw_str("Back", left, back_y)
+		if command_num == classes.size():
+			g2.draw_str(">", left - int(gp.tile_size * 0.7), back_y)
+
+
+## The one line of numbers under a class name on the select screen. Written
+## from the resource, so it can never disagree with what you actually get.
+func class_summary(c: PlayerClass) -> String:
+	var bits: Array[String] = []
+	bits.append(c.starting_weapon)
+
+	if c.swing_multiplier < 0.95:
+		bits.append("fast swing")
+	elif c.swing_multiplier > 1.05:
+		bits.append("slow swing")
+
+	if c.melee_multiplier >= 1.1:
+		bits.append("+%d%% melee" % int(round((c.melee_multiplier - 1.0) * 100)))
+	elif c.melee_multiplier <= 0.9:
+		bits.append("-%d%% melee" % int(round((1.0 - c.melee_multiplier) * 100)))
+
+	if c.ranged_multiplier >= 1.1:
+		bits.append("+%d%% thrown" % int(round((c.ranged_multiplier - 1.0) * 100)))
+	if c.defence_pierce > 0:
+		bits.append("ignores %d armour" % c.defence_pierce)
+	if c.night_multiplier > 1.05:
+		bits.append("+%d%% at night" % int(round((c.night_multiplier - 1.0) * 100)))
+	if c.knockback_dealt > 1.05:
+		bits.append("heavy hits")
+	if c.knockback_taken < 0.95:
+		bits.append("keeps his feet")
+	if c.life_per_level > 2:
+		bits.append("+%d life a level" % c.life_per_level)
+	if c.walk_speed > 4:
+		bits.append("quick")
+	elif c.walk_speed < 4:
+		bits.append("slow")
+
+	return "  ".join(bits)
 
 
 func draw_pause_screen() -> void:
@@ -403,6 +464,59 @@ func draw_pause_screen() -> void:
 		g2.draw_str(tally, get_x_for_centered_text(tally), y + int(gp.tile_size * 1.7))
 
 
+## Break text into lines that fit `max_width`, keeping any newlines the author
+## did write as hard breaks. Words that are themselves too long are split, so a
+## run-on never disappears off the side of the window.
+func wrap_text(raw: String, max_width: int, font: Font, size: int) -> Array:
+	var out: Array = []
+	for hard in raw.split("\n"):
+		var line := ""
+		for word in hard.split(" "):
+			var probe: String = word if line.is_empty() else line + " " + word
+			if font.get_string_size(probe, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x <= max_width:
+				line = probe
+				continue
+			if not line.is_empty():
+				out.append(line)
+				line = ""
+			# A single word wider than the window has to be cut somewhere.
+			while font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > max_width and word.length() > 1:
+				var cut: int = word.length() - 1
+				while cut > 1 and font.get_string_size(word.substr(0, cut), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > max_width:
+					cut -= 1
+				out.append(word.substr(0, cut))
+				word = word.substr(cut)
+			line = word
+		out.append(line)
+	return out
+
+
+## The wrapped lines, cut into windowfuls.
+func paginate(raw: String, max_width: int, font: Font, size: int) -> Array:
+	var lines: Array = wrap_text(raw, max_width, font, size)
+	var pages: Array = []
+	var page: Array = []
+	for line in lines:
+		page.append(line)
+		if page.size() == DIALOGUE_LINES:
+			pages.append("\n".join(page))
+			page = []
+	if not page.is_empty() or pages.is_empty():
+		pages.append("\n".join(page))
+	return pages
+
+
+## Re-wrap when the line being spoken changes, and only then.
+func _set_dialogue_source(raw: String, max_width: int) -> void:
+	if raw == _dialogue_source and not _dialogue_pages.is_empty():
+		return
+	_dialogue_source = raw
+	_dialogue_pages = paginate(raw, max_width, maru_monica, 28)
+	_dialogue_page = 0
+	char_index = 0
+	combined_text = ""
+
+
 func draw_dialogue_screen() -> void:
 
 	if npc == null:
@@ -424,7 +538,9 @@ func draw_dialogue_screen() -> void:
 
 	if npc.dialogues[npc.dialogue_set][npc.dialogue_index] != null:
 
-		var characters: String = npc.dialogues[npc.dialogue_set][npc.dialogue_index]
+		_set_dialogue_source(npc.dialogues[npc.dialogue_set][npc.dialogue_index],
+				width - gp.tile_size * 2)
+		var characters: String = _dialogue_pages[_dialogue_page]
 
 		if char_index < characters.length():
 			gp.play_se(sound_num)
@@ -437,19 +553,38 @@ func draw_dialogue_screen() -> void:
 			char_index = 0
 			combined_text = ""
 
-			if gp.game_state == gp.DIALOGUE_STATE:
+			# A long line reads a windowful at a time before moving on.
+			if _dialogue_page < _dialogue_pages.size() - 1:
+				_dialogue_page += 1
+				gp.key_h.enter_pressed = false
+			elif gp.game_state == gp.DIALOGUE_STATE:
+				_dialogue_source = ""
+				_dialogue_pages.clear()
 				npc.dialogue_index += 1
 				gp.key_h.enter_pressed = false
 
 	else:  # if there is no text in the array
 		npc.dialogue_index = 0
+		_dialogue_source = ""
+		_dialogue_pages.clear()
 
 		if gp.game_state == gp.DIALOGUE_STATE:
 			gp.game_state = gp.PLAY_STATE
+			# Let go of the key on the way out. A latched Enter used to leak
+			# into whatever came next - a swing, or the first page of the next
+			# conversation going by unread.
+			gp.key_h.enter_pressed = false
 
 	for line in current_dialogue.split("\n"):
 		g2.draw_str(line, x, y)
 		y += 40
+
+	# Say so when there is more to come, so nobody thinks the old man is done.
+	if _dialogue_page < _dialogue_pages.size() - 1:
+		g2.set_font(maru_monica, 22)
+		g2.set_color(kamigreen)
+		g2.draw_str("[more]", gp.screen_width - gp.tile_size * 5,
+				gp.tile_size / 2 + height - 16)
 
 
 func draw_character_screen() -> void:

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="PlayerClass" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/PlayerClass.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ninja"
+display_name = "Ninja"
+tagline = "Quick, quiet, and better after dark."
+blurb = "Half the muscle and twice the hands. His cuts are small but they land where the armour isn't, his shuriken hit like someone else's sword, and at night he is the most dangerous thing on the map."
+starting_weapon = "Kami no Bokken"
+starting_shield = "Puffa Shield"
+starting_projectile = "Shuriken"
+bonus_mana = 3
+bonus_ammo = 10
+starts_with_boots = false
+melee_multiplier = 0.75
+swing_multiplier = 0.65
+favoured_weapon = ""
+favoured_bonus = 1.0
+defence_pierce = 2
+night_multiplier = 1.35
+ranged_multiplier = 1.5
+knockback_dealt = 0.8
+knockback_taken = 1.0
+bonus_defence = 0
+walk_speed = 5
+life_per_level = 2
+strength_every = 1
+dexterity_every = 3
+mana_every = 2
