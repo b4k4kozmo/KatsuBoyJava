@@ -41,6 +41,7 @@ to play.
 | key bindings | Project Settings → Input Map |
 | dialogue | `scripts/entity/NPC_*.gd` (code) |
 | where the boat goes, and when | `assets/data/dungeons/*.tres` |
+| how much money things are worth | drop tables in `scripts/monster/MON_*.gd`, `Coin Value` on markers |
 
 ---
 
@@ -232,6 +233,7 @@ Under **Objects**. An item, chest or door.
 |---|---|
 | **Item** | which item — coins, keys, weapons, Boots, Chest, Door… |
 | **Chest Loot** | only used when Item is `Chest`: what's inside |
+| **Coin Value** | only used when the item (or the chest's loot) is a Kami Coin: how much it is worth. 1 is loose change, 5 a purse, 20 a real find. Bigger coins are drawn bigger. |
 
 Pickup-only items (coins, hearts, mana, Boots) are used the moment you walk over
 them. Weapons, shields, keys and potions go into the inventory. `Door` and
@@ -244,7 +246,9 @@ Under **InteractiveTiles**. Scenery you can destroy.
 |---|---|
 | **Kind** | DryTree — chop it with the Kami Axe, it becomes a stump |
 
-The pathfinder treats these as solid until they're destroyed.
+The pathfinder treats these as solid until they're destroyed. A felled dry tree
+drops a coin 40% of the time, so scattering a few is a small, one-time reason to
+carry the axe.
 
 ### `EventMarker`
 Under **Events**. Fires when the player steps on its tile.

@@ -130,6 +130,12 @@ optional and all documented in [AUTHORING.md](AUTHORING.md):
   your ticket at the quay, and an ending once everything is cleared. A ticket is
   good for one trip; sailing home is free. Destinations are `.tres` files, so
   adding one is authoring rather than coding — see `ROADMAP.md`.
+- **An economy.** A new game starts with nothing. Monsters pay by how dangerous
+  they are, dry trees pay a little when chopped, coins lie around the map, and
+  re-entering a map refills its monsters — so the shop is always reachable
+  without coins ever being free. `ROADMAP.md` has the table and the target
+  numbers, and the test suite checks that clearing the starting map buys a boat
+  ticket but not the whole shop.
 - **Dev tools** (F1) and a **regression test suite**.
 
 ## Bugs fixed along the way

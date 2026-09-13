@@ -458,6 +458,7 @@ func damage_interactive_tile(i: int) -> void:
 		generate_particle(gp.i_tile[gp.current_map][i], gp.i_tile[gp.current_map][i])
 
 		if gp.i_tile[gp.current_map][i].life == 0:
+			gp.i_tile[gp.current_map][i].check_drop()
 			gp.i_tile[gp.current_map][i] = gp.i_tile[gp.current_map][i].get_destroyed_form()
 			gp.p_finder.solid_dirty = true  # the pathfinder can route through it now
 

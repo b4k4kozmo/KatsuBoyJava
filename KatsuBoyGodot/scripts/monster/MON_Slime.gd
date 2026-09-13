@@ -46,15 +46,17 @@ func damage_reaction() -> void:
 	direction = gp.player.direction
 
 
+## The bottom of the money ladder: small change, often, from something that
+## dies in two hits. See ROADMAP.md for what a sweep of the map is worth.
 func check_drop() -> void:
 
-	# CAST A DIE
 	var i: int = randi() % 100 + 1
 
-	# SET THE MONSTER DROP
-	if i < 50:
-		drop_item(OBJ_Coin.new(gp))
-	if i >= 50 and i < 75:
+	if i <= 55:
+		drop_item(OBJ_Coin.worth(gp, randi_range(1, 3)))
+	elif i <= 65:
+		drop_item(OBJ_Coin.worth(gp, OBJ_Coin.PURSE))
+	elif i <= 85:
 		drop_item(OBJ_Potion_Green.new(gp))
-	if i >= 75:
+	else:
 		drop_item(OBJ_ManaCrystal.new(gp))

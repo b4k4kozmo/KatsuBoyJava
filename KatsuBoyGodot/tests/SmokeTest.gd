@@ -81,6 +81,25 @@ func _use_heart() -> int:
 	return gp.player.life - 100
 
 
+## Average coins a monster drops, over enough kills for the average to mean
+## something. Clears map 0's objects while it samples and puts them back after.
+func _coin_yield(maker: String, samples: int) -> float:
+	var total := 0
+	for _i in range(samples):
+		for slot in range(gp.obj[gp.current_map].size()):
+			gp.obj[gp.current_map][slot] = null
+		var m = gp.e_generator.get_monster(maker)
+		if m == null:
+			return 0.0
+		m.world_x = gp.player.world_x
+		m.world_y = gp.player.world_y
+		m.check_drop()
+		for o in gp.obj[gp.current_map]:
+			if o is OBJ_Coin:
+				total += o.value
+	return float(total) / float(samples)
+
+
 func press(action: StringName) -> void:
 	gp.key_h.action_pressed(action)
 
@@ -109,7 +128,7 @@ func _physics_process(_d: float) -> void:
 			check("tree tile collides", gp.tile_m.tile[16].collision == true)
 			check("grass tile does not collide", gp.tile_m.tile[0].collision == false)
 			check("map 0 tiles read", gp.tile_m.map_tile_num[0][94][94] >= 0)
-			check("objects placed from markers", objects_on(0) == 15, str(objects_on(0)))
+			check("objects placed from markers", objects_on(0) == 23, str(objects_on(0)))
 			check("monsters placed from markers", monsters_alive(0) == 23, str(monsters_alive(0)))
 			check("npc on map 0", gp.npc[0][0] != null)
 			check("merchant on map 1", gp.npc[1][1] is NPC_Merchant)
@@ -146,13 +165,16 @@ func _physics_process(_d: float) -> void:
 			press(Action.MOVE_DOWN)
 		26:
 			# the Carbuncle crashed the Java build on pickup
-			check("carbuncle picked up", objects_on(0) == 14, str(objects_on(0)))
+			check("carbuncle picked up", objects_on(0) == 22, str(objects_on(0)))
 			release(Action.MOVE_DOWN)
 			gp.player.world_x = gp.tile_size * 50
 			gp.player.world_y = gp.tile_size * 96
 			press(Action.MOVE_DOWN)
 		36:
-			check("coin picked up (coin +1)", gp.player.coin == 1000, str(gp.player.coin))
+			# A new game starts broke, and that first coin is worth what its
+			# marker says - loose change, near where you wake up.
+			check("coin picked up, and worth what the marker says",
+				gp.player.coin == 3, str(gp.player.coin))
 			release(Action.MOVE_DOWN)
 
 		40:
@@ -166,7 +188,11 @@ func _physics_process(_d: float) -> void:
 		52:
 			release(Action.CONFIRM); release(Action.MOVE_DOWN)
 		56:
-			check("chest opened", gp.obj[0][11].opened == true)
+			var chest_slot := -1
+			for slot in range(gp.obj[0].size()):
+				if gp.obj[0][slot] is OBJ_Chest and gp.obj[0][slot].opened:
+					chest_slot = slot
+			check("chest opened", chest_slot >= 0, "no opened chest found")
 			check("key in inventory", gp.player.search_item_in_inventory("Key") != 999)
 			gp.game_state = gp.PLAY_STATE
 		60:
@@ -367,7 +393,7 @@ func _physics_process(_d: float) -> void:
 				gp.monster[0][0].world_x == gp.tile_size * 82
 				and gp.monster[0][0].world_y == gp.tile_size * 95,
 				"%d,%d" % [gp.monster[0][0].world_x, gp.monster[0][0].world_y])
-			check("objects reset from markers", objects_on(0) == 15, str(objects_on(0)))
+			check("objects reset from markers", objects_on(0) == 23, str(objects_on(0)))
 
 		930:
 			print("\n-- boots and running --")
@@ -992,6 +1018,123 @@ func _physics_process(_d: float) -> void:
 				guide.guide_dungeon_id = "mushroom_cave"
 				gp.game_state = gp.PLAY_STATE
 				gp.quest = QuestLog.new()
+
+		1078:
+			print("\n-- the economy --")
+
+			check("a new game starts broke", PlayerStats.new().coin == 0,
+				str(PlayerStats.new().coin))
+
+			gp.current_map = 0
+			gp.game_state = gp.PLAY_STATE
+
+			# What each kind of monster is worth, averaged over 400 kills.
+			var per_slime: float = _coin_yield("Slime", 400)
+			var per_snome: float = _coin_yield("Snome", 400)
+			var per_jack: float = _coin_yield("Kamijack", 400)
+			var per_shadow: float = _coin_yield("Shadow", 400)
+			gp.a_setter.set_object()
+
+			print("      avg coins: slime %.1f  snome %.1f  kamijack %.1f  shadow %.1f" % [
+				per_slime, per_snome, per_jack, per_shadow])
+
+			check("every monster is worth something", per_slime > 0 and per_snome > 0)
+			check("the dangerous ones pay better than the easy ones",
+				per_jack > per_snome and per_snome > per_slime,
+				"%.1f %.1f %.1f" % [per_slime, per_snome, per_jack])
+
+			# What the starting map actually holds.
+			var roster := {"Slime": 0, "Snome": 0, "Kamijack": 0, "Shadow": 0}
+			for m in gp.monster[0]:
+				if m == null:
+					continue
+				if m is MON_Slime: roster["Slime"] += 1
+				elif m is MON_Snome: roster["Snome"] += 1
+				elif m is MON_KamiJack: roster["Kamijack"] += 1
+				elif m is MON_ShadowKatsu: roster["Shadow"] += 1
+
+			var sweep: float = (roster["Slime"] * per_slime + roster["Snome"] * per_snome
+					+ roster["Kamijack"] * per_jack + roster["Shadow"] * per_shadow)
+			var careful_sweep: float = roster["Slime"] * per_slime + roster["Snome"] * per_snome
+
+			print("      world map: %s   full sweep ~%d coins, avoiding the hard ones ~%d" % [
+				str(roster), int(sweep), int(careful_sweep)])
+
+			# The point of all of it: a first afternoon has to end at the shop
+			# with something to show for it.
+			var cheapest := 999999
+			var ticket_price := 0
+			for d in gp.dungeons:
+				if d is DungeonInfo and d.sold_from_start and d.ticket_price > 0:
+					ticket_price = d.ticket_price
+			var shop = gp.npc[1][1]
+			gp.quest = QuestLog.new()
+			shop.refresh_stock()
+			for item in shop.inventory:
+				cheapest = mini(cheapest, item.price)
+
+			check("clearing the starting map buys a boat ticket",
+				sweep >= float(ticket_price) and ticket_price > 0,
+				"%d coins vs a %d coin ticket" % [int(sweep), ticket_price])
+			check("even playing it safe buys something from the shop",
+				careful_sweep >= float(cheapest) and cheapest < 999999,
+				"%d coins vs the %d coin cheapest item" % [int(careful_sweep), cheapest])
+			check("but not the whole shop in one afternoon",
+				sweep < 210.0, "%d coins" % int(sweep))
+
+			# Coins lying around: worth finding, never the main income.
+			var scattered := 0
+			for o in gp.obj[0]:
+				if o is OBJ_Coin:
+					scattered += o.value
+			check("there are coins to find on the map", scattered > 0, str(scattered))
+			check("but they are worth less than the monsters",
+				float(scattered) < sweep, "%d scattered vs %d from monsters" % [scattered, int(sweep)])
+			print("      scattered on the world map: %d coins" % scattered)
+
+			# Chopping a dry tree pays now and then - the grass-cutting money of
+			# this game, and a reason to carry the axe.
+			var tree_total := 0
+			for _i in range(400):
+				for slot in range(gp.obj[gp.current_map].size()):
+					gp.obj[gp.current_map][slot] = null
+				var tree := IT_DryTree.new(gp, 90, 90)
+				tree.check_drop()
+				for o in gp.obj[gp.current_map]:
+					if o is OBJ_Coin:
+						tree_total += o.value
+			gp.a_setter.set_object()
+			var per_tree: float = float(tree_total) / 400.0
+			print("      avg coins per dry tree: %.1f" % per_tree)
+			check("chopping a tree sometimes pays", per_tree > 0.0)
+			check("but less than killing something", per_tree < per_slime,
+				"%.1f vs %.1f" % [per_tree, per_slime])
+
+			# A placed coin keeps its value through a save.
+			var big := OBJ_Coin.worth(gp, 20)
+			check("a coin can be worth more than one", big.value == 20)
+			check("and a fat coin is drawn bigger",
+				big.down1.get_width() > OBJ_Coin.worth(gp, 1).down1.get_width())
+
+			# Clear the map, walk away, come back: it is full again. This is the
+			# loop that keeps the shop reachable without making coins free.
+			for slot in range(gp.monster[0].size()):
+				gp.monster[0][slot] = null
+			check("the map is empty after a clear", monsters_alive(0) == 0)
+
+			gp.e_handler.change_map(1, 25, 22)
+			gp.ui.counter = 50
+			gp.ui.update_transition()
+			gp.e_handler.change_map(0, 94, 94)
+			gp.ui.counter = 50
+			gp.ui.update_transition()
+			check("walking back in refills it", monsters_alive(0) == 23,
+				str(monsters_alive(0)))
+			check("and the player is back on the world map", gp.current_map == 0)
+
+			gp.player.coin = 0
+			gp.player.world_x = gp.tile_size * 94
+			gp.player.world_y = gp.tile_size * 94
 
 		1080:
 			print("\n-- boat tickets at Kami Mart --")

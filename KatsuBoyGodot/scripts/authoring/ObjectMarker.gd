@@ -23,6 +23,14 @@ extends PlacementMarker
 		chest_loot = value
 		refresh()
 
+## Only used when the item (or a chest's loot) is a Kami Coin: how many coins
+## it is worth. 1 is loose change; 5 is a purse; 20 is a find. Scattered coins
+## are meant to be rarer and smaller than what monsters drop - see ROADMAP.md.
+@export_range(1, 200) var coin_value: int = 1:
+	set(value):
+		coin_value = value
+		refresh()
+
 const PREVIEWS := {
 	"Kami Coin": "coin", "Key": "key", "Door": "door", "Chest": "chest",
 	"Candle": "candle", "Tent": "tent", "Green Potion": "potion",
@@ -47,4 +55,6 @@ func marker_color() -> Color:
 func marker_label() -> String:
 	if item == "Chest":
 		return "Chest (%s)" % chest_loot
+	if item == "Kami Coin" and coin_value > 1:
+		return "%s x%d" % [item, coin_value]
 	return item

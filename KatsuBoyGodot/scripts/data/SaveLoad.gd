@@ -56,6 +56,7 @@ func save() -> void:
 		var ys: Array = []
 		var loots: Array = []
 		var opened: Array = []
+		var values: Array = []
 
 		for i in range(gp.obj[1].size()):
 
@@ -65,6 +66,7 @@ func save() -> void:
 				ys.append(0)
 				loots.append("")
 				opened.append(false)
+				values.append(0)
 			else:
 				names.append(gp.obj[map_num][i].name)
 				xs.append(gp.obj[map_num][i].world_x)
@@ -74,12 +76,14 @@ func save() -> void:
 				else:
 					loots.append("")
 				opened.append(gp.obj[map_num][i].opened)
+				values.append(gp.obj[map_num][i].value if gp.obj[map_num][i] is OBJ_Coin else 0)
 
 		ds.map_object_names.append(names)
 		ds.map_object_world_x.append(xs)
 		ds.map_object_world_y.append(ys)
 		ds.map_object_loot_names.append(loots)
 		ds.map_object_opened.append(opened)
+		ds.map_object_values.append(values)
 
 	# Write the DataStorage object
 	file.store_var(ds.to_dict())
@@ -166,5 +170,10 @@ func load_game() -> void:
 				if loot_name != "":
 					gp.obj[map_num][i].set_loot(gp.e_generator.get_object(loot_name))
 				gp.obj[map_num][i].opened = ds.map_object_opened[map_num][i]
+				if (gp.obj[map_num][i] is OBJ_Coin
+						and map_num < ds.map_object_values.size()
+						and i < ds.map_object_values[map_num].size()
+						and int(ds.map_object_values[map_num][i]) > 0):
+					gp.obj[map_num][i].set_value(int(ds.map_object_values[map_num][i]))
 				if gp.obj[map_num][i].opened == true:
 					gp.obj[map_num][i].down1 = gp.obj[map_num][i].image2

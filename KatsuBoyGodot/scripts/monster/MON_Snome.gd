@@ -51,15 +51,17 @@ func damage_reaction() -> void:
 	on_path = true
 
 
+## Worth going out of your way for: four times a slime's health, four times the
+## money.
 func check_drop() -> void:
 
-	# CAST A DIE
 	var i: int = randi() % 100 + 1
 
-	# SET THE MONSTER DROP
-	if i < 50:
-		drop_item(OBJ_Coin.new(gp))
-	if i >= 50 and i < 75:
+	if i <= 45:
+		drop_item(OBJ_Coin.worth(gp, randi_range(3, 6)))
+	elif i <= 70:
+		drop_item(OBJ_Coin.worth(gp, 10))
+	elif i <= 90:
 		drop_item(OBJ_Potion_Green.new(gp))
-	if i >= 75:
+	else:
 		drop_item(OBJ_Heart.new(gp))

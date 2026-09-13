@@ -58,15 +58,17 @@ func damage_reaction() -> void:
 	slow_down = 120
 
 
+## The dangerous one on the starting map, so it is also the profitable one -
+## clearing the three by the shore is most of a boat ticket.
 func check_drop() -> void:
 
-	# CAST A DIE
 	var i: int = randi() % 100 + 1
 
-	# SET THE MONSTER DROP
-	if i < 50:
-		drop_item(OBJ_Coin.new(gp))
-	if i >= 50 and i < 75:
+	if i <= 45:
+		drop_item(OBJ_Coin.worth(gp, randi_range(15, 25)))
+	elif i <= 75:
+		drop_item(OBJ_Coin.worth(gp, 8))
+	elif i <= 90:
 		drop_item(OBJ_Potion_Green.new(gp))
-	if i >= 75:
+	else:
 		drop_item(OBJ_Heart.new(gp))

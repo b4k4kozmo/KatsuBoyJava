@@ -25,6 +25,14 @@ func play_se() -> void:
 	gp.play_se(SE.SWING_WEAPON)
 
 
+## Chopping something down should occasionally be worth it, the way cutting
+## grass is in the games this one is built after. Small money, no guarantee.
+func check_drop() -> void:
+	var i: int = randi() % 100 + 1
+	if i <= 40:
+		drop_item(OBJ_Coin.worth(gp, randi_range(1, 4)))
+
+
 func get_destroyed_form() -> InteractiveTile:
 	@warning_ignore("integer_division")
 	return IT_Trunk.new(gp, world_x / gp.tile_size, world_y / gp.tile_size)

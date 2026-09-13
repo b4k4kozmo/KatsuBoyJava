@@ -40,6 +40,9 @@ var map_object_world_x: Array = []    # [map][slot] int
 var map_object_world_y: Array = []    # [map][slot] int
 var map_object_loot_names: Array = [] # [map][slot] String or null
 var map_object_opened: Array = []     # [map][slot] bool
+## [map][slot] int - a coin's worth. Everything else stores 0. Without this a
+## 20 coin pile on the floor came back as loose change after a save.
+var map_object_values: Array = []
 
 
 func to_dict() -> Dictionary:
@@ -64,6 +67,7 @@ func to_dict() -> Dictionary:
 		"map_object_world_y": map_object_world_y,
 		"map_object_loot_names": map_object_loot_names,
 		"map_object_opened": map_object_opened,
+		"map_object_values": map_object_values,
 		"quest": quest,
 		"current_dungeon_id": current_dungeon_id,
 	}
@@ -91,6 +95,7 @@ static func from_dict(d: Dictionary) -> DataStorage:
 	ds.map_object_world_y = d.get("map_object_world_y", [])
 	ds.map_object_loot_names = d.get("map_object_loot_names", [])
 	ds.map_object_opened = d.get("map_object_opened", [])
+	ds.map_object_values = d.get("map_object_values", [])
 	# Saves written before the boat existed simply have no quest data, and an
 	# empty dictionary loads as a fresh quest log rather than failing.
 	ds.quest = d.get("quest", {})

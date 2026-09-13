@@ -17,6 +17,11 @@ func play_se() -> void:
 	pass
 
 
+## What falls out when this is destroyed. Nothing, by default.
+func check_drop() -> void:
+	pass
+
+
 func get_destroyed_form() -> InteractiveTile:
 	return null
 

@@ -67,15 +67,14 @@ func damage_reaction() -> void:
 	on_path = true
 
 
+## The hardest thing on the map pays like it. One of these is most of a ticket.
 func check_drop() -> void:
 
-	# CAST A DIE
 	var i: int = randi() % 100 + 1
 
-	# SET THE MONSTER DROP
-	if i < 50:
-		drop_item(OBJ_Coin.new(gp))
-	if i >= 50 and i < 75:
-		drop_item(OBJ_Potion_Green.new(gp))
-	if i >= 75:
+	if i <= 60:
+		drop_item(OBJ_Coin.worth(gp, randi_range(25, 40)))
+	elif i <= 80:
 		drop_item(OBJ_Heart.new(gp))
+	else:
+		drop_item(OBJ_Potion_Green.new(gp))

@@ -101,7 +101,12 @@ func set_object() -> void:
 				push_warning("Unknown object '%s' on map %d." % [m.item, map_num])
 				continue
 			if m.item == OBJ_Chest.OBJ_NAME:
-				entity.set_loot(gp.e_generator.get_object(m.chest_loot))
+				var loot: Entity = gp.e_generator.get_object(m.chest_loot)
+				if loot is OBJ_Coin:
+					loot.set_value(m.coin_value)
+				entity.set_loot(loot)
+			elif entity is OBJ_Coin:
+				entity.set_value(m.coin_value)
 			_place(entity, m)
 			gp.obj[map_num][i] = entity
 			i += 1
@@ -138,28 +143,41 @@ func set_npc() -> void:
 
 
 func set_monster() -> void:
-
 	for map_num in range(gp.max_map):
-		var i := 0
-		for m in markers(map_num, "Monsters"):
-			if not (m is MonsterMarker):
-				continue
-			if i >= gp.monster[map_num].size():
-				push_warning("Map %d has more monsters than slots (%d)." % [map_num, gp.monster[map_num].size()])
-				break
-			var entity: Entity = gp.e_generator.get_monster(m.monster)
-			if entity == null:
-				push_warning("Unknown monster '%s' on map %d." % [m.monster, map_num])
-				continue
-			_place(entity, m)
-			# A boss needs to know which dungeon it guards and which route its
-			# death opens. Both are set on the marker in the Inspector.
-			if entity is MON_Boss:
-				entity.dungeon_id = m.boss_dungeon_id
-				entity.reward_ticket = m.reward_ticket
-			gp.monster[map_num][i] = entity
-			i += 1
-		_clear_rest(gp.monster, map_num, i)
+		set_monster_on(map_num)
+
+
+## Rebuild one map's monsters from its markers.
+##
+## Called for every map on a new game, on death and when the player rests - and
+## for a single map whenever the player walks onto it, which is what makes
+## re-entering a place refill it. That is the oldest money loop there is: clear
+## the screen, leave, come back, clear it again.
+func set_monster_on(map_num: int) -> void:
+
+	if map_num < 0 or map_num >= gp.max_map:
+		return
+
+	var i := 0
+	for m in markers(map_num, "Monsters"):
+		if not (m is MonsterMarker):
+			continue
+		if i >= gp.monster[map_num].size():
+			push_warning("Map %d has more monsters than slots (%d)." % [map_num, gp.monster[map_num].size()])
+			break
+		var entity: Entity = gp.e_generator.get_monster(m.monster)
+		if entity == null:
+			push_warning("Unknown monster '%s' on map %d." % [m.monster, map_num])
+			continue
+		_place(entity, m)
+		# A boss needs to know which dungeon it guards and which route its
+		# death opens. Both are set on the marker in the Inspector.
+		if entity is MON_Boss:
+			entity.dungeon_id = m.boss_dungeon_id
+			entity.reward_ticket = m.reward_ticket
+		gp.monster[map_num][i] = entity
+		i += 1
+	_clear_rest(gp.monster, map_num, i)
 
 
 func set_interactive_tile() -> void:

@@ -854,6 +854,13 @@ func update_transition() -> void:
 	if counter >= 50:
 		counter = 0
 		gp.game_state = gp.PLAY_STATE
+
+		# Walking onto a map refills its monsters, the way leaving a screen and
+		# coming back does in the games this one is built after. It is the
+		# money loop: clear an area, step through a door, clear it again.
+		if gp.current_map != gp.e_handler.temp_map:
+			gp.a_setter.set_monster_on(gp.e_handler.temp_map)
+
 		gp.current_map = gp.e_handler.temp_map
 		gp.player.world_x = gp.tile_size * gp.e_handler.temp_col
 		gp.player.world_y = gp.tile_size * gp.e_handler.temp_row

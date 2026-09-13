@@ -12,7 +12,7 @@ extends Resource
 @export var strength: int = 1
 ## More dexterity = less damage taken.
 @export var dexterity: int = 1
-@export var coin: int = 999
+@export var coin: int = 0
 ## Exp needed for level 2. Each level after that costs 3x the last.
 @export var next_level_exp: int = 5
 

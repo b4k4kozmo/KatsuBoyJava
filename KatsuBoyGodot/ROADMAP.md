@@ -252,6 +252,43 @@ of the week.
 
 ---
 
+## The economy
+
+A new game starts with **nothing**. Everything in Kami Mart has to be earned,
+and the earning is built the way the games this one is modelled on did it:
+monsters are the income, everything else is a bonus.
+
+| Source | Typical | Repeatable? |
+|---|---|---|
+| Slime | ~1.5 coins | yes |
+| Snome | ~4.7 coins | yes |
+| Kamijack | ~11 coins | yes |
+| Shadow Katsu | ~20 coins | yes |
+| A dungeon boss | 60–90 first kill, 15–25 after | yes |
+| Chopping a dry tree | ~0.8 coins (40% chance of 1–4) | no |
+| Coins lying on the map | 39 coins across the whole world map | no |
+| A chest | 10 coins, in the north field | no |
+
+**Clearing the starting map is worth about 135 coins.** Avoiding the dangerous
+things — the five Kamijacks and the Shadow — still comes to about 59, which is
+the number that matters: it buys the 40 coin boat ticket, or the Tent, with
+change. The full sweep does not buy the 210 coin Kami no Bokken, which is the
+other end of the curve. The test suite checks both ends, so a change to a drop
+table that breaks the shop shows up immediately.
+
+**Monsters come back when you re-enter a map.** Walking through a door, or
+sailing anywhere, rebuilds that map's monsters from its markers. That is the
+loop: clear an area, step out, step back, clear it again. Resting at a healing
+pool and dying rebuild every map, as before.
+
+Coins on the floor never come back, which is deliberate — they are a reward for
+looking around, not a farm. If the game ever feels too rich or too poor, the
+dials in order of bluntness are: the drop tables in `scripts/monster/MON_*.gd`,
+the `coin_value` on scattered `ObjectMarker`s, and the `price` in each
+`scripts/object/OBJ_*.gd`.
+
+---
+
 ## Recipes
 
 Each of these uses the framework already in place. `AUTHORING.md` has the

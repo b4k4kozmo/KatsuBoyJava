@@ -99,6 +99,49 @@ tile_set = SubResource("TileSet_jtruc")
 [node name="KamiCoin" type="Node2D" parent="Objects"]
 position = Vector2(2400, 4656)
 script = ExtResource("2_pgo1x")
+coin_value = 3
+
+[node name="LooseCoinNorth" type="Node2D" parent="Objects"]
+position = Vector2(1440, 960)
+script = ExtResource("2_pgo1x")
+coin_value = 5
+
+[node name="LooseCoinField" type="Node2D" parent="Objects"]
+position = Vector2(2880, 1920)
+script = ExtResource("2_pgo1x")
+coin_value = 3
+
+[node name="LooseCoinWest" type="Node2D" parent="Objects"]
+position = Vector2(1920, 2400)
+script = ExtResource("2_pgo1x")
+coin_value = 5
+
+[node name="LooseCoinEast" type="Node2D" parent="Objects"]
+position = Vector2(3360, 2880)
+script = ExtResource("2_pgo1x")
+coin_value = 3
+
+[node name="LooseCoinSouth" type="Node2D" parent="Objects"]
+position = Vector2(2400, 3360)
+script = ExtResource("2_pgo1x")
+coin_value = 5
+
+[node name="LooseCoinShore" type="Node2D" parent="Objects"]
+position = Vector2(4608, 2976)
+script = ExtResource("2_pgo1x")
+coin_value = 3
+
+[node name="LostPurse" type="Node2D" parent="Objects"]
+position = Vector2(576, 576)
+script = ExtResource("2_pgo1x")
+coin_value = 8
+
+[node name="CoinChest" type="Node2D" parent="Objects"]
+position = Vector2(2208, 1152)
+script = ExtResource("2_pgo1x")
+item = "Chest"
+chest_loot = "Kami Coin"
+coin_value = 10
 
 [node name="Carbuncle" type="Node2D" parent="Objects"]
 position = Vector2(2496, 4704)
@@ -113,10 +156,12 @@ item = "Key"
 [node name="KamiCoin2" type="Node2D" parent="Objects"]
 position = Vector2(4608, 4656)
 script = ExtResource("2_pgo1x")
+coin_value = 2
 
 [node name="KamiCoin3" type="Node2D" parent="Objects"]
 position = Vector2(4656, 4320)
 script = ExtResource("2_pgo1x")
+coin_value = 2
 
 [node name="KaminoBokken" type="Node2D" parent="Objects"]
 position = Vector2(4704, 4704)
@@ -301,6 +346,22 @@ monster = "Shadow"
 
 [node name="DryTree" type="Node2D" parent="InteractiveTiles"]
 position = Vector2(4128, 4656)
+script = ExtResource("5_ym87g")
+
+[node name="DryTree2" type="Node2D" parent="InteractiveTiles"]
+position = Vector2(4416, 4416)
+script = ExtResource("5_ym87g")
+
+[node name="DryTree3" type="Node2D" parent="InteractiveTiles"]
+position = Vector2(4608, 4656)
+script = ExtResource("5_ym87g")
+
+[node name="DryTree4" type="Node2D" parent="InteractiveTiles"]
+position = Vector2(4032, 4512)
+script = ExtResource("5_ym87g")
+
+[node name="DryTree5" type="Node2D" parent="InteractiveTiles"]
+position = Vector2(4656, 4464)
 script = ExtResource("5_ym87g")
 
 [node name="Events" type="Node2D" parent="."]

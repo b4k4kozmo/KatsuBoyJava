@@ -90,13 +90,17 @@ func damage_reaction() -> void:
 func check_drop() -> void:
 
 	if gp.quest == null:
+		drop_item(OBJ_Coin.worth(gp, randi_range(60, 90)))
 		return
 
-	# Fall back to whichever dungeon the boat dropped the player in, so a boss
-	# placed without an explicit id still works.
-	var id := dungeon_id
-	if id.is_empty():
-		id = gp.current_dungeon_id
+	# The first kill pays for the whole trip. Later ones still pay - a boss is
+	# worth beating twice - but not enough to make farming it the best way to
+	# earn a living.
+	var first_time: bool = not gp.quest.is_cleared(_drop_dungeon_id())
+	drop_item(OBJ_Coin.worth(gp,
+			randi_range(60, 90) if first_time else randi_range(15, 25)))
+
+	var id: String = _drop_dungeon_id()
 
 	# Only the first kill counts. Bosses are rebuilt from their markers whenever
 	# the map resets - resting at a healing pool does it - so without this the
@@ -117,6 +121,14 @@ func check_drop() -> void:
 	# itself - this is just so the player hears about it.
 	if gp.quest.all_cleared(gp.dungeons):
 		gp.ui.add_message("The Wunderboat can take you home.")
+
+
+## Which dungeon this death clears. Falls back to whichever one the boat
+## dropped the player in, so a boss placed without an explicit id still works.
+func _drop_dungeon_id() -> String:
+	if not dungeon_id.is_empty():
+		return dungeon_id
+	return gp.current_dungeon_id
 
 
 func _dungeon_name(id: String) -> String:

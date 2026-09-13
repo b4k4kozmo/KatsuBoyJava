@@ -126,9 +126,9 @@ var e_generator: EntityGenerator
 
 # ENTITY AND OBJECT
 var player: Player
-var obj: Array = []          # [max_map][20]
+var obj: Array = []          # [max_map][40]
 var npc: Array = []          # [max_map][10]
-var monster: Array = []      # [max_map][30]
+var monster: Array = []      # [max_map][80]
 var i_tile: Array = []       # [max_map][50]
 var projectile: Array = []   # [max_map][20]
 var particle_list: Array = []
@@ -193,10 +193,14 @@ func _ready() -> void:
 	quest = QuestLog.new()
 	e_generator = EntityGenerator.new(self)
 
+	# Slots per map. An empty slot is null; going over the limit warns at
+	# startup rather than crashing, but the extra markers are ignored - which is
+	# why these are roomier than the Java fixed arrays. A generated dungeon can
+	# easily hold sixty monsters.
 	player = Player.new(self, key_h)
-	obj = _new_entity_array(20)
+	obj = _new_entity_array(40)
 	npc = _new_entity_array(10)
-	monster = _new_entity_array(30)
+	monster = _new_entity_array(80)
 	i_tile = _new_entity_array(50)
 	projectile = _new_entity_array(20)
 
