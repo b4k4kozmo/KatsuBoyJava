@@ -88,7 +88,11 @@ func set_action() -> void:
 			direction = "down"
 			return
 
-		search_path(goal_col, goal_row)
+		# No route at all - the goal is walled in, or something is parked on
+		# it. Go back to wandering instead of grinding against a wall; talking
+		# to him again starts the walk over.
+		if not search_path(goal_col, goal_row):
+			on_path = false
 	else:
 		action_lock_counter += 1
 
@@ -151,7 +155,9 @@ func _build_guide_dialogue() -> bool:
 	var next := 1
 
 	if not gp.quest.has_ticket(info.ticket_id):
-		if info.ticket_price > 0:
+		if _carrying(info.ticket_id):
+			dialogues[GUIDE_SET][next] = "You have the ticket. The collector\nat the dock has to stamp it."
+		elif info.ticket_price > 0 and (info.sold_from_start or gp.quest.is_known(info.ticket_id)):
 			dialogues[GUIDE_SET][next] = "You will need a ticket.\nKami Mart sells them, %d coins." % info.ticket_price
 		else:
 			dialogues[GUIDE_SET][next] = "You will need a ticket for that\nroute. They are not for sale."
@@ -162,6 +168,16 @@ func _build_guide_dialogue() -> bool:
 	# So the pause screen agrees with what he just said.
 	gp.quest.current_target = info.id
 	return true
+
+
+## Is the player carrying a paper ticket for this route?
+func _carrying(route: String) -> bool:
+	if route.is_empty() or gp.player == null:
+		return false
+	for item in gp.player.inventory:
+		if item is OBJ_BoatTicket and item.route_id == route:
+			return true
+	return false
 
 
 func _on_tile(col: int, row: int) -> bool:

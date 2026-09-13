@@ -13,6 +13,7 @@ scale = 0
 sail_days = 18
 ticket_id = "mushroom_cave"
 ticket_price = 40
+sold_from_start = true
 unlocked_by = ""
 hint = "The cave under the mushrooms. The boat runs Mondays and Thursdays - buy passage at Kami Mart."
 is_victory = false

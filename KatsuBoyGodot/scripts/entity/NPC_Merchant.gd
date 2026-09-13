@@ -60,8 +60,12 @@ func set_items() -> void:
 
 ## Boat tickets are stocked from the dungeon files rather than listed here, so
 ## adding a destination with a ticket_price puts it on the shelf by itself.
-## Tickets the player already holds come off the shelf - nobody wants to sell
-## the same passage twice.
+##
+## A ticket is good for one trip, so the shelf is never emptied by owning one -
+## it is a ferry office, it keeps selling tickets. What does gate the shelf is
+## whether the route is public: a dungeon marked "sold from start" is on sale
+## immediately, and anything else appears only once the player has held one of
+## its tickets, which is usually the one a boss handed over.
 func refresh_stock() -> void:
 
 	for i in range(inventory.size() - 1, -1, -1):
@@ -72,11 +76,11 @@ func refresh_stock() -> void:
 		return
 
 	for d in gp.dungeons:
-		if not (d is DungeonInfo) or d.is_victory:
+		if not (d is DungeonInfo) or d.is_victory or d.is_home_port:
 			continue
 		if d.ticket_price <= 0 or d.ticket_id.is_empty():
 			continue
-		if gp.quest.has_ticket(d.ticket_id):
+		if not d.sold_from_start and not gp.quest.is_known(d.ticket_id):
 			continue
 		# A route whose charts are not drawn yet is not on sale either, so the
 		# shop never spoils what is coming.

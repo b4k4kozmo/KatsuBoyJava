@@ -42,9 +42,14 @@ var sail_days: int = 127
 ## empty for a destination that needs no ticket at all, like the home port.
 @export var ticket_id: String = ""
 
-## What Kami Mart charges for that ticket. 0 means it is not for sale, so the
+## What Kami Mart charges for that ticket. 0 means it is never for sale, so the
 ## only way to get it is whatever drops it.
 @export var ticket_price: int = 0
+
+## Is it on the shelf from the beginning? Leave this off for a route the player
+## has to be given first: once they have held its ticket once, Kami Mart starts
+## stocking it at `ticket_price` so they can go back.
+@export var sold_from_start: bool = false
 
 ## The dungeon whose boss must be beaten before this route appears at all, by
 ## id. Empty means it is open from the start. Use this for the spine of the

@@ -4,8 +4,13 @@ extends Entity
 ##
 ## This exists so tickets can go through the shop and the loot system without
 ## either of them needing to know what a ticket is. The Merchant stocks it like
-## any other item; a chest can hold it; a boss can drop it. Using it hands the
-## ticket to the quest log, and the boat reads the quest log.
+## any other item; a chest can hold it; a boss can drop it.
+##
+## A ticket is paper, not permission. Selecting it in the inventory does
+## nothing except tell you where to take it: the collector at the dock is the
+## only one who can turn it into a boarding pass, and the boat only reads
+## passes. That is what stops a player using a ticket in the middle of a
+## dungeon and sailing for free afterwards.
 ##
 ## One item covers every route: call configure() with a DungeonInfo and it
 ## becomes that route's ticket, taking its name and price from the file. That is
@@ -50,23 +55,12 @@ func _describe() -> void:
 
 
 func set_dialogue() -> void:
-	dialogues[0][0] = "The captain stamped your ticket.\nThe route is open."
-	dialogues[1][0] = "You have already booked this one."
+	dialogues[0][0] = "The ticket collector takes these\nat the dock. Not here."
 
 
 func use(_entity) -> bool:
-	# Using a ticket does not consume it in any meaningful sense - it registers
-	# the route with the quest log, which is what the boat checks. Returning
-	# true lets the inventory remove the paper copy.
-	if gp.quest == null:
-		return false
-
-	if gp.quest.grant_ticket(route_id):
-		sound_number = 20
-		set_sound()
-		gp.play_se(SE.POWER_UP)
-		start_dialogue(self, 0)
-		return true
-
-	start_dialogue(self, 1)
+	# Never consumed from the menu. The collector takes it - see NPC_TicketMan.
+	sound_number = 20
+	set_sound()
+	start_dialogue(self, 0)
 	return false

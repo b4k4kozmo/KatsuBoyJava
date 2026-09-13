@@ -140,24 +140,49 @@ code to grow — adding a destination is a `.tres` file and a map.
 |---|---|
 | `scripts/data/DungeonInfo.gd` | One destination, as editable data. |
 | `assets/data/dungeons/*.tres` | The destinations themselves. Drop them into GamePanel's **Dungeons** list. |
-| `scripts/data/QuestLog.gd` | Tickets held, dungeons cleared, current objective. Saved with the rest of the game. |
+| `scripts/data/QuestLog.gd` | Boarding passes, routes you have ever held a ticket for, dungeons cleared, current objective. Saved with the rest of the game. |
 | `scripts/environment/BoatService.gd` | Pure logic: given dungeons + quest log + day, what sails. No nodes, which is why the tests can check the whole timetable without running the game. |
 | `scripts/monster/MON_Boss.gd` | A monster that, on death, marks its dungeon cleared and grants the ticket for the next route. |
-| `scripts/object/OBJ_BoatTicket.gd` | A ticket as an inventory item. One script covers every route — `configure()` points it at a `DungeonInfo`. |
-| `scripts/entity/NPC_Merchant.gd` | Stocks tickets straight from the dungeon files. A route with `ticket_price > 0` appears on the shelf by itself. |
+| `scripts/object/OBJ_BoatTicket.gd` | A ticket as an inventory item — paper, not permission. One script covers every route; `configure()` points it at a `DungeonInfo`. |
+| `scripts/entity/NPC_TicketMan.gd` | The collector at the dock. Takes a paper ticket off you and stamps one boarding pass. The only way a ticket becomes passage. |
+| `scripts/entity/NPC_Merchant.gd` | Stocks tickets straight from the dungeon files: `sold_from_start` routes always, anything else once you have held its ticket once. |
 | `scripts/entity/NPC_OldMan.gd` | With a `guide_dungeon_id` he becomes a signpost: tells you where to go, sets the objective, then walks to the dock so you can follow him. |
 | `UI.draw_boat_screen()` | The timetable. Shows every route you could *ever* take with the reason each one is unavailable, so the schedule teaches itself. |
 | `UI.draw_pause_screen()` | Prints the objective and the tally. |
 
+**Tickets, passes, and the collector**
+
+A ticket is a thing you carry; a **pass** is permission to board. They are
+deliberately separate:
+
+```
+Kami Mart / a boss   ->   ticket in your bag   ->   collector at the dock
+                                                          |
+                                                    one boarding pass
+                                                          |
+                                                 the boat spends it, once
+```
+
+Selecting a ticket in the inventory does nothing but tell you where to take it,
+so a route can never be unlocked from inside a dungeon. `NPC_TicketMan` takes
+the paper and calls `QuestLog.grant_ticket()`; `EventHandler.sail_to()` calls
+`spend_pass()` and refuses if there is nothing to spend. Coming home to the
+port, and the victory route, carry no ticket id and are always free.
+
+Handing a ticket over also marks its route **known**, which is what puts it on
+Kami Mart's shelf permanently — so the route a boss opened up can be bought
+again later, at whatever `ticket_price` says.
+
 **How a route opens up**
 
-There are two gates, and they do different jobs:
+There are three gates, and they do different jobs:
 
 - **`unlocked_by`** is the spine. The Shadow Deep does not appear at all until
   the Mushroom Cave is cleared. Use this for story order.
-- **`ticket_id` / `ticket_price`** is the door. A ticket is bought at Kami Mart
-  or dropped by a boss. Use a price for somewhere optional; use a price of `0`
-  and a boss drop for somewhere you must earn.
+- **`ticket_id` / `ticket_price` / `sold_from_start`** is the door. Tick
+  `sold_from_start` for a route Kami Mart sells from the beginning; leave it off
+  for one the player must be given first, and it appears on the shelf once they
+  have held its ticket once. `ticket_price` of `0` means never for sale.
 
 And one on top of both: **`sail_days`**, the timetable, which turns the
 day-of-week system from decoration into planning. The Shadow Deep sails only on
@@ -169,10 +194,11 @@ point of the calendar.
 ```
 talk to the guide  ->  he names a dungeon and walks to the dock
 buy the ticket at Kami Mart (or take it off a boss)
+hand it to the collector at the dock  ->  one stamped trip
 wait for the day the boat runs
-sail  ->  clear the dungeon  ->  the boss hands over the next ticket
-                                          |
-                    every dungeon cleared -+-> the boat offers "sail home"
+sail  ->  clear the dungeon  ->  the boss stamps the next route
+       -> the way home is free                    |
+                    every dungeon cleared --------+-> the boat offers "sail home"
                                                        |
                                                    the ending
 ```
@@ -187,7 +213,9 @@ Nothing here is code.
    major ones are close to world-map size.
 2. **Put a boat dock in it.** An `EventMarker` on the arrival tile, `kind` =
    `Boat`, `Dock Of` = the dungeon's id. That is how you get home again, and
-   the boat never offers to sail you to the dock you are standing on.
+   the boat never offers to sail you to the dock you are standing on. Coming
+   home is free — you only need a stamped pass to leave the port, so a dungeon
+   dock needs no collector.
 3. **Put a boss in it.** A `MonsterMarker`, `monster` = `Boss`, `Boss Dungeon
    Id` = this dungeon's id, `Reward Ticket` = the `ticket_id` of the route it
    opens (leave empty if it opens nothing).
@@ -203,6 +231,8 @@ Nothing here is code.
    in `tests/SmokeTest.tscn`.
 7. **Point a guide at it.** An `NpcMarker` with `npc` = `OldMan`, `Guide
    Dungeon Id` = the new id, and `Guide Col`/`Guide Row` set to the dock tile.
+   The port already has a collector (`npc` = `TicketMan`); he takes tickets for
+   every route, so a new destination needs no new one.
 8. **Run the tests.** `godot --headless --path . res://tests/SmokeTest.tscn`.
    They check every arrival tile is walkable, every id is unique and every
    `map_index` points at a real map, which catches the three mistakes that are

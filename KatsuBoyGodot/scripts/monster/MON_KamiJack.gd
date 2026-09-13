@@ -10,6 +10,12 @@ func _init(gp) -> void:
 	super(gp)
 
 	# Numbers live in the resource so they can be tuned in the Inspector.
+	#
+	# They were retuned in the Godot port. The Java version gave this thing
+	# 111 life, 6 defence, 20 attack and speed 12, which against a starting
+	# player - 3 hearts, attack 1 - meant it could not be damaged at all, could
+	# not be outrun, and killed in one touch. Five of them wander the world map
+	# near the start. Edit kamijack.tres to take it back the other way.
 	STATS.apply_to(self)
 
 	get_image()
@@ -45,7 +51,10 @@ func set_action() -> void:
 
 func damage_reaction() -> void:
 	action_lock_counter = 0
-	speed = 3
+	# Reels for two seconds after a hit. Entity.tick_slow_down() puts the speed
+	# back - Java set this counter and never counted it down, so one hit left a
+	# Kamijack crawling for the rest of its life.
+	speed = 2
 	slow_down = 120
 
 

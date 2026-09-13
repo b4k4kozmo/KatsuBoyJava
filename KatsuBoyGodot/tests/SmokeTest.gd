@@ -637,7 +637,11 @@ func _physics_process(_d: float) -> void:
 				BoatService.destinations(dungeons, q, 1).size() == 2)
 
 			q.grant_ticket("cave")
-			check("a ticket is not granted twice", q.grant_ticket("cave") == false)
+			check("a ticket with no route is not a ticket", q.grant_ticket("") == false)
+			check("a second ticket buys a second trip",
+				q.grant_ticket("cave") and q.pass_count("cave") == 2, str(q.pass_count("cave")))
+			check("and a trip is spent when it is used", q.spend_pass("cave") and q.pass_count("cave") == 1)
+			check("holding a ticket makes the route known to Kami Mart", q.is_known("cave"))
 			check("with a ticket the Monday boat sails",
 				BoatService.sailable(dungeons, q, 1).size() == 1)
 			check("but not on a Tuesday",
@@ -650,6 +654,21 @@ func _physics_process(_d: float) -> void:
 
 			check("the objective points at the cave",
 				q.objective_text(dungeons) == "Clear Cave.", q.objective_text(dungeons))
+
+			# Holding the paper ticket is not the same as being stamped, and the
+			# objective line has to say which of the two you are missing.
+			var unstamped := QuestLog.new()
+			check("with nothing at all, buy a ticket",
+				unstamped.objective_text(dungeons) == "Get a ticket to Cave.",
+				unstamped.objective_text(dungeons))
+			check("with a ticket in the bag, go to the collector",
+				unstamped.objective_text(dungeons, ["cave"])
+					== "Take your Cave ticket to the collector.",
+				unstamped.objective_text(dungeons, ["cave"]))
+			check("a carried ticket changes the boat's wording, not what sails",
+				"collector" in BoatService.destinations(dungeons, unstamped, 1, ["cave"])[0]["reason"]
+					and BoatService.sailable(dungeons, unstamped, 1, ).is_empty(),
+				BoatService.destinations(dungeons, unstamped, 1, ["cave"])[0]["reason"])
 
 			q.mark_cleared("cave")
 			check("a dungeon is not cleared twice", q.mark_cleared("cave") == false)
@@ -682,7 +701,7 @@ func _physics_process(_d: float) -> void:
 			check("tickets survive a save", round_trip.has_ticket("deep"))
 			check("cleared dungeons survive a save", round_trip.is_cleared("cave"))
 			check("a save with no quest data loads as a fresh log",
-				QuestLog.new().tickets.is_empty())
+				QuestLog.new().passes.is_empty())
 
 			# The real Inspector-assigned dungeons, so a typo in a .tres shows up.
 			check("dungeon resources are assigned", gp.dungeons.size() >= 3,
@@ -720,12 +739,131 @@ func _physics_process(_d: float) -> void:
 					not gp.tile_m.tile[arrive_tile].collision,
 					"map %d tile %d at %d,%d" % [d.map_index, arrive_tile, d.arrive_col, d.arrive_row])
 
+		1070:
+			print("\n-- squeezing through a one-tile doorway --")
+
+			# The hut's doorway is one tile wide: col 26 of row 32, walls both
+			# sides. Walking into it a few pixels off centre used to stop the
+			# player dead; corner_assist is what lets them round the frame.
+			gp.current_map = 1
+			gp.game_state = gp.PLAY_STATE
+			gp.player.direction = "down"
+			gp.player.speed = 4
+			gp.player.world_x = 1236      # 16 px left of centre - clipping col 25
+			gp.player.world_y = 1486      # bottom edge just above row 32
+
+			var start_y: int = gp.player.world_y
+			var blocked_frames := 0
+			for _i in range(24):
+				gp.player.collision_on = false
+				gp.c_checker.check_tile(gp.player)
+				if gp.player.collision_on:
+					blocked_frames += 1
+				else:
+					gp.player.world_y += gp.player.speed
+
+			check("the doorway does not block a slightly misaligned player",
+				gp.player.world_y > start_y,
+				"stuck at %d after %d blocked frames" % [gp.player.world_y, blocked_frames])
+			check("and it took a moment of sliding, not a teleport",
+				blocked_frames > 0 and blocked_frames < 16, str(blocked_frames))
+			check("the slide stopped once the player was inside the doorway",
+				gp.player.world_x >= 1248 - 8 and gp.player.world_x <= 1256,
+				str(gp.player.world_x))
+
+			# Squarely facing a wall must still be a wall: no drift, no move.
+			gp.player.world_x = 1104      # against the left wall of the room
+			gp.player.world_y = 1486
+			gp.player.direction = "down"
+			var wall_x: int = gp.player.world_x
+			var wall_y: int = gp.player.world_y
+			for _i in range(12):
+				gp.player.collision_on = false
+				gp.c_checker.check_tile(gp.player)
+				if not gp.player.collision_on:
+					gp.player.world_y += gp.player.speed
+			check("a wall you are squarely facing is still a wall",
+				gp.player.world_y == wall_y, str(gp.player.world_y))
+			check("and the player is not slid sideways along it",
+				absi(gp.player.world_x - wall_x) <= 2, str(gp.player.world_x))
+
+			gp.current_map = 0
+			gp.player.world_x = gp.tile_size * 94
+			gp.player.world_y = gp.tile_size * 94
+			gp.player.speed = gp.player.default_speed
+
+		1072:
+			print("\n-- hitboxes --")
+
+			# A monster's solid_area is both its hurtbox and its body, so one
+			# that draws at two tiles and keeps a one-tile box in its corner is
+			# a monster you swing at and miss.
+			var jack := MON_KamiJack.new(gp)
+			var jack_sprite: int = gp.tile_size * 2
+			check("the Kamijack draws two tiles wide",
+				jack.down1 != null and int(jack.down1.get_width()) == jack_sprite,
+				str(jack.down1.get_width() if jack.down1 else -1))
+			check("its hitbox covers the middle of that sprite, not a corner",
+				jack.solid_area.x > jack_sprite / 6
+					and jack.solid_area.x + jack.solid_area.width > jack_sprite / 2
+					and jack.solid_area.width >= gp.tile_size,
+				"x %d w %d" % [jack.solid_area.x, jack.solid_area.width])
+			check("and still fits down a two-tile corridor",
+				jack.solid_area.width < gp.tile_size * 2
+					and jack.solid_area.height < gp.tile_size * 2,
+				"%d x %d" % [jack.solid_area.width, jack.solid_area.height])
+
+			check("nothing on the world map outruns a player in boots",
+				jack.speed < PlayerStats.new().boots_walk_speed
+					or jack.speed <= gp.player.default_speed,
+				str(jack.speed))
+
+			# The starting kit has to be able to hurt what the starting map
+			# spawns, or the fight is unwinnable rather than hard.
+			var starter := MON_Slime.new(gp)
+			starter.max_life = 1000
+			starter.life = 1000
+			var first_weapon: int = 1 * 3      # strength 1, Kami no Bokken
+			check("a starting player can damage a Kamijack at all",
+				first_weapon - jack.defense >= 1,
+				"attack %d vs defense %d" % [first_weapon, jack.defense])
+			check("and a Kamijack does not kill a new player in one touch",
+				jack.attack - 1 < PlayerStats.new().max_life,
+				"%d damage vs %d life" % [jack.attack, PlayerStats.new().max_life])
+
+			# Being hit slows a Kamijack down, and it recovers. Java set the
+			# counter and never ticked it, so the slow lasted forever.
+			jack.damage_reaction()
+			var slowed: int = jack.speed
+			check("a hit slows it", slowed < jack.default_speed,
+				"%d vs %d" % [slowed, jack.default_speed])
+			for _i in range(200):
+				jack.tick_slow_down()
+			check("and the slow wears off", jack.speed == jack.default_speed,
+				"%d vs %d" % [jack.speed, jack.default_speed])
+
+			# Every monster's box should sit inside the sprite it is drawn as.
+			for maker in ["Slime", "Snome", "Kamijack", "Shadow"]:
+				var m = gp.e_generator.get_monster(maker)
+				if m == null or m.down1 == null:
+					continue
+				var w: int = m.down1.get_width()
+				var h: int = m.down1.get_height()
+				check("%s's hitbox is inside its sprite" % maker,
+					m.solid_area.x >= 0 and m.solid_area.y >= 0
+						and m.solid_area.x + m.solid_area.width <= w
+						and m.solid_area.y + m.solid_area.height <= h,
+					"box %d,%d %dx%d in %dx%d" % [m.solid_area.x, m.solid_area.y,
+						m.solid_area.width, m.solid_area.height, w, h])
+
 		1075:
 			print("\n-- the guide who walks to the boat --")
 
-			var guide = gp.npc[0][1]
-			check("the dock guide is on the world map", guide is NPC_OldMan,
-				str(guide))
+			var guide = null
+			for n in gp.npc[0]:
+				if n is NPC_OldMan and not n.guide_dungeon_id.is_empty():
+					guide = n
+			check("the dock guide is on the world map", guide != null, str(guide))
 
 			if guide is NPC_OldMan:
 				check("the guide knows which dungeon he points at",
@@ -795,8 +933,46 @@ func _physics_process(_d: float) -> void:
 				guide.set_action()
 				check("away from the dock he is still walking", guide.on_path == true)
 
+				# He should actually get there. Walk him for a few seconds of
+				# game time with the player standing in his way, which is the
+				# case that used to wedge him against a body forever.
+				gp.player.world_x = 90 * gp.tile_size
+				gp.player.world_y = 97 * gp.tile_size
+				guide.on_path = true
+				guide.world_x = 92 * gp.tile_size - guide.solid_area.x
+				guide.world_y = 97 * gp.tile_size - guide.solid_area.y
+				var guide_start_x: int = guide.world_x
+				for _i in range(600):
+					if not guide.on_path:
+						break
+					guide.update()
+				@warning_ignore("integer_division")
+				var guide_col: int = (guide.world_x + guide.solid_area.x) / gp.tile_size
+				check("he walks around the player instead of pushing at them",
+					guide.world_x < guide_start_x - gp.tile_size,
+					"moved from %d to %d" % [guide_start_x, guide.world_x])
+				check("and reaches the dock", guide.on_path == false and guide_col <= 88,
+					"col %d, on_path %s" % [guide_col, str(guide.on_path)])
+
+				# A goal that cannot be reached at all stops the walk rather
+				# than leaving him grinding at a wall.
+				guide.guide_col = 0
+				guide.guide_row = 0          # the map border, solid
+				guide.on_path = true
+				for _i in range(120):
+					guide.set_action()
+				check("an unreachable goal ends the walk", guide.on_path == false)
+				guide.guide_col = 87
+				guide.guide_row = 97
+
+				gp.player.world_x = gp.tile_size * 94
+				gp.player.world_y = gp.tile_size * 94
+
 				# An NPC with no guide id is unchanged: small talk that cycles.
-				var plain = gp.npc[0][0]
+				var plain = null
+				for n in gp.npc[0]:
+					if n is NPC_OldMan and n.guide_dungeon_id.is_empty():
+						plain = n
 				if plain is NPC_OldMan:
 					check("an ordinary old man is not a guide",
 						plain.guide_dungeon_id.is_empty(), plain.guide_dungeon_id)
@@ -841,32 +1017,78 @@ func _physics_process(_d: float) -> void:
 					stocked_tickets[0].route_id == "mushroom_cave",
 					stocked_tickets[0].route_id)
 
-				# Buying it registers the route, which is what the boat reads.
+				# A ticket is paper. Selecting it in the menu must not turn it
+				# into passage, wherever the player happens to be standing.
 				var bought = stocked_tickets[0]
-				check("using a ticket grants the route", bought.use(gp.player) == true)
-				check("and the quest log has it", gp.quest.has_ticket("mushroom_cave"))
-				check("using it twice does nothing", bought.use(gp.player) == false)
+				gp.player.inventory.append(bought)
+				check("a ticket cannot be used from the inventory",
+					bought.use(gp.player) == false)
+				check("and using it grants nothing",
+					gp.quest.has_ticket("mushroom_cave") == false)
 				gp.game_state = gp.PLAY_STATE
 
+				# The collector at the dock is the only one who can stamp it.
+				var collector = null
+				for n in gp.npc[0]:
+					if n is NPC_TicketMan:
+						collector = n
+				check("there is a ticket collector at the dock", collector != null)
+
+				if collector != null:
+					var bag_before: int = gp.player.inventory.size()
+					collector.speak()
+					check("he takes the ticket",
+						gp.player.inventory.size() == bag_before - 1,
+						"%d -> %d" % [bag_before, gp.player.inventory.size()])
+					check("and stamps a boarding pass",
+						gp.quest.has_ticket("mushroom_cave"))
+					check("one ticket buys exactly one trip",
+						gp.quest.pass_count("mushroom_cave") == 1,
+						str(gp.quest.pass_count("mushroom_cave")))
+					check("he says which route and when",
+						"Mushroom Cave" in str(collector.dialogues[NPC_TicketMan.STAMPED_SET][0]),
+						str(collector.dialogues[NPC_TicketMan.STAMPED_SET][0]))
+					gp.game_state = gp.PLAY_STATE
+
+					# Empty handed, he sends you shopping rather than aboard.
+					gp.quest = QuestLog.new()
+					collector.speak()
+					check("with no ticket he refuses",
+						collector.dialogue_set == NPC_TicketMan.NOTHING_TO_STAMP,
+						str(collector.dialogue_set))
+					check("and says where tickets come from",
+						"Kami Mart" in str(collector.dialogues[NPC_TicketMan.NOTHING_TO_STAMP][1]),
+						str(collector.dialogues[NPC_TicketMan.NOTHING_TO_STAMP][1]))
+					gp.game_state = gp.PLAY_STATE
+
+			gp.player.inventory.clear()
+			gp.player.set_items()
 			merchant.refresh_stock()
 			var still_stocked := 0
 			for item in merchant.inventory:
 				if item is OBJ_BoatTicket:
 					still_stocked += 1
-			check("a ticket you already hold comes off the shelf",
-				still_stocked == 0, str(still_stocked))
-			check("the ordinary stock is untouched", merchant.inventory.size() == 4,
+			check("the shop keeps selling tickets, now that they get used up",
+				still_stocked == 1, str(still_stocked))
+			check("the ordinary stock is untouched", merchant.inventory.size() == 5,
 				str(merchant.inventory.size()))
 
-			# The Shadow Deep is not for sale at any point - its ticket_price is
-			# 0, so the only way there is through the cave's boss.
+			# The Shadow Deep is not on the shelf until the player has held one
+			# of its tickets - the cave's boss hands over the first.
 			gp.quest.mark_cleared("mushroom_cave")
 			merchant.refresh_stock()
 			var deep_on_sale := false
 			for item in merchant.inventory:
 				if item is OBJ_BoatTicket and item.route_id == "shadow_deep":
 					deep_on_sale = true
-			check("a route with no price is never sold", not deep_on_sale)
+			check("a route you have never had a ticket for is not sold", not deep_on_sale)
+
+			gp.quest.mark_known("shadow_deep")
+			merchant.refresh_stock()
+			for item in merchant.inventory:
+				if item is OBJ_BoatTicket and item.route_id == "shadow_deep":
+					deep_on_sale = true
+			check("but once you have held one, Kami Mart stocks it", deep_on_sale)
 
 			# A ticket in the bag is saved by name, so the generator has to be
 			# able to build it back from that name alone.
@@ -915,16 +1137,25 @@ func _physics_process(_d: float) -> void:
 					deep_boss = m
 			check("the deep has a boss", deep_boss != null)
 
-			# Sail. Monday, with the ticket bought at the shop.
+			# Sail. Monday, with a pass stamped by the collector.
 			gp.quest.grant_ticket("mushroom_cave")
 			var sail_day := 1
+			if gp.e_manager and gp.e_manager.clock:
+				gp.e_manager.clock.day_index = sail_day
 			# The home port sails every day and needs no ticket, so on a Monday
 			# with the cave ticket in hand there are two routes: home and the cave.
 			check("the cave is sailing on Monday",
 				BoatService.sailable(gp.dungeons, gp.quest, sail_day).size() == 2,
 				str(BoatService.sailable(gp.dungeons, gp.quest, sail_day).size()))
 
-			gp.e_handler.sail_to(cave)
+			check("the boat refuses a route with no stamped ticket",
+				gp.e_handler.sail_to(deep) == false)
+			check("and refusing does not move the player",
+				gp.game_state != gp.TRANSITION_STATE, str(gp.game_state))
+
+			check("with a pass it sails", gp.e_handler.sail_to(cave) == true)
+			check("the trip is spent", gp.quest.pass_count("mushroom_cave") == 0,
+				str(gp.quest.pass_count("mushroom_cave")))
 			check("boarding starts the transition", gp.game_state == gp.TRANSITION_STATE)
 			check("and it is aimed at the cave map",
 				gp.e_handler.temp_map == cave.map_index, str(gp.e_handler.temp_map))
@@ -954,11 +1185,15 @@ func _physics_process(_d: float) -> void:
 				str(gp.quest.cleared_count(gp.dungeons)))
 
 			# The deep only runs on Saturday.
+			# Monday: only the way home. The cave runs today but the ticket that
+			# got us here has been used, and the deep is a Saturday route.
 			check("the deep does not sail on Monday",
-				BoatService.sailable(gp.dungeons, gp.quest, 1).size() == 2,
+				BoatService.sailable(gp.dungeons, gp.quest, 1).size() == 1,
 				str(BoatService.sailable(gp.dungeons, gp.quest, 1).size()))
 			# Saturday: home and the deep. The cave only runs Mondays and
 			# Thursdays, so it drops off the board.
+			if gp.e_manager and gp.e_manager.clock:
+				gp.e_manager.clock.day_index = 6
 			check("but it does on Saturday",
 				BoatService.sailable(gp.dungeons, gp.quest, 6).size() == 2,
 				str(BoatService.sailable(gp.dungeons, gp.quest, 6).size()))
@@ -972,7 +1207,8 @@ func _physics_process(_d: float) -> void:
 				QuestLog.countable(gp.dungeons).size() == 2,
 				str(QuestLog.countable(gp.dungeons).size()))
 
-			gp.e_handler.sail_to(deep)
+			check("the deep sails once its boss ticket is stamped",
+				gp.e_handler.sail_to(deep) == true)
 			gp.ui.counter = 50
 			gp.ui.update_transition()
 			check("you arrive in the deep", gp.current_map == deep.map_index,
@@ -991,6 +1227,8 @@ func _physics_process(_d: float) -> void:
 			check("and it is the victory route", home_row_found)
 
 			gp.ui.game_finished = false
+			if gp.e_manager and gp.e_manager.clock:
+				gp.e_manager.clock.day_index = 1
 			gp.e_handler.sail_to(home)
 			check("sailing home ends the game", gp.game_state == gp.ENDING_STATE,
 				str(gp.game_state))

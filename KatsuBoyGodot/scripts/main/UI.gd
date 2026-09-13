@@ -370,7 +370,12 @@ func draw_pause_screen() -> void:
 
 	g2.set_font(maru_monica, 28)
 	g2.set_color(kamiwhite)
-	var objective: String = gp.quest.objective_text(gp.dungeons)
+	var carried: Array[String] = []
+	for item in gp.player.inventory:
+		if item is OBJ_BoatTicket and not carried.has(item.route_id):
+			carried.append(item.route_id)
+
+	var objective: String = gp.quest.objective_text(gp.dungeons, carried)
 	g2.draw_str(objective, get_x_for_centered_text(objective), y + gp.tile_size)
 
 	var counted: int = QuestLog.countable(gp.dungeons).size()
@@ -868,7 +873,14 @@ func draw_boat_screen() -> void:
 
 	var day: int = gp.e_manager.clock.day_index if gp.e_manager and gp.e_manager.clock else 0
 
-	boat_rows = BoatService.destinations(gp.dungeons, gp.quest, day)
+	# What is in the bag only changes the wording of a blocked row: a ticket
+	# you are carrying has to be stamped by the collector before it is passage.
+	var carried: Array[String] = []
+	for item in gp.player.inventory:
+		if item is OBJ_BoatTicket and not carried.has(item.route_id):
+			carried.append(item.route_id)
+
+	boat_rows = BoatService.destinations(gp.dungeons, gp.quest, day, carried)
 	# Never offer to sail to the dock you are standing on.
 	if not boat_dock_of.is_empty():
 		var kept: Array[Dictionary] = []
@@ -932,8 +944,8 @@ func draw_boat_screen() -> void:
 			g2.draw_str(">", text_x - 26, text_y)
 			if gp.key_h.enter_pressed and row["sailing"]:
 				gp.key_h.enter_pressed = false
-				command_num = 0
-				gp.event_h.sail_to(info)
+				if gp.event_h.sail_to(info):
+					command_num = 0
 				return
 
 		text_y += int(gp.tile_size * 0.8)

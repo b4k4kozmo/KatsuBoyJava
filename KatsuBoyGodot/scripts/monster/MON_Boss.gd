@@ -3,9 +3,10 @@ extends Entity
 ## A dungeon boss: the thing whose death clears a dungeon and opens the next
 ## route on the boat.
 ##
-## Mechanically it is a monster with two extra jobs. When it dies it tells the
-## quest log which dungeon is finished and hands over the ticket for the route
-## it unlocks, which is how the boat's timetable grows as the game goes on.
+## Mechanically it is a monster with two extra jobs. The first time it dies it
+## tells the quest log which dungeon is finished and stamps a boarding pass for
+## the route it unlocks - which also puts that route on Kami Mart's shelf, so
+## the player can go back later by buying a ticket like anyone else.
 ##
 ## Place one with a MonsterMarker set to "Boss" and fill in "Boss Dungeon Id"
 ## and "Reward Ticket" in the Inspector. Both come from your DungeonInfo files:
@@ -97,8 +98,13 @@ func check_drop() -> void:
 	if id.is_empty():
 		id = gp.current_dungeon_id
 
-	if gp.quest.mark_cleared(id):
-		gp.ui.add_message("%s cleared!" % _dungeon_name(id))
+	# Only the first kill counts. Bosses are rebuilt from their markers whenever
+	# the map resets - resting at a healing pool does it - so without this the
+	# same boss could be farmed for boarding passes.
+	if not gp.quest.mark_cleared(id):
+		return
+
+	gp.ui.add_message("%s cleared!" % _dungeon_name(id))
 
 	if gp.quest.grant_ticket(reward_ticket):
 		var route := BoatService.by_id(gp.dungeons, reward_ticket)

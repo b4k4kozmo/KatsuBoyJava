@@ -78,6 +78,7 @@ func get_npc(npc_name: String) -> Entity:
 		"OldMan": npc = NPC_OldMan.new(gp)
 		"NanaMan": npc = NPC_NanaMan.new(gp)
 		"Merchant": npc = NPC_Merchant.new(gp)
+		"TicketMan": npc = NPC_TicketMan.new(gp)
 
 	return npc
 

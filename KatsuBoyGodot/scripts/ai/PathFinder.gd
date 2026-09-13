@@ -17,6 +17,10 @@ var touched_list: Array[PathNode] = []
 ## Which map the solid flags were built for, and whether they need rebuilding.
 var solid_map: int = -1
 var solid_dirty: bool = true
+## Tiles that are solid only for the search in progress, because somebody is
+## standing on them. Put back by reset_nodes(), so the cached terrain grid is
+## never touched.
+var _body_solid: Array[PathNode] = []
 
 
 func _init(gp) -> void:
@@ -42,6 +46,11 @@ func reset_nodes() -> void:
 		n.open = false
 		n.checked = false
 	touched_list.clear()
+
+	# Let go of the tiles the last search treated as occupied.
+	for n in _body_solid:
+		n.solid = false
+	_body_solid.clear()
 
 	# Reset other settings
 	open_list.clear()
@@ -79,7 +88,8 @@ func set_solid_nodes() -> void:
 	solid_dirty = false
 
 
-func set_nodes(start_col: int, start_row: int, goal_col: int, goal_row: int) -> void:
+func set_nodes(start_col: int, start_row: int, goal_col: int, goal_row: int,
+		searcher = null) -> void:
 
 	reset_nodes()
 	set_solid_nodes()
@@ -88,9 +98,50 @@ func set_nodes(start_col: int, start_row: int, goal_col: int, goal_row: int) -> 
 	start_node = node[start_col][start_row]
 	current_node = start_node
 	goal_node = node[goal_col][goal_row]
+
+	# Bodies count as walls. Without this the path runs straight through
+	# whoever is standing in the corridor, the walker bumps into them every
+	# frame, and an NPC following a route gets stuck against the player for
+	# good. The goal and the searcher's own tile are never blocked - a monster
+	# chasing the player is heading for the tile the player is standing on.
+	if searcher != null:
+		_block_bodies(searcher)
+
 	open_list.append(current_node)
 	touched_list.append(current_node)
 	get_cost(start_node)
+
+
+func _block_bodies(searcher) -> void:
+	_block_body(gp.player, searcher)
+	for e in gp.npc[gp.current_map]:
+		_block_body(e, searcher)
+	for e in gp.monster[gp.current_map]:
+		_block_body(e, searcher)
+
+
+func _block_body(body, searcher) -> void:
+
+	if body == null or body == searcher:
+		return
+
+	@warning_ignore_start("integer_division")
+	# The box is half open: a body whose bottom edge lands exactly on a tile
+	# boundary is not standing in the tile below, and blocking it there would
+	# seal corridors that are actually open.
+	var left: int = (body.world_x + body.solid_area.x) / gp.tile_size
+	var right: int = (body.world_x + body.solid_area.x + body.solid_area.width - 1) / gp.tile_size
+	var top: int = (body.world_y + body.solid_area.y) / gp.tile_size
+	var bottom: int = (body.world_y + body.solid_area.y + body.solid_area.height - 1) / gp.tile_size
+	@warning_ignore_restore("integer_division")
+
+	for col in range(maxi(left, 0), mini(right, gp.max_world_col - 1) + 1):
+		for row in range(maxi(top, 0), mini(bottom, gp.max_world_row - 1) + 1):
+			var n: PathNode = node[col][row]
+			if n.solid or n == start_node or n == goal_node:
+				continue
+			n.solid = true
+			_body_solid.append(n)
 
 
 func get_cost(n: PathNode) -> void:

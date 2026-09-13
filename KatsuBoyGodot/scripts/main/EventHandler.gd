@@ -210,10 +210,24 @@ func board_boat(marker: EventMarker) -> void:
 
 ## Take the boat somewhere. Called by the boat menu once a destination is
 ## chosen; the menu has already checked the route is sailing today.
-func sail_to(info: DungeonInfo) -> void:
+func sail_to(info: DungeonInfo) -> bool:
 
 	if info == null:
-		return
+		return false
+
+	# The menu has already worked this out, but the boat is the authority: no
+	# route is reachable without a stamped pass and a day the boat runs, even
+	# if something else opened the screen or the day changed while it was open.
+	var day: int = gp.e_manager.clock.day_index if gp.e_manager and gp.e_manager.clock else 0
+	if gp.quest != null and not BoatService.can_sail(gp.dungeons, gp.quest, day, info):
+		gp.ui.add_message("The boat is not sailing there.")
+		return false
+
+	# One trip per ticket. The home port and the way home cost nothing, which
+	# spend_pass() knows because they carry no ticket id.
+	if gp.quest != null and not gp.quest.spend_pass(info.ticket_id):
+		gp.ui.add_message("The collector wants a ticket for that.")
+		return false
 
 	if info.is_victory:
 		# Sailing home with everything cleared is the ending.
@@ -223,11 +237,12 @@ func sail_to(info: DungeonInfo) -> void:
 		gp.play_se(SE.FANFARE)
 		# Report the finished run to the web high-score board.
 		WebScore.post_progress(gp.player.level, gp.player.coin)
-		return
+		return true
 
 	gp.current_dungeon_id = info.id
 	gp.play_se(SE.DOOR)
 	change_map(info.map_index, info.arrive_col, info.arrive_row)
+	return true
 
 
 func change_map(current_map: int, x: int, y: int) -> void:

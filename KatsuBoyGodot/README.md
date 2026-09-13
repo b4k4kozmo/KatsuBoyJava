@@ -126,9 +126,10 @@ optional and all documented in [AUTHORING.md](AUTHORING.md):
 - **Shaders** for the night filter and for hit sparks, both palette-only.
 - **The Wunderboat.** A ticketed boat with a weekly timetable that takes you to
   dungeons, a quest log that tracks what you have cleared, bosses that hand over
-  the next route, guide NPCs who walk you to the dock, and an ending once
-  everything is cleared. Destinations are `.tres` files, so adding one is
-  authoring rather than coding — see `ROADMAP.md`.
+  the next route, guide NPCs who walk you to the dock, a collector who takes
+  your ticket at the quay, and an ending once everything is cleared. A ticket is
+  good for one trip; sailing home is free. Destinations are `.tres` files, so
+  adding one is authoring rather than coding — see `ROADMAP.md`.
 - **Dev tools** (F1) and a **regression test suite**.
 
 ## Bugs fixed along the way
@@ -170,6 +171,30 @@ GDScript.
 - Slimes and Kamijacks set `speed` but never `defaultSpeed`, so the first time
   one was knocked back it recovered to speed 0 and stopped moving for good.
   `MonsterStats` sets both.
+- **One-tile doorways were a coin flip.** Collision stopped an entity dead the
+  moment either leading corner touched a wall, and the player's solid box is 32
+  of a tile's 48 pixels. Walking into a doorway a few pixels off centre simply
+  did not work, with nothing on screen to say why. `CollisionChecker` now does
+  corner correction: when only one corner is clipping, and only slightly, it
+  slides the entity clear over the next couple of frames.
+- **Followers got stuck against anything the path could not see.** The A\* grid
+  knew about terrain only, so a route ran straight through whoever was standing
+  in the corridor and the walker pushed at them forever. Bodies now count as
+  walls for the duration of a search (never the searcher's own tile or the goal
+  tile, so a monster can still chase the player), and a step that turns out to
+  be blocked picks another way round rather than repeating itself. `search_path`
+  also reports when there is no route at all, so an NPC gives up and goes back
+  to wandering instead of grinding at a wall.
+- **`slowDown` was never counted down.** Two monsters set a temporary speed
+  penalty after being hit and nothing ever ticked it, so the first hit slowed
+  them for the rest of their lives. It is a real timer now.
+- **The Kamijack was unfightable and unavoidable.** It draws at two tiles but
+  kept a one-tile hitbox in its top-left corner, so swings that visibly
+  connected missed; and with 6 defence against a starting attack of 1, even a
+  clean hit did nothing. Meanwhile it moved at speed 12 — faster than the player
+  can run — and hit for 20 against a 6-life player. Five of them wander the
+  starting map. The hitbox now matches the body, and the numbers in
+  `kamijack.tres` were retuned to something a new player can survive.
 - **The Boots did nothing.** The item existed with the description "Gotta go
   fast!", but had no `use()` and was never placed on a map, so the Run key only
   worked at all if you happened to pick the Ninja or Zilla class. Picking them

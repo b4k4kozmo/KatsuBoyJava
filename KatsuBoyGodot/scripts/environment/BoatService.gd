@@ -21,7 +21,13 @@ enum Block {
 ## One row of the boat menu.
 ## { info: DungeonInfo, sailing: bool, block: Block, reason: String,
 ##   cleared: bool }
-static func destinations(dungeons: Array, quest: QuestLog, day_index: int) -> Array[Dictionary]:
+##
+## `carried` is the route ids the player has paper tickets for in their bag. It
+## changes nothing about what sails - only the wording, so somebody holding an
+## unstamped ticket is told to see the collector rather than sent shopping for
+## a ticket they already own.
+static func destinations(dungeons: Array, quest: QuestLog, day_index: int,
+		carried: Array = []) -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 
 	for d in dungeons:
@@ -48,7 +54,7 @@ static func destinations(dungeons: Array, quest: QuestLog, day_index: int) -> Ar
 			"info": d,
 			"sailing": block == Block.NONE,
 			"block": block,
-			"reason": reason_text(d, block),
+			"reason": reason_text(d, block, carried.has(d.ticket_id)),
 			"cleared": quest.is_cleared(d.id),
 		})
 
@@ -57,11 +63,13 @@ static func destinations(dungeons: Array, quest: QuestLog, day_index: int) -> Ar
 
 ## A route the player cannot even see yet is left out of the menu entirely;
 ## everything else shows with a reason, so the timetable teaches itself.
-static func reason_text(info: DungeonInfo, block: int) -> String:
+static func reason_text(info: DungeonInfo, block: int, carrying := false) -> String:
 	match block:
 		Block.LOCKED:
 			return "no charts yet"
 		Block.NO_TICKET:
+			if carrying:
+				return "ticket not stamped - see the collector"
 			if info.ticket_price > 0:
 				return "ticket %d coins at Kami Mart" % info.ticket_price
 			return "need a ticket"
@@ -79,6 +87,18 @@ static func sailable(dungeons: Array, quest: QuestLog, day_index: int) -> Array[
 		if row["sailing"]:
 			out.append(row)
 	return out
+
+
+## Is this exact route running today, for this player? The boat asks before it
+## casts off, so a destination can never be reached through a menu that has got
+## out of step with the quest log.
+static func can_sail(dungeons: Array, quest: QuestLog, day_index: int, info: DungeonInfo) -> bool:
+	if info == null:
+		return false
+	for row in destinations(dungeons, quest, day_index):
+		if row["info"] == info:
+			return row["sailing"]
+	return false
 
 
 ## Look a dungeon up by id. Returns null if there is no such dungeon, which is

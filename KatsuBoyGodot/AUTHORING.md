@@ -207,7 +207,7 @@ Under **NPCs**. Spawns a character you can talk to.
 
 | Property | What it does |
 |---|---|
-| **Npc** | OldMan / NanaMan / Merchant |
+| **Npc** | OldMan / NanaMan / Merchant / TicketMan |
 | **Guide Dungeon Id** | `OldMan` only. Fill this in and he becomes a signpost: he tells you about that dungeon, makes it your objective, then walks off towards the dock. Empty = ordinary small talk. |
 | **Guide Col / Row** | where he walks to after you talk to him. The world map's boat dock is **87, 97**. `-1` means he stays put and wanders. |
 
@@ -215,8 +215,15 @@ The Merchant opens the shop. Dialogue is in that NPC's script — except a guide
 which is written from the dungeon's `hint`, price and timetable so it can never
 contradict the boat.
 
-The Merchant's stock is partly generated too: any dungeon with a
-`ticket_price` above zero is on the shelf until you buy it.
+**TicketMan** is the ticket collector. Stand him at a boat dock: he takes a
+paper ticket out of the player's bag and stamps one trip on the boat. Tickets do
+nothing when used from the inventory, so he is the only way to board, and he
+needs no properties — he takes whatever route the player is carrying.
+
+The Merchant's stock is partly generated too: a dungeon whose `ticket_price` is
+above zero goes on the shelf, either from the start (`sold_from_start`) or once
+the player has held one of its tickets. Tickets are used up, so the shop keeps
+selling them.
 
 ### `ObjectMarker`
 Under **Objects**. An item, chest or door.
@@ -282,8 +289,12 @@ position. Without one, the game falls back to tile 94,94 on map 0.
 
 A destination is a `.tres` file, not code. `assets/data/dungeons/*.tres` each
 describe one place the boat goes — which map, which tile you land on, which days
-it sails, what the ticket costs, what must be cleared first, and the hint the
-guide gives. Drop them into **GamePanel → Dungeons** in `main.tscn`.
+it sails, what the ticket costs and whether it is sold from the start, what must
+be cleared first, and the hint the guide gives. Drop them into
+**GamePanel → Dungeons** in `main.tscn`.
+
+A ticket is good for **one trip**, and only the collector at the dock can turn
+it into passage. Sailing home is always free.
 
 `ROADMAP.md → The boat, the tickets and the quest log` has the full picture and
 a step-by-step for adding one, including the generator that builds a dungeon map

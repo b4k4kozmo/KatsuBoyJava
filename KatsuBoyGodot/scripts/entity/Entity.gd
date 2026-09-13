@@ -52,6 +52,10 @@ var alive: bool = true
 var dying: bool = false
 var hp_bar_on: bool = false
 var on_path: bool = false
+## Set while stepping around something the pathfinder cannot see - see
+## search_path().
+var _detour_direction: String = ""
+var _detour_counter: int = 0
 var knock_back: bool = false
 var knock_back_direction: String
 var guarding: bool = false
@@ -256,6 +260,41 @@ func generate_particle(generator, target) -> void:
 	gp.particle_list.append(p4)
 
 
+## Would this entity be blocked if it faced `dir` right now?
+##
+## A question, not a move: no corner assist, no contact damage, and both
+## `direction` and `collision_on` are put back afterwards. Used by the
+## pathfinder to pick a direction that actually works instead of walking into
+## the same wall every frame.
+func probe_blocked(dir: String) -> bool:
+	var saved_direction: String = direction
+	var saved_collision: bool = collision_on
+
+	direction = dir
+	collision_on = false
+	gp.c_checker.check_tile(self, false)
+	gp.c_checker.check_object(self, false)
+	gp.c_checker.check_entity(self, gp.npc)
+	gp.c_checker.check_entity(self, gp.monster)
+	gp.c_checker.check_entity(self, gp.i_tile)
+	gp.c_checker.check_player(self)
+
+	var blocked: bool = collision_on
+	direction = saved_direction
+	collision_on = saved_collision
+	return blocked
+
+
+## Count down a temporary speed penalty set by damage_reaction(), and put the
+## speed back when it runs out. Java set `slowDown` in a couple of monsters and
+## never ticked it anywhere, so the penalty was permanent.
+func tick_slow_down() -> void:
+	if slow_down > 0:
+		slow_down -= 1
+		if slow_down <= 0:
+			speed = default_speed
+
+
 func check_collision() -> void:
 	collision_on = false
 	gp.c_checker.check_tile(self)
@@ -278,7 +317,8 @@ func update() -> void:
 		if collision_on == true:
 			knock_back_counter = 0
 			knock_back = false
-			speed = default_speed
+			if slow_down <= 0:
+				speed = default_speed
 		else:
 			match knock_back_direction:
 				"up": world_y -= speed
@@ -290,12 +330,14 @@ func update() -> void:
 		if knock_back_counter == 10:
 			knock_back_counter = 0
 			knock_back = false
-			speed = default_speed
+			if slow_down <= 0:
+				speed = default_speed
 
 	elif attacking == true:
 		do_attacking()
 
 	else:
+		tick_slow_down()
 		set_action()
 		check_collision()
 
@@ -626,12 +668,28 @@ func setup(image_path: String, width: int, height: int) -> Texture2D:
 	return u_tool.scale_image(texture, width, height)
 
 
-func search_path(goal_col: int, goal_row: int) -> void:
+## Take one step towards a goal tile. Returns false when there is no route,
+## so a caller can stop following and go back to whatever it was doing rather
+## than standing in a doorway forever.
+func search_path(goal_col: int, goal_row: int) -> bool:
 
+	# Still stepping around something. Committing to a sidestep for a few
+	# frames is what stops the classic flip-flop: the path says "west", a body
+	# is in the way, the entity steps south, the path immediately says "west"
+	# again, and it spends the afternoon rocking between two tiles.
+	if _detour_counter > 0:
+		_detour_counter -= 1
+		if not probe_blocked(_detour_direction):
+			direction = _detour_direction
+			return true
+		_detour_counter = 0
+
+	@warning_ignore("integer_division")
 	var start_col: int = (world_x + solid_area.x) / gp.tile_size
+	@warning_ignore("integer_division")
 	var start_row: int = (world_y + solid_area.y) / gp.tile_size
 
-	gp.p_finder.set_nodes(start_col, start_row, goal_col, goal_row)
+	gp.p_finder.set_nodes(start_col, start_row, goal_col, goal_row, self)
 
 	if gp.p_finder.search() == true:
 
@@ -658,27 +716,77 @@ func search_path(goal_col: int, goal_row: int) -> void:
 		elif en_top_y > next_y and en_left_x > next_x:
 			# up or left
 			direction = "up"
-			check_collision()
-			if collision_on == true:
+			if probe_blocked(direction):
 				direction = "left"
 		elif en_top_y > next_y and en_left_x < next_x:
 			# up or right
 			direction = "up"
-			check_collision()
-			if collision_on == true:
+			if probe_blocked(direction):
 				direction = "right"
 		elif en_top_y < next_y and en_left_x > next_x:
 			# down or left
 			direction = "down"
-			check_collision()
-			if collision_on == true:
+			if probe_blocked(direction):
 				direction = "left"
 		elif en_top_y < next_y and en_left_x < next_x:
 			# down or right
 			direction = "down"
-			check_collision()
-			if collision_on == true:
+			if probe_blocked(direction):
 				direction = "right"
+
+		# The step above is chosen from the path alone, so anything the path
+		# does not know about - the player standing in a doorway, a monster in
+		# the corridor, a corner clipped by a few pixels - used to leave the
+		# entity walking into it every frame forever. Try the other ways that
+		# still close the distance before giving up on this frame.
+		if probe_blocked(direction):
+			var around: String = _unstick(next_x, next_y)
+			if around != direction:
+				_detour_direction = around
+				# A whole tile of committed sidestep, whatever the speed:
+				# anything less does not clear the body that is in the way, and
+				# the entity arrives back where it started still blocked.
+				@warning_ignore("integer_division")
+				_detour_counter = maxi(12, gp.tile_size / maxi(speed, 1))
+			direction = around
+
+		return true
+
+	return false
+
+
+## Pick a direction that is both free and not backwards. Falls back to any free
+## direction, and finally to the one we had, which means "wait a frame".
+func _unstick(next_x: int, next_y: int) -> String:
+
+	var en_x: int = world_x + solid_area.x
+	var en_y: int = world_y + solid_area.y
+
+	# Keep going whichever way we were already stepping around this thing, if
+	# it is still open. Without this the entity walks a tile down, finds the
+	# path pointing west again, gets blocked again, and walks straight back up.
+	if (not _detour_direction.is_empty() and _detour_direction != direction
+			and not probe_blocked(_detour_direction)):
+		return _detour_direction
+
+	# Ordered by how much each one still helps us get there.
+	var wanted: Array[String] = []
+	if absi(next_x - en_x) > absi(next_y - en_y):
+		wanted.append("right" if next_x > en_x else "left")
+		wanted.append("down" if next_y > en_y else "up")
+	else:
+		wanted.append("down" if next_y > en_y else "up")
+		wanted.append("right" if next_x > en_x else "left")
+
+	for d in wanted:
+		if d != direction and not probe_blocked(d):
+			return d
+
+	for d in ["up", "down", "left", "right"]:
+		if d != direction and not probe_blocked(d):
+			return d
+
+	return direction
 
 
 func get_detected(user, target: Array, target_name: String) -> int:
