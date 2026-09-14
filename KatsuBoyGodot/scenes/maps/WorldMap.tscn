@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=4]
+[gd_scene load_steps=13 format=4]
 
 [ext_resource type="Texture2D" path="res://assets/tiles/katsuboy_atlas.png" id="1_pfxcw"]
 [ext_resource type="Script" path="res://scripts/authoring/ObjectMarker.gd" id="2_pgo1x"]
@@ -9,8 +9,7 @@
 [ext_resource type="Script" path="res://scripts/authoring/PlayerStartMarker.gd" id="7_g74m0"]
 [ext_resource type="Script" path="res://scripts/authoring/DungeonMap.gd" id="dm_90"]
 [ext_resource type="Resource" path="res://assets/data/dungeons/port.tres" id="di_90"]
-[ext_resource type="PackedScene" path="res://scenes/maps/MushroomHut.tscn" id="sc_90"]
-[ext_resource type="PackedScene" path="res://scenes/maps/TestMap.tscn" id="sc_91"]
+[ext_resource type="Resource" path="res://assets/data/npcs/example_villager.tres" id="np_90"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4yqft"]
 texture = ExtResource("1_pfxcw")
@@ -236,6 +235,12 @@ script = ExtResource("3_din4q")
 guide_dungeon_id = "mushroom_cave"
 guide_target = NodePath("../../Events/BoatDock")
 
+[node name="DriftwoodNan" type="Node2D" parent="NPCs"]
+position = Vector2(3984, 4464)
+script = ExtResource("3_din4q")
+npc = "From Stats"
+profile = ExtResource("np_90")
+
 [node name="Monsters" type="Node2D" parent="."]
 
 [node name="Snome" type="Node2D" parent="Monsters"]
@@ -383,7 +388,7 @@ target_row = 70
 position = Vector2(384, 2208)
 script = ExtResource("6_x5e63")
 kind = "ChangeMap"
-target_scene = ExtResource("sc_90")
+target_scene = "res://scenes/maps/MushroomHut.tscn"
 target_col = 26
 target_row = 32
 
@@ -392,7 +397,7 @@ position = Vector2(480, 432)
 script = ExtResource("6_x5e63")
 kind = "ChangeMap"
 required_direction = "up"
-target_scene = ExtResource("sc_91")
+target_scene = "res://scenes/maps/TestMap.tscn"
 target_col = 82
 target_row = 67
 

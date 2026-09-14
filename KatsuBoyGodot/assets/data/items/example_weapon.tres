@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemStats" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/ItemStats.gd" id="1_c7flo"]
+[ext_resource type="Texture2D" path="res://assets/objects/sword.png" id="2_nffkn"]
+
+[resource]
+script = ExtResource("1_c7flo")
+display_name = "Driftwood Blade"
+sprite = ExtResource("2_nffkn")
+description = "[Driftwood Blade]
+Washed up on the shore.
+Light, and it knows it."
+price = 35
+kind = "Sword"
+attack_value = 4
+knock_back_power = 4
+motion1_duration = 4
+motion2_duration = 11

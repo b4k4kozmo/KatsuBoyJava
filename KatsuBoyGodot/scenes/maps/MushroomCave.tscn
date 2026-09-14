@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=4]
+[gd_scene load_steps=10 format=4]
 
 [ext_resource type="TileSet" path="res://assets/tiles/katsuboy_tileset.tres" id="1_l786s"]
 [ext_resource type="Script" path="res://scripts/authoring/ObjectMarker.gd" id="2_he677"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/authoring/DungeonMap.gd" id="dm_90"]
 [ext_resource type="Resource" path="res://assets/data/dungeons/mushroom_cave.tres" id="di_90"]
 [ext_resource type="Resource" path="res://assets/data/monsters/example_custom.tres" id="ms_90"]
+[ext_resource type="Resource" path="res://assets/data/items/example_consumable.tres" id="it_90"]
 
 [node name="MushroomCave" type="Node2D"]
 script = ExtResource("dm_90")
@@ -23,7 +24,8 @@ tile_set = ExtResource("1_l786s")
 position = Vector2(2592, 2304)
 script = ExtResource("2_he677")
 item = "Chest"
-chest_loot = "Green Potion"
+chest_loot = "From Stats"
+chest_loot_stats = ExtResource("it_90")
 
 [node name="Chest1" type="Node2D" parent="Objects"]
 position = Vector2(1872, 2784)

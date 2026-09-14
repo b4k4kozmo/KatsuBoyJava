@@ -35,6 +35,14 @@ var current_map: int = 0
 ## assets/data/dungeons/. Order here is the order of the boat's menu.
 ## See ROADMAP.md for how the boat, tickets and quest fit together.
 @export var dungeons: Array[DungeonInfo] = []
+
+## Every item that is a resource rather than a script, from assets/data/items/.
+##
+## The list exists so a save file can find one again: a saved bag holds item
+## NAMES, and a name that matches none of the hand-written items is looked for
+## here. An item missing from this list works on the map and then quietly fails
+## to come back after a save, which is why the marker warns about it.
+@export var items: Array[ItemStats] = []
 ## The instantiated map scenes, one per index. Live in the scene tree so you
 ## can inspect them while the game runs (Debugger -> Remote tree).
 var map_node: Array[Node2D] = []
@@ -536,13 +544,12 @@ func _wire_maps() -> void:
 				info.arrive_row = landing.y
 
 		for m in a_setter_markers(node, "Events"):
-			if m is EventMarker and m.target_scene != null:
-				var path: String = m.target_scene.resource_path
-				if index_of.has(path):
-					m.target_map = index_of[path]
+			if m is EventMarker and not m.target_scene.is_empty():
+				if index_of.has(m.target_scene):
+					m.target_map = index_of[m.target_scene]
 				else:
 					push_warning("%s points at %s, which is not in Map Scenes."
-							% [m.name, path.get_file()])
+							% [m.name, m.target_scene.get_file()])
 
 
 ## Markers under a group of an already-instantiated map, however deeply nested.

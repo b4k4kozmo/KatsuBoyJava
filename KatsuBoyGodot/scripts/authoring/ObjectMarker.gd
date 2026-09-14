@@ -4,23 +4,46 @@ class_name ObjectMarker
 extends PlacementMarker
 ## An item, chest, door or other pickup on the map.
 ## Java equivalent: one entry in AssetSetter.setObject().
+##
+## Two ways to fill one in:
+##
+##   * Pick a named item. Those are the nineteen that came over from Java, each
+##     with its own script in scripts/object/.
+##   * Pick "From Stats" and drag an ItemStats resource in. That resource IS
+##     the item - name, sprite, price, what it does. No code at all.
 
 ## Must match the OBJ_NAME constants in scripts/object/*.gd.
 @export_enum(
 	"Kami Coin", "Key", "Door", "Chest", "Candle", "Tent", "Green Potion",
 	"Heart", "Mana Crystal", "Boots", "Kami Axe", "Kami no Bokken",
-	"Kami Shield", "Puffa Shield", "Normal Sword", "Carbuncle", "Cave Ticket"
+	"Kami Shield", "Puffa Shield", "Normal Sword", "Carbuncle", "Cave Ticket",
+	"From Stats"
 ) var item: String = "Kami Coin":
 	set(value):
 		item = value
 		refresh()
 
+## The item itself, when Item is "From Stats". Drag one in from
+## assets/data/items/, and add the same resource to GamePanel's "Items" list so
+## a save file can find it again by name.
+@export var item_stats: ItemStats:
+	set(value):
+		item_stats = value
+		refresh()
+
 ## Only used when item is "Chest" - what you find inside.
 @export_enum("Key", "Kami Coin", "Green Potion", "Candle", "Tent",
-	"Kami Axe", "Kami no Bokken", "Kami Shield", "Boots", "Cave Ticket"
+	"Kami Axe", "Kami no Bokken", "Kami Shield", "Boots", "Cave Ticket",
+	"From Stats"
 ) var chest_loot: String = "Key":
 	set(value):
 		chest_loot = value
+		refresh()
+
+## What is in the chest, when Chest Loot is "From Stats".
+@export var chest_loot_stats: ItemStats:
+	set(value):
+		chest_loot_stats = value
 		refresh()
 
 ## Only used when the item (or a chest's loot) is a Kami Coin: how many coins
@@ -43,6 +66,8 @@ const PREVIEWS := {
 
 
 func preview_texture() -> Texture2D:
+	if item == "From Stats":
+		return item_stats.sprite if item_stats != null else null
 	if PREVIEWS.has(item):
 		return load("res://assets/objects/%s.png" % PREVIEWS[item])
 	return null
@@ -54,10 +79,20 @@ func marker_color() -> Color:
 
 func marker_label() -> String:
 	if item == "Chest":
-		return "Chest (%s)" % chest_loot
+		return "Chest (%s)" % _loot_name()
 	if item == "Kami Coin" and coin_value > 1:
 		return "%s x%d" % [item, coin_value]
+	if item == "From Stats":
+		if item_stats == null:
+			return "From Stats (empty!)"
+		return "%s - %s" % [item_stats.display_name, item_stats.summary()]
 	return item
+
+
+func _loot_name() -> String:
+	if chest_loot != "From Stats":
+		return chest_loot
+	return chest_loot_stats.display_name if chest_loot_stats != null else "empty!"
 
 
 func _get_configuration_warnings() -> PackedStringArray:
@@ -74,5 +109,17 @@ func _get_configuration_warnings() -> PackedStringArray:
 
 	if item == "Chest" and chest_loot == "Chest":
 		warnings.append("A chest containing a chest. Pick something else.")
+
+	if item == "From Stats" and item_stats == null:
+		warnings.append("Item is 'From Stats' but the Item Stats slot is empty. "
+				+ "Drag an ItemStats resource in, or pick a named item.")
+
+	if item == "Chest" and chest_loot == "From Stats" and chest_loot_stats == null:
+		warnings.append("Chest Loot is 'From Stats' with nothing in the slot, so "
+				+ "this chest is empty.")
+
+	if item_stats != null and item_stats.sprite == null:
+		warnings.append("%s has no sprite, so it would be invisible on the ground."
+				% item_stats.display_name)
 
 	return warnings

@@ -58,6 +58,18 @@ func set_items() -> void:
 	refresh_stock()
 
 
+## Replace the shelf with a list of ItemStats from the marker, so what the shop
+## sells is a field in the Inspector rather than the four lines above. Called
+## by AssetSetter when the marker's Shop Stock has anything in it.
+func stock_from(sheets: Array) -> void:
+
+	inventory.clear()
+	for sheet in sheets:
+		if sheet is ItemStats:
+			inventory.append(OBJ_Custom.new(gp, sheet))
+	refresh_stock()
+
+
 ## Boat tickets are stocked from the dungeon files rather than listed here, so
 ## adding a destination with a ticket_price puts it on the shelf by itself.
 ##

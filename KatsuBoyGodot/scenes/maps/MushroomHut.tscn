@@ -1,10 +1,9 @@
-[gd_scene load_steps=8 format=4]
+[gd_scene load_steps=7 format=4]
 
 [ext_resource type="Texture2D" path="res://assets/tiles/katsuboy_atlas.png" id="1_acpes"]
 [ext_resource type="Script" path="res://scripts/authoring/NpcMarker.gd" id="2_bu1xe"]
 [ext_resource type="Script" path="res://scripts/authoring/EventMarker.gd" id="3_3xxs4"]
 [ext_resource type="Script" path="res://scripts/authoring/DungeonMap.gd" id="dm_90"]
-[ext_resource type="PackedScene" path="res://scenes/maps/WorldMap.tscn" id="sc_90"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4yqft"]
 texture = ExtResource("1_acpes")
@@ -117,7 +116,7 @@ npc = "Merchant"
 position = Vector2(1248, 1536)
 script = ExtResource("3_3xxs4")
 kind = "ChangeMap"
-target_scene = ExtResource("sc_90")
+target_scene = "res://scenes/maps/WorldMap.tscn"
 target_col = 8
 target_row = 46
 

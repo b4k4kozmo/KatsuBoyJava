@@ -111,12 +111,13 @@ func set_object() -> void:
 			if i >= gp.obj[map_num].size():
 				push_warning("Map %d has more objects than slots (%d)." % [map_num, gp.obj[map_num].size()])
 				break
-			var entity: Entity = gp.e_generator.get_object(m.item)
+			var entity: Entity = gp.e_generator.get_object(m.item, m.item_stats)
 			if entity == null:
 				push_warning("Unknown object '%s' on map %d." % [m.item, map_num])
 				continue
 			if m.item == OBJ_Chest.OBJ_NAME:
-				var loot: Entity = gp.e_generator.get_object(m.chest_loot)
+				var loot: Entity = gp.e_generator.get_object(
+						m.chest_loot, m.chest_loot_stats)
 				if loot is OBJ_Coin:
 					loot.set_value(m.coin_value)
 				entity.set_loot(loot)
@@ -140,13 +141,16 @@ func set_npc() -> void:
 			if i >= gp.npc[map_num].size():
 				push_warning("Map %d has more NPCs than slots (%d)." % [map_num, gp.npc[map_num].size()])
 				break
-			var entity: Entity = gp.e_generator.get_npc(m.npc)
+			var entity: Entity = gp.e_generator.get_npc(m.npc, m.profile)
 			if entity == null:
 				push_warning("Unknown NPC '%s' on map %d." % [m.npc, map_num])
 				continue
 			_place(entity, m)
 			# A guide NPC needs to know which dungeon he is pointing at and
 			# where he walks when you follow him. Both come from the marker.
+			# A shop whose shelf is filled in on the marker rather than in code.
+			if entity is NPC_Merchant and not m.shop_stock.is_empty():
+				entity.stock_from(m.shop_stock)
 			if entity is NPC_OldMan:
 				entity.guide_dungeon_id = m.guide_dungeon_id
 				var goal: Vector2i = m.guide_tile()

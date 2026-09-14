@@ -1,9 +1,8 @@
-[gd_scene load_steps=7 format=4]
+[gd_scene load_steps=6 format=4]
 
 [ext_resource type="Texture2D" path="res://assets/tiles/katsuboy_atlas.png" id="1_kbf6l"]
 [ext_resource type="Script" path="res://scripts/authoring/EventMarker.gd" id="2_w16d7"]
 [ext_resource type="Script" path="res://scripts/authoring/DungeonMap.gd" id="dm_90"]
-[ext_resource type="PackedScene" path="res://scenes/maps/WorldMap.tscn" id="sc_90"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4yqft"]
 texture = ExtResource("1_kbf6l")
@@ -106,6 +105,6 @@ tile_set = SubResource("TileSet_jtruc")
 position = Vector2(3936, 3216)
 script = ExtResource("2_w16d7")
 kind = "ChangeMap"
-target_scene = ExtResource("sc_90")
+target_scene = "res://scenes/maps/WorldMap.tscn"
 target_col = 10
 target_row = 9

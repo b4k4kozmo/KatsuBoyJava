@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemStats" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/ItemStats.gd" id="1_dbmsx"]
+[ext_resource type="Texture2D" path="res://assets/objects/sando_full.png" id="2_8g2aq"]
+
+[resource]
+script = ExtResource("1_dbmsx")
+display_name = "Sea Bun"
+sprite = ExtResource("2_8g2aq")
+description = "[Sea Bun]
+Salty. Restores a third
+of your life and some mana."
+price = 14
+effects = 3
+heal_amount = 2
+heal_share = 33
+mana_amount = 1
+use_message = "You eat the Sea Bun.
+The salt wakes you up."
+stackable = true

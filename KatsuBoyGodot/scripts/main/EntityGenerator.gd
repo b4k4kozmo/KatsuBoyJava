@@ -10,9 +10,14 @@ extends RefCounted
 ## below, then add its name to the @export_enum list in the matching marker
 ## script in scripts/authoring/. After that it is placeable in the editor.
 ##
-## A MONSTER does not need any of that any more: make a MonsterStats resource,
-## set a MonsterMarker to "From Stats" and drag it in. Only something whose
-## behaviour the four built-in kinds cannot describe still wants a script.
+## MOST OF THAT IS NO LONGER NEEDED. A monster, an item and an NPC can each be
+## a resource on its own - MonsterStats, ItemStats, NpcProfile - dropped into a
+## marker set to "From Stats". Only something whose behaviour is a new rule
+## rather than new numbers still wants a script here.
+
+## Where item resources live. Everything in here is findable by name without
+## being registered anywhere.
+const ITEM_FOLDER := "res://assets/data/items/"
 
 var gp
 
@@ -21,7 +26,14 @@ func _init(gp) -> void:
 	self.gp = gp
 
 
-func get_object(item_name: String) -> Entity:
+## Build an item by name. `stats` short-circuits the lookup when a marker has
+## a resource in hand; without it, a name that matches nothing hand-written is
+## looked for in GamePanel's Items list, which is how a data item survives a
+## save and comes back as itself.
+func get_object(item_name: String, stats: ItemStats = null) -> Entity:
+
+	if stats != null:
+		return OBJ_Custom.new(gp, stats)
 
 	var obj: Entity = null
 
@@ -49,6 +61,13 @@ func get_object(item_name: String) -> Entity:
 	# Tickets are named after their route ("Mushroom Cave Ticket"), so they are
 	# matched against the dungeon list rather than listed above. Without this a
 	# ticket in the bag would not survive a save and load.
+	# Items that are nothing but a resource. Looked up by display name, which
+	# is why that field is the stable key and must never be renamed.
+	if obj == null:
+		var sheet: ItemStats = find_item(item_name)
+		if sheet != null:
+			obj = OBJ_Custom.new(gp, sheet)
+
 	if obj == null and item_name.ends_with("Ticket"):
 		for d in gp.dungeons:
 			if d is DungeonInfo and "%s Ticket" % d.display_name == item_name:
@@ -62,6 +81,46 @@ func get_object(item_name: String) -> Entity:
 
 ## Build a monster by name. "From Stats" builds one out of the resource alone,
 ## which is how a monster gets added without any code: see MonsterStats.
+## Find an ItemStats by its display name: GamePanel's Items list first, then
+## every .tres in assets/data/items/.
+##
+## The folder sweep is the safety net. Registering an item in the Inspector is
+## the documented step, and forgetting it used to mean the item worked on the
+## map and then vanished from the bag after a save - a bug that only shows up
+## ten minutes later. Now forgetting costs nothing.
+func find_item(item_name: String) -> ItemStats:
+
+	for sheet in gp.items:
+		if sheet is ItemStats and sheet.display_name == item_name:
+			return sheet
+
+	for path in item_files():
+		var sheet: Resource = load(path)
+		if sheet is ItemStats and sheet.display_name == item_name:
+			return sheet
+
+	return null
+
+
+## Every item resource shipped in assets/data/items/.
+static func item_files() -> PackedStringArray:
+
+	var out := PackedStringArray()
+	var dir := DirAccess.open(ITEM_FOLDER)
+	if dir == null:
+		return out
+
+	for file in dir.get_files():
+		# Exported builds rename imported resources; the original name is the
+		# path with .remap taken off.
+		if file.ends_with(".remap"):
+			file = file.trim_suffix(".remap")
+		if file.ends_with(".tres"):
+			out.append(ITEM_FOLDER + file)
+
+	return out
+
+
 func get_monster(monster_name: String, stats: MonsterStats = null) -> Entity:
 
 	var monster: Entity = null
@@ -77,7 +136,9 @@ func get_monster(monster_name: String, stats: MonsterStats = null) -> Entity:
 	return monster
 
 
-func get_npc(npc_name: String) -> Entity:
+## Build an NPC by name. "From Stats" builds one out of an NpcProfile alone,
+## which is how a character gets added without any code.
+func get_npc(npc_name: String, profile: NpcProfile = null) -> Entity:
 
 	var npc: Entity = null
 
@@ -86,6 +147,7 @@ func get_npc(npc_name: String) -> Entity:
 		"NanaMan": npc = NPC_NanaMan.new(gp)
 		"Merchant": npc = NPC_Merchant.new(gp)
 		"TicketMan": npc = NPC_TicketMan.new(gp)
+		"From Stats": npc = NPC_Custom.new(gp, profile)
 
 	return npc
 

@@ -31,6 +31,34 @@ func check(label: String, condition: bool, detail: String = "") -> void:
 		print("  FAIL  %s %s" % [label, detail])
 
 
+## Every ItemStats in assets/data/items/ resolves back to itself by name.
+## A save file holds names, so one that does not resolve is an item the player
+## loses on reload.
+func _all_item_files_resolve() -> bool:
+	return _unresolved_items() == ""
+
+
+func _unresolved_items() -> String:
+	var bad: Array[String] = []
+	for path in EntityGenerator.item_files():
+		var sheet: Resource = load(path)
+		if not (sheet is ItemStats):
+			continue
+		if gp.e_generator.find_item(sheet.display_name) == null:
+			bad.append(path.get_file())
+	return ", ".join(bad)
+
+
+## Godot has no literal for a typed array, so compare element by element.
+func _same(got: Array, want: Array) -> bool:
+	if got.size() != want.size():
+		return false
+	for i in range(got.size()):
+		if got[i] != want[i]:
+			return false
+	return true
+
+
 func monsters_alive(map := 0) -> int:
 	var n := 0
 	for m in gp.monster[map]:
@@ -2066,9 +2094,9 @@ func _physics_process(_d: float) -> void:
 				if m is EventMarker and m.kind == "ChangeMap":
 					doors_wired += 1
 					check("%s resolved to a real map" % m.name,
-						m.target_scene != null
+						not m.target_scene.is_empty()
 							and m.target_map > 0 and m.target_map < gp.max_map
-							and gp.map_scenes[m.target_map] == m.target_scene,
+							and gp.map_scenes[m.target_map].resource_path == m.target_scene,
 						"map %d" % m.target_map)
 			check("the world map's doors are all wired this way", doors_wired == 2,
 				str(doors_wired))
@@ -2085,6 +2113,112 @@ func _physics_process(_d: float) -> void:
 					and dock_guide.guide_tile() == Vector2i(
 						home_dock.tile_col(), home_dock.tile_row()),
 				str(dock_guide.guide_tile()) if dock_guide != null else "no guide")
+
+		1088:
+			print("\n-- monsters, items and people from resources --")
+
+			# An item that is nothing but a file. The sheet says sword, and the
+			# entity that comes out is equippable as one.
+			var sword_sheet: ItemStats = load("res://assets/data/items/example_weapon.tres")
+			var blade: Entity = gp.e_generator.get_object("From Stats", sword_sheet)
+			check("an item can be built from a resource alone", blade is OBJ_Custom)
+			check("and it is a weapon with the sheet's numbers",
+				blade.type == Entity.TYPE_SWORD and blade.attack_value == 4
+					and blade.name == "Driftwood Blade" and blade.price == 35,
+				"%s type %d atk %d" % [blade.name, blade.type, blade.attack_value])
+			check("with a sprite, so it can be seen on the ground", blade.down1 != null)
+			check("and a swing shorter than the axe's",
+				blade.motion1_duration + blade.motion2_duration
+					< OBJ_Kamiaxe.new(gp).motion1_duration + OBJ_Kamiaxe.new(gp).motion2_duration)
+
+			# Equipping it really does change what the player hits for. Measured
+			# against bare hands, because by this point in the run the player is
+			# already carrying something better than a bit of driftwood.
+			var kept_weapon = gp.player.current_weapon
+			gp.player.current_weapon = null
+			var bare: int = gp.player.get_attack()
+			gp.player.current_weapon = blade
+			var armed: int = gp.player.get_attack()
+			gp.player.current_weapon = kept_weapon
+			gp.player.attack = gp.player.get_attack()
+			check("equipping it raises your attack", armed > bare,
+				"%d bare -> %d armed" % [bare, armed])
+
+			# A consumable, and the effect flags that drive it.
+			var bun_sheet: ItemStats = load("res://assets/data/items/example_consumable.tres")
+			var bun: Entity = gp.e_generator.get_object("From Stats", bun_sheet)
+			check("a consumable stacks in one slot",
+				bun.type == Entity.TYPE_CONSUMABLE and bun.stackable)
+			check("its healing scales with your maximum",
+				bun_sheet.life_restored(100) > bun_sheet.life_restored(10),
+				"%d vs %d" % [bun_sheet.life_restored(100), bun_sheet.life_restored(10)])
+
+			gp.player.life = 1
+			gp.player.mana = 0
+			var full_life: int = gp.player.max_life
+			bun.use(gp.player)
+			check("using it heals you", gp.player.life > 1 and gp.player.life <= full_life,
+				"%d of %d" % [gp.player.life, full_life])
+			check("and gives back mana", gp.player.mana > 0, str(gp.player.mana))
+			gp.player.life = full_life
+			gp.player.mana = gp.player.max_mana
+
+			# The thing that used to break ten minutes later: a saved bag holds
+			# names, so a data item has to be findable by name or it vanishes.
+			var by_name: Entity = gp.e_generator.get_object("Driftwood Blade")
+			check("a data item survives a save by name",
+				by_name is OBJ_Custom and by_name.attack_value == 4,
+				str(by_name))
+			check("every item file in the folder is findable by its name",
+				_all_item_files_resolve(), _unresolved_items())
+
+			# A character who is nothing but a file, placed on the world map.
+			var nan = null
+			for n in gp.npc[0]:
+				if n is NPC_Custom:
+					nan = n
+			check("the world map ships a resource-only character", nan != null)
+			if nan != null:
+				check("with a name and art",
+					nan.name == "Driftwood Nan" and nan.down1 != null and nan.up1 != null,
+					nan.name)
+				check("and three conversations written into her table",
+					nan.dialogues[0][0] != null and nan.dialogues[1][0] != null
+						and nan.dialogues[2][0] != null)
+
+				# Talking walks forward one conversation and then stays put.
+				nan.dialogue_set = -1
+				var seen: Array[int] = []
+				for i in range(5):
+					gp.game_state = gp.PLAY_STATE
+					nan.speak()
+					seen.append(nan.dialogue_set)
+				check("talking moves through them and stops on the last",
+					_same(seen, [0, 1, 2, 2, 2]), str(seen))
+
+				# And the gift is handed over once, not every time.
+				var blades := 0
+				for held in gp.player.inventory:
+					if held != null and held.name == "Driftwood Blade":
+						blades += 1
+				check("her gift arrives exactly once", blades == 1, str(blades))
+
+			# Back to a sane state for the phases that follow.
+			gp.game_state = gp.PLAY_STATE
+			gp.ui.message.clear()
+			for i in range(gp.player.inventory.size() - 1, -1, -1):
+				if gp.player.inventory[i].name == "Driftwood Blade":
+					gp.player.inventory.remove_at(i)
+
+			# The cave's first chest holds a data item, so the whole path -
+			# .tres on disk, into a marker, into a chest, into the bag - is
+			# exercised by a real map.
+			var cave_map: int = BoatService.by_id(gp.dungeons, "mushroom_cave").map_index
+			var found_bun := false
+			for o in gp.obj[cave_map]:
+				if o is OBJ_Chest and o.loot is OBJ_Custom and o.loot.name == "Sea Bun":
+					found_bun = true
+			check("a chest can hold a resource-only item", found_bun)
 
 		1090:
 			print("\n================================")
