@@ -164,6 +164,8 @@ WorldMap                 ← DungeonMap script on the root
 └── PlayerStart          where a new game begins
 ```
 
+![The Godot Scene dock showing a map with its Tiles layer and group nodes](docs/images/scene-tree.png)
+
 **You don't have to build that by hand.** The root of every map scene carries
 the `DungeonMap` script, which puts four buttons at the top of the Inspector:
 
@@ -173,6 +175,8 @@ the `DungeonMap` script, which puts four buttons at the top of the Inspector:
 | **Check this map** | walks the whole map and lists what's wrong in the **Output** panel. |
 | **Paint the border** | fills the edges outside the painted area so the camera never shows the void. Water where the map's edge is water, trees otherwise. |
 | **Tidy up the markers** | snaps every marker to the nearest tile. |
+
+![The Godot Inspector with the DungeonMap script selected, showing four buttons](docs/images/map-root.png)
 
 It also shows a **yellow warning triangle** on the root node listing every
 problem it can see — a marker in a wall, two things on one tile where one is
@@ -240,6 +244,8 @@ art and behaviour from `scripts/monster/MON_<Name>.gd`. A `Boss` is built from
 those numbers and then multiplied up — six times the health, double the attack —
 in `scripts/monster/MON_Boss.gd`.
 
+![A MonsterMarker with Monster set to From Stats](docs/images/monster-marker.png)
+
 **A new monster does not need a script.** Set Monster to `From Stats` and drag
 in a `MonsterStats` resource that carries its art, its behaviour and its drop
 table. `assets/data/monsters/example_custom.tres` — the Cave Mushroom in the
@@ -257,6 +263,8 @@ Under **NPCs**. Spawns a character you can talk to.
 | **Guide Dungeon Id** | `OldMan` only. Fill this in and he becomes a signpost: he tells you about that dungeon, makes it your objective, then walks off towards the dock. Empty = ordinary small talk. |
 | **Guide Target** | drag the marker he walks to — the Boat dock's `EventMarker`, usually. Move the dock and he follows it. |
 | **Guide Col / Row** | the same thing typed out by hand, for a destination with no marker of its own. Ignored when Guide Target is set. `-1` means he stays put and wanders. |
+
+![An NpcMarker with Npc set to From Stats and a profile](docs/images/npc-marker.png)
 
 **A new character does not need a script.** Set Npc to `From Stats` and drag in
 an `NpcProfile`: their art, how restless they are, and their conversations as a
@@ -296,6 +304,8 @@ Under **Objects**. An item, chest or door.
 Pickup-only items (coins, hearts, mana, Boots) are used the moment you walk over
 them. Weapons, shields, keys and potions go into the inventory. `Door` and
 `Chest` are obstacles you interact with using the Confirm key.
+
+![An ObjectMarker on a chest with Chest Loot set to From Stats](docs/images/object-marker.png)
 
 **A new item does not need a script.** Set Item to `From Stats` and drag in an
 `ItemStats` resource that carries its sprite, its price, its numbers and what
@@ -528,6 +538,8 @@ tankier.
 
 ### `assets/data/monsters/*.tres`
 
+![The MonsterStats resource for the Cave Mushroom in the Inspector](docs/images/sheet-monster.png)
+
 A `MonsterStats` resource. For one of the five named monsters it is just the
 numbers, applied to every monster of that type everywhere. For a marker set to
 **From Stats** it is the entire monster: art, behaviour and loot as well.
@@ -558,6 +570,8 @@ weights short.
 
 ### `assets/data/items/*.tres`
 
+![The ItemStats resource for the Sea Bun in the Inspector](docs/images/sheet-item.png)
+
 An `ItemStats` resource. Everything a hand-written item in `scripts/object/`
 does, minus the code.
 
@@ -576,6 +590,8 @@ Anything in `assets/data/items/` is found by name even if you forget, but the
 list is the documented place and the one the tests read.
 
 ### `assets/data/npcs/*.tres`
+
+![The NpcProfile resource for Driftwood Nan in the Inspector](docs/images/sheet-npc.png)
 
 An `NpcProfile` resource: a character with no script.
 
@@ -754,6 +770,31 @@ own drawing. Entities are plain objects rather than nodes — they're drawn and
 depth-sorted by hand in `GamePanel._draw()`, which is what keeps this code a
 line-for-line match with the original Java. Making them nodes would mean
 rewriting collision, draw order and the entity arrays.
+
+---
+
+## Regenerating the screenshots
+
+The pictures in this file and in `DUNGEON_CHEATSHEET.md` are real captures of
+this project in the Godot editor, not mock-ups, so they cannot drift from the
+code without someone noticing. To rebuild them after changing a marker or a
+resource:
+
+```
+cp -r tools/screenshots addons/shotter
+xvfb-run -a -s "-screen 0 1920x1400x24" godot --editor --path . \
+    --rendering-method gl_compatibility --rendering-driver opengl3
+rm -rf addons
+```
+
+Enable the plugin in **Project Settings → Plugins** (or add it to
+`project.godot` under `[editor_plugins]`) before the run, and take it back out
+afterwards — it quits the editor when it finishes, which is not what you want
+while working.
+
+It opens each scene, selects a node, unfolds every property group, and writes
+cropped PNGs into `docs/images/`. The list of shots is at the top of
+`tools/screenshots/shotter.gd`; add a line there to add a picture.
 
 ---
 

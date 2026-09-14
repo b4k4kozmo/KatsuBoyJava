@@ -31,6 +31,11 @@ That is a playable map. The rest of this page is the detail.
 
 ## The four buttons on the root
 
+![The Godot Inspector with the DungeonMap script selected, showing four buttons](docs/images/map-root.png)
+
+*Click the map's root node and the Inspector shows this. If the buttons are not
+there, the root has no `DungeonMap` script on it yet.*
+
 | Button | Does | When |
 |---|---|---|
 | **Set up this map** | makes `Tiles` (with the tile set already in it) and the five group nodes | first thing, on a new map. Safe to press again. |
@@ -98,6 +103,11 @@ YourDungeon              ← DungeonMap
 └── Events               pits, pools, doorways, the boat dock
 ```
 
+![The Godot Scene dock showing MushroomCave with Tiles, Objects, NPCs and Monsters](docs/images/scene-tree.png)
+
+*What **Set up this map** builds. The flag on the root is the `DungeonMap`
+script; the icons on the markers are the thing each one places.*
+
 To place something: select the group → **Add Child Node** (`Ctrl+A`) → type the
 marker's name → pick what it is in the Inspector → drag it onto a tile.
 
@@ -124,6 +134,8 @@ Going over is not an error, it is silently ignored — which is why
 | **Chest Loot Stats** | what is in the chest, for `From Stats` |
 | **Coin Value** | `Kami Coin` only — 1 loose change, 5 a purse, 20 a find. Drawn bigger when it is worth more. |
 
+![An ObjectMarker on a chest with Chest Loot set to From Stats](docs/images/object-marker.png)
+
 `Chest` and `Door` block the tile they stand on. Everything else is walked over.
 
 ### `MonsterMarker` → **Monsters**
@@ -134,6 +146,8 @@ Going over is not an error, it is silently ignored — which is why
 | **Stats** | a `MonsterStats`. On a named monster it retunes *this one placement*. On **From Stats** it *is* the monster. On a `Boss`, near-required. |
 | **Boss Dungeon Id** | `Boss` only — the dungeon it guards. Killing it clears that dungeon. |
 | **Reward Ticket** | `Boss` only — the route its death opens |
+
+![A MonsterMarker with Monster set to From Stats](docs/images/monster-marker.png)
 
 Monsters respawn from their markers whenever the map resets: on death, on
 restart, and when the player rests at a healing pool. Leaving a map and coming
@@ -180,6 +194,8 @@ player may not have the axe.
 | `Speak` | starts a conversation |
 | `Boat` | opens the timetable — Confirm while standing on it |
 
+![An EventMarker set to ChangeMap with a target scene](docs/images/event-changemap.png)
+
 First matching event in tree order wins. If two overlap, move the one you want
 higher up.
 
@@ -212,6 +228,7 @@ respawns after dying.
 
 2. Drag that resource into the map root's **Dungeon Info** slot.
 3. Put an `EventMarker` on the pier: Kind `Boat`, **Dock Of** = the dungeon's id.
+   ![An EventMarker set to Boat with Dock Of filled in](docs/images/event-boat.png)
    *That marker's tile is where the boat puts the player down* — there is no
    arrival tile to type, and moving the dock moves the landing.
 4. Put a boss in: `MonsterMarker`, Monster `Boss`, **Boss Dungeon Id** = the
@@ -246,6 +263,11 @@ cleared, so adding one automatically makes the ending harder to reach.
 5. `ObjectMarker` → **Item** = `From Stats` → drag the resource into
    **Item Stats**.
 
+![The effect tick-boxes on the Sea Bun's ItemStats resource](docs/images/sheet-item-2.png)
+
+*The part that does the work: **Effects** is five tick-boxes, and **Heal Share**
+is a percentage of your maximum rather than a flat number.*
+
 > Step 4 matters because a saved bag holds item *names*. Anything in
 > `assets/data/items/` is found by name even if you forget, but the list is the
 > documented place and the one the tests read.
@@ -268,6 +290,8 @@ cleared, so adding one automatically makes the ending harder to reach.
    | **Gift** | an `ItemStats` handed over the first time you talk, once per run, plus its **Gift Message** |
 
 4. `NpcMarker` → **Npc** = `From Stats` → drag the resource into **Profile**.
+
+![The NpcProfile resource for Driftwood Nan in the Inspector](docs/images/sheet-npc.png)
 
 **Conversations move forward.** Talking again goes to the next one and the last
 repeats forever. Three conversations is a character who has something new to say
@@ -297,6 +321,10 @@ in order. Confirm moves to the next. Lines wrap for you; `\n` forces a break.
 
 4. `MonsterMarker` → **Monster** = `From Stats` → drag the resource into
    **Stats**.
+
+![The MonsterStats resource for the Cave Mushroom in the Inspector](docs/images/sheet-monster.png)
+
+*The Cave Mushroom, with every group opened.*
 
 ### Drop tables
 

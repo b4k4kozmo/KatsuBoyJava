@@ -6,3 +6,7 @@ build/
 *.exe
 *.pck
 *.zip
+
+# The screenshot plugin is copied into addons/ only while regenerating the
+# documentation pictures - see AUTHORING.md. It never belongs in the project.
+/addons/
