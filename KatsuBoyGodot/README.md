@@ -29,9 +29,11 @@ on any plain static host.
 1. Open Godot 4.5.1 → **Import** → pick `KatsuBoyGodot/project.godot`.
 2. Let it import the assets once (a few seconds), then press **F5**.
 
-**If you want to add maps, monsters, items or sounds, read
-[AUTHORING.md](AUTHORING.md)** — most of that is done in the editor without
-touching code. This file is about how the port works.
+**If you want to build a dungeon, start with
+[DUNGEON_CHEATSHEET.md](DUNGEON_CHEATSHEET.md)** — one page, no code.
+[AUTHORING.md](AUTHORING.md) is the long version: every property of every node,
+plus items, sounds, the clock and the classes. This file is about how the port
+works.
 
 Press **F1** in game for the dev panel (cheats, live stats, click-to-teleport).
 Run the regression tests with:

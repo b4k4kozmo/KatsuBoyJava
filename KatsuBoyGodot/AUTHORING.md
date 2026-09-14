@@ -27,14 +27,20 @@ to play.
 
 ---
 
+> **Building a dungeon?** [DUNGEON_CHEATSHEET.md](DUNGEON_CHEATSHEET.md) is the
+> one-page version of everything on this page that a level designer needs, with
+> nothing about code in it. This file is the full reference.
+
 ## Where things are
 
 | I want to change... | Open |
 |---|---|
+| whether a map is set up right | `scenes/maps/<Map>.tscn` → select the **root** → **Check this map** |
 | the terrain of a map | `scenes/maps/<Map>.tscn` → select **Tiles** |
 | what's on a map (items, monsters, NPCs, doors) | `scenes/maps/<Map>.tscn` → the group nodes |
 | which tiles block movement | `assets/tiles/katsuboy_tileset.tres` |
-| monster stats | `assets/data/monsters/*.tres` |
+| monster stats, art, behaviour and drops | `assets/data/monsters/*.tres` |
+| adding a whole new monster | copy `assets/data/monsters/example_custom.tres` |
 | the player's starting stats and speeds | `assets/data/player.tres` |
 | the exp curve and what a level gives you | `assets/data/player.tres` → Levelling |
 | what the three classes are good at | `assets/data/classes/*.tres` |
@@ -43,7 +49,7 @@ to play.
 | key bindings | Project Settings → Input Map |
 | dialogue | `scripts/entity/NPC_*.gd` (code) |
 | where the boat goes, and when | `assets/data/dungeons/*.tres` |
-| how much money things are worth | drop tables in `scripts/monster/MON_*.gd`, `Coin Value` on markers |
+| how much money things are worth | `Drops` in `assets/data/monsters/*.tres`, the tables in `scripts/monster/MON_*.gd`, `Coin Value` on markers |
 
 ---
 
@@ -146,7 +152,7 @@ All tiles live in one atlas image, because that's what the TileSet paints from.
 Each map scene has group nodes to put markers under:
 
 ```
-WorldMap
+WorldMap                 ← DungeonMap script on the root
 ├── Tiles                (TileMapLayer — the terrain)
 ├── Objects              items, chests, doors
 ├── NPCs
@@ -155,6 +161,28 @@ WorldMap
 ├── Events               pits, save points, doorways between maps
 └── PlayerStart          where a new game begins
 ```
+
+**You don't have to build that by hand.** The root of every map scene carries
+the `DungeonMap` script, which puts four buttons at the top of the Inspector:
+
+| Button | Does |
+|---|---|
+| **Set up this map** | creates the `Tiles` layer with the tile set already in it, plus any of the five group nodes that are missing. Safe to press twice. |
+| **Check this map** | walks the whole map and lists what's wrong in the **Output** panel. |
+| **Paint the border** | fills the edges outside the painted area so the camera never shows the void. Water where the map's edge is water, trees otherwise. |
+| **Tidy up the markers** | snaps every marker to the nearest tile. |
+
+It also shows a **yellow warning triangle** on the root node listing every
+problem it can see — a marker in a wall, two things on one tile where one is
+solid, a locked door with no key on the map, a dungeon with no boss, more
+markers than there are slots. Each individual marker carries its own triangle
+too, so you can click straight to the offender.
+
+Nothing on the root runs in the game. It is editor furniture, like the markers.
+
+You can sort markers into sub-folders — `Monsters/Upper Floor`,
+`Objects/Room 3` — and they are still found. Tree order is preserved, which
+matters for Events: the first one the player is touching wins.
 
 **The markers are real node types.** You don't attach scripts by hand:
 
@@ -168,8 +196,10 @@ WorldMap
 
 **Turn on grid snapping** so things land on tiles: the magnet icon in the
 toolbar, then **Configure Snap → Grid Step 48 × 48**, and enable **Use Grid
-Snap**. (A marker that's slightly off-grid still snaps to the nearest tile at
-run time, so this is for your eyes, not correctness.)
+Snap**. A marker that's off-grid still rounds to the nearest tile at run time,
+but then what you see is not quite what the game builds, and two markers that
+look like neighbours can turn out to share a tile — so an off-grid marker
+raises a warning, and **Tidy up the markers** fixes them all at once.
 
 Each marker draws its real sprite in the editor, so you can see what you placed.
 Markers never draw in game — at startup `AssetSetter` reads them and builds the
@@ -180,9 +210,10 @@ actual entities.
 > stand in the door and block it. That came straight from the Java version.
 > Now that both are nodes you can just drag one of them off the other.
 
-**Per-map limits:** 20 objects, 10 NPCs, 30 monsters, 50 interactive tiles.
-Going over is ignored with a warning in the **Output** panel. To raise one,
-change the matching number in `GamePanel._ready()` (`_new_entity_array(20)`).
+**Per-map limits:** 40 objects, 10 NPCs, 80 monsters, 50 interactive tiles.
+Going over is ignored — **Check this map** says so, and so does the root's
+warning triangle. To raise one, change the matching number in
+`GamePanel._ready()` (`_new_entity_array(40)`).
 
 **Monsters respawn** from their markers whenever the map resets — on death, on
 restart, and when the player rests at a healing pool. Objects the player picked
@@ -197,14 +228,21 @@ Under **Monsters**. Spawns one monster.
 
 | Property | What it does |
 |---|---|
-| **Monster** | Slime / Snome / Kamijack / Shadow / Boss |
-| **Boss Stats** | `Boss` only — drag in a `MonsterStats` from `assets/data/monsters/` (`boss_cave.tres`, `boss_deep.tres`). Without one the boss is a Kamijack with six times the health, which is a placeholder, not a fight. |
+| **Monster** | Slime / Snome / Kamijack / Shadow / Boss / **From Stats** |
+| **Stats** | a `MonsterStats` from `assets/data/monsters/`. For a named monster this is an *override* — same script, same art, different numbers, so you can put one tougher Slime at the back of a dungeon without writing a second Slime. For **From Stats** it is the whole monster. For a `Boss` it is close to required: without one the boss is a Kamijack with six times the health, which is a placeholder, not a fight. |
 | **Boss Dungeon Id** | `Boss` only — the `DungeonInfo` id this boss guards. Killing it clears that dungeon. |
 | **Reward Ticket** | `Boss` only — the `ticket_id` of the route its death opens. Leave empty if it opens nothing. |
 
-Its numbers come from `assets/data/monsters/<name>.tres`. A `Boss` is built from
+A named monster's numbers come from `assets/data/monsters/<name>.tres`, and its
+art and behaviour from `scripts/monster/MON_<Name>.gd`. A `Boss` is built from
 those numbers and then multiplied up — six times the health, double the attack —
 in `scripts/monster/MON_Boss.gd`.
+
+**A new monster does not need a script.** Set Monster to `From Stats` and drag
+in a `MonsterStats` resource that carries its art, its behaviour and its drop
+table. `assets/data/monsters/example_custom.tres` — the Cave Mushroom in the
+mushroom cave — is one; copy it and change the numbers. See
+[`assets/data/monsters/*.tres`](#assetsdatamonsterstres) below for every field.
 
 ### `NpcMarker`
 Under **NPCs**. Spawns a character you can talk to.
@@ -213,7 +251,8 @@ Under **NPCs**. Spawns a character you can talk to.
 |---|---|
 | **Npc** | OldMan / NanaMan / Merchant / TicketMan |
 | **Guide Dungeon Id** | `OldMan` only. Fill this in and he becomes a signpost: he tells you about that dungeon, makes it your objective, then walks off towards the dock. Empty = ordinary small talk. |
-| **Guide Col / Row** | where he walks to after you talk to him. The world map's boat dock is **87, 97**. `-1` means he stays put and wanders. |
+| **Guide Target** | drag the marker he walks to — the Boat dock's `EventMarker`, usually. Move the dock and he follows it. |
+| **Guide Col / Row** | the same thing typed out by hand, for a destination with no marker of its own. Ignored when Guide Target is set. `-1` means he stays put and wanders. |
 
 The Merchant opens the shop. Dialogue is in that NPC's script — except a guide's,
 which is written from the dungeon's `hint`, price and timetable so it can never
@@ -260,7 +299,8 @@ Under **Events**. Fires when the player steps on its tile.
 |---|---|
 | **Kind** | see the table below |
 | **Required Direction** | `any`, or the way the player must be walking for it to fire |
-| **Target Map** | `ChangeMap` only — index into GamePanel's Map Scenes |
+| **Target Scene** | `ChangeMap` only — drag the destination's `.tscn` straight in from `scenes/maps/`. The map number is worked out at load time. |
+| **Target Map** | the map number typed out by hand. Filled in from Target Scene when one is set, so leave it alone. |
 | **Target Col / Row** | the tile the player arrives on (`Teleport` and `ChangeMap`) |
 | **Speak Npc** | `Speak` only — drag the NpcMarker to talk to |
 | **Dock Of** | `Boat` only — the id of the dungeon this dock is in. The boat never offers to sail you where you already are. Leave empty for the home port. |
@@ -280,12 +320,14 @@ wins**, so if two overlap, move the one you want higher up.
 **Linking two maps** needs a marker on *both* sides, or the player walks through
 and is immediately sent back:
 
-- In `WorldMap`, at the door tile: `ChangeMap`, Target Map `1`, Target Col/Row =
-  where they arrive inside.
-- In `MushroomHut`, at *that arrival tile*: `ChangeMap`, Target Map `0`, Target
-  Col/Row = the tile just outside the door.
+- In `WorldMap`, at the door tile: `ChangeMap`, **Target Scene** =
+  `MushroomHut.tscn`, Target Col/Row = where they arrive inside.
+- In `MushroomHut`, at *that arrival tile*: `ChangeMap`, **Target Scene** =
+  `WorldMap.tscn`, Target Col/Row = the tile just outside the door.
 
-The existing hut door is set up exactly like this — copy it as a template.
+The existing hut door is set up exactly like this — copy it as a template. A
+`ChangeMap` with no Target Scene raises a warning, because a hand-typed map
+number points somewhere else the moment anybody reorders the map list.
 
 ### `PlayerStartMarker`
 Anywhere in any map scene. Where a new game begins and where the player
@@ -312,20 +354,29 @@ skeleton for you.
 ## Building a new map or dungeon
 
 1. **Scene → New Scene → 2D Scene**. Rename the root, e.g. `CryptLevel1`.
-2. **Add Child Node → TileMapLayer**. Name it exactly **`Tiles`**.
-3. Select it. In the Inspector, drag `assets/tiles/katsuboy_tileset.tres` into
-   the **Tile Set** slot.
-4. Paint the level (bucket-fill wall first, then carve).
-5. Add empty **Node2D** children named exactly `Objects`, `NPCs`, `Monsters`,
-   `InteractiveTiles`, `Events` — only the ones you need.
+2. With the root selected, attach **`scripts/authoring/DungeonMap.gd`** to it
+   (the script icon above the Inspector, then **Load**).
+3. Press **Set up this map**. That makes the `Tiles` layer with the tile set
+   already in it and all five group nodes, named correctly.
+4. Paint the level (bucket-fill wall first, then carve), then press
+   **Paint the border** so the camera never shows the void past the edge.
+5. Drop markers under the groups. Press **Check this map** whenever you want to
+   know what is still wrong.
 6. Save into `scenes/maps/`.
 7. Open `main.tscn`, select **GamePanel**, find **Map Scenes** in the Inspector,
-   press **+**, and drop your scene in. **Its position in that list is its map
-   number** — that's what an EventMarker's Target Map refers to.
-8. Add `ChangeMap` events on both sides to connect it to an existing map.
+   press **+**, and drop your scene in.
+8. Add `ChangeMap` events on both sides to connect it to an existing map,
+   dragging each destination's `.tscn` into **Target Scene**.
 
 > The names `Tiles`, `Objects`, `NPCs`, `Monsters`, `InteractiveTiles` and
-> `Events` are how the game finds things. They must match exactly.
+> `Events` are how the game finds things. They must match exactly — which is
+> the reason **Set up this map** exists rather than a list of names to type.
+
+**To make it a boat destination** as well, make a `DungeonInfo` `.tres` in
+`assets/data/dungeons/`, drag it into the root's **Dungeon Info** slot, drop an
+`EventMarker` with Kind `Boat` and Dock Of = the dungeon's id on the pier tile,
+and add the resource to **GamePanel → Dungeons**. The map number and the
+arrival tile fill themselves in from the scene — you never type either.
 
 Also add the new scene to **`tests/SmokeTest.tscn`**'s Map Scenes, so the tests
 cover it.
@@ -452,12 +503,33 @@ tankier.
 
 ### `assets/data/monsters/*.tres`
 
-Life, attack, defense, exp reward, speed, knockback, hitbox, and melee reach
-and timing. Applies to every monster of that type everywhere.
+A `MonsterStats` resource. For one of the five named monsters it is just the
+numbers, applied to every monster of that type everywhere. For a marker set to
+**From Stats** it is the entire monster: art, behaviour and loot as well.
 
-Not in here: which sprites it uses and how it behaves (chase? shoot? swing?).
-Those are too different between monsters to be data — they live in
-`scripts/monster/MON_*.gd`.
+| Group | Fields |
+|---|---|
+| (top) | **Display Name** — what the damage numbers and the boss bar call it |
+| **Stats** | Max Life, Attack, Defense, Exp Reward, Speed, Knock Back Power |
+| **Hitbox** | **Solid Area** — the collision box inside the 48×48 tile, as `Rect2i(x, y, w, h)`. Smaller than the sprite is usually right; the player's is 24×24. |
+| **Looks** | **Frames Down / Up / Left / Right** — two PNGs each, the walk cycle. Leave Up, Left and Right empty and it faces every way with its Down pair, which is what the Slime does. **Sprite Scale** 1 draws it one tile across, 2 draws it two (a Kamijack is a 2). |
+| **Behaviour** | **Behaviour**: `Wander` drifts and hurts on contact; `Chaser` takes the shortest path to you once you are close; `Fighter` chases and swings; `Shooter` chases, swings and throws. Plus **Notice Distance** and **Give Up Distance** in tiles, **Shot Interval** and **Projectile** for a Shooter, **Swing Interval** for a Fighter. |
+| **Drops** | a list of `MonsterDrop` rows — see below |
+| **Melee attack** | **Attack Area** (reach of a swing; leave at zero for something that only touches or shoots) and **Motion 1 / 2 Duration** (frames of wind-up, then frames until the swing ends) |
+
+Only the Looks and Behaviour groups are ignored by a named monster — those
+already live in `scripts/monster/MON_*.gd`. Everything else applies to both.
+
+**Drop rows** (`MonsterDrop`): each has an **Item** — Coin, Heart, Green Potion,
+Mana Crystal or **Nothing** — and a **Weight**. Weights are relative, not
+percentages, so `55 / 20 / 25` and `11 / 4 / 5` give the same odds and you can
+add a row without redoing the arithmetic on the others. A Coin row also takes
+**Coin Min / Max**; it rolls somewhere in that range. `Nothing` is a real row —
+use it for the share of kills that pay out nothing, rather than leaving the
+weights short.
+
+`example_custom.tres` is a worked example: a Chaser with one pair of frames, a
+55/15/15/15 drop table, and no script anywhere.
 
 ### `assets/data/sound_bank.tres`
 
@@ -591,9 +663,12 @@ Then it's placeable from the editor like anything else. **Skipping step 2 is the
 one mistake that crashes the game** — it's what broke the Carbuncle in the Java
 version.
 
-**A new monster** — same shape: a script in `scripts/monster/` (behaviour and
-sprites), a `.tres` in `assets/data/monsters/` (numbers), one line in
-`EntityGenerator.get_monster()`, one entry in `MonsterMarker.gd`.
+**A new monster** — usually *not* code any more. A `MonsterStats` `.tres` with
+its art, its behaviour and its drop table filled in, dropped into a
+`MonsterMarker` set to **From Stats**, is a complete monster. Only something the
+four behaviours cannot describe — a boss with phases, something that splits when
+it dies — still wants a script in `scripts/monster/`, a line in
+`EntityGenerator.get_monster()` and an entry in `MonsterMarker.gd`.
 
 **Dialogue** — in each character's `set_dialogue()`:
 

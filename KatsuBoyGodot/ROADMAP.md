@@ -219,20 +219,24 @@ Nothing here is code.
 3. **Put a boss in it.** A `MonsterMarker`, `monster` = `Boss`, `Boss Dungeon
    Id` = this dungeon's id, `Reward Ticket` = the `ticket_id` of the route it
    opens (leave empty if it opens nothing).
-4. **Register the map.** `main.tscn` → GamePanel → **Map Scenes**. Its index in
-   that array is its map number. Do the same in `tests/SmokeTest.tscn` so the
-   tests see it too.
+4. **Register the map.** `main.tscn` → GamePanel → **Map Scenes**. Do the same
+   in `tests/SmokeTest.tscn` so the tests see it too. You do not need to note
+   where in the list it landed — see step 6.
 5. **Write the `DungeonInfo`.** Copy `assets/data/dungeons/mushroom_cave.tres`.
    Set `id` (never rename one after a save exists — saves look dungeons up by
-   id), `display_name`, `map_index` from step 4, `arrive_col`/`arrive_row` to
-   the dock tile, `scale`, `sail_days`, `ticket_id`, `ticket_price`,
-   `unlocked_by`, and a `hint` in character.
-6. **Add it to the list.** `main.tscn` → GamePanel → **Dungeons**, and the same
-   in `tests/SmokeTest.tscn`.
+   id), `display_name`, `scale`, `sail_days`, `ticket_id`, `ticket_price`,
+   `unlocked_by`, and a `hint` in character. Leave `map_index`,
+   `arrive_col` and `arrive_row` alone.
+6. **Join the two.** Drag the `DungeonInfo` into the map root's **Dungeon Info**
+   slot. That is what fills in `map_index` (wherever the scene sits in Map
+   Scenes) and the arrival tile (wherever the Boat marker is), at load time,
+   every time — so reordering the map list or moving the dock can never leave
+   them stale. Then add the resource to `main.tscn` → GamePanel → **Dungeons**,
+   and the same in `tests/SmokeTest.tscn`.
 7. **Point a guide at it.** An `NpcMarker` with `npc` = `OldMan`, `Guide
-   Dungeon Id` = the new id, and `Guide Col`/`Guide Row` set to the dock tile.
-   The port already has a collector (`npc` = `TicketMan`); he takes tickets for
-   every route, so a new destination needs no new one.
+   Dungeon Id` = the new id, and **Guide Target** dragged onto the port's Boat
+   dock marker. The port already has a collector (`npc` = `TicketMan`); he
+   takes tickets for every route, so a new destination needs no new one.
 8. **Run the tests.** `godot --headless --path . res://tests/SmokeTest.tscn`.
    They check every arrival tile is walkable, every id is unique and every
    `map_index` points at a real map, which catches the three mistakes that are
@@ -397,19 +401,22 @@ detail on markers, the tile editor and the resource files.
 
 ### Add a monster
 
-Cheapest content in the game — mostly a data file.
+Cheapest content in the game, and no longer code at all.
 
 1. Drop the sprites in `assets/monster/`.
-2. Copy `assets/data/monsters/slime.tres` to `yourmonster.tres` and open it in
-   the Inspector. Set life, speed, attack, defence, exp reward, the sprites and
-   the drop.
-3. Copy `scripts/monster/MON_Slime.gd` to `MON_YourMonster.gd`. Point it at the
-   new `.tres`. If it behaves like a slime, you are done; override a method
-   only if it needs new behaviour.
-4. In a map scene, add a `MonsterMarker`, set its `monster` to your script, and
-   drag it where you want it.
+2. Copy `assets/data/monsters/example_custom.tres` and open it in the Inspector.
+   Set life, speed, attack, defence and exp reward; drag two PNGs into **Frames
+   Down** (and the other three directions if you have them); pick a
+   **Behaviour**; write a **Drops** table.
+3. In a map scene, add a `MonsterMarker`, set **Monster** to `From Stats`, drag
+   your resource into **Stats**, and put it where you want it.
 
-No other file changes. That is the whole job.
+That is the whole job. The Cave Mushroom in the mushroom cave was made this way.
+
+Only something the four behaviours cannot describe — phases, splitting on death,
+summoning — still wants a script: copy `scripts/monster/MON_Slime.gd`, point it
+at its own `.tres`, add a line to `EntityGenerator.get_monster()` and an entry
+to `MonsterMarker`'s list.
 
 ### Add a boss
 
@@ -441,21 +448,30 @@ the entry out of the script.
 
 To paint one from scratch instead:
 
-1. `Scene → New Scene → Node2D`, name it after the dungeon, save into
+1. `Scene → New Scene → 2D Scene`, name it after the dungeon, save into
    `scenes/maps/`.
-2. Add a `TileMapLayer` child **named exactly `Tiles`** and set its TileSet to
-   `assets/tiles/katsuboy_tileset.tres`. The name matters: `TileManager`
-   looks it up by name.
+2. Attach `scripts/authoring/DungeonMap.gd` to the root and press
+   **Set up this map**. That makes the `Tiles` layer with the right tile set
+   and all five group nodes, spelled the way `TileManager` and `AssetSetter`
+   look them up.
 3. Paint with the TileMap editor. Tick `collision` in the TileSet on anything
-   solid — see `AUTHORING.md → Which tiles block movement`.
-4. Add a `PlayerStartMarker` where the player arrives.
-5. Place monsters, objects and NPCs with their markers.
-6. Open `main.tscn`, select `GamePanel`, and add the scene to `map_scenes`.
-   Its index in that array is its map number.
-7. Link it up: put an `EventMarker` on the entrance tile of the map it leads
-   from, set it to change map, and give it the new index.
-8. Re-run `tools/build_map_borders.gd` so the new map gets its terrain border
-   and the camera never shows void past the edge.
+   solid — see `AUTHORING.md → Which tiles block movement` — then press
+   **Paint the border** so the camera never shows void past the edge.
+4. Place monsters, objects and NPCs with their markers, and a
+   `PlayerStartMarker` if the player can arrive on foot.
+5. Open `main.tscn`, select `GamePanel`, and add the scene to `map_scenes`.
+6. Link it up: put an `EventMarker` set to `ChangeMap` on the entrance tile of
+   the map it leads from, and drag your new `.tscn` into its **Target Scene**.
+   Put a matching one on the arrival tile pointing back.
+7. Press **Check this map** and fix whatever it lists.
+
+For a boat destination, also make a `DungeonInfo` in `assets/data/dungeons/`,
+drop it into the root's **Dungeon Info** slot, put a `Boat` EventMarker on the
+pier with Dock Of = the dungeon's id, and add the resource to
+**GamePanel → Dungeons**. Its map number and arrival tile are read off the
+scene, so there are no indices to keep in step.
+
+`DUNGEON_CHEATSHEET.md` is the one-page version of all of this.
 
 ### Add an item
 
