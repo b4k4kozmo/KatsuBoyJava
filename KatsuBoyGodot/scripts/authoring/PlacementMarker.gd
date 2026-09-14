@@ -34,6 +34,13 @@ func marker_label() -> String:
 	return ""
 
 
+## How many tiles across and down the thing this marker places is. A Kamijack
+## is 2. The outline in the editor is drawn at this size, so what you see on
+## the map is the space the monster will actually take up.
+func marker_tiles() -> int:
+	return 1
+
+
 ## Position within the map, in pixels.
 ##
 ## NOT global_position: at run time the map scenes live under GamePanel/World,
@@ -106,17 +113,34 @@ func _placement_warnings() -> PackedStringArray:
 	if map == null:
 		return out
 
-	if map.tile_is_solid(tile_col(), tile_row()):
-		out.append("Tile %d,%d is a wall. Nothing can reach this."
-				% [tile_col(), tile_row()])
+	# Everything below is checked over the whole footprint, not just the corner
+	# tile. A two-tile monster with its head in open floor and its body in a
+	# wall looks fine in the editor and cannot move at run time.
+	var span: int = maxi(marker_tiles(), 1)
 
-	for other in map.markers_on_tile(tile_col(), tile_row()):
-		if other == self:
-			continue
-		if map.is_solid_marker(other) or map.is_solid_marker(self):
-			out.append("Sharing tile %d,%d with %s, and one of them blocks the way."
-					% [tile_col(), tile_row(), other.name])
-			break
+	for dx in range(span):
+		for dy in range(span):
+			var col: int = tile_col() + dx
+			var row: int = tile_row() + dy
+			if map.tile_is_solid(col, row):
+				if span == 1:
+					out.append("Tile %d,%d is a wall. Nothing can reach this."
+							% [col, row])
+				else:
+					out.append("This is %d tiles across and tile %d,%d is a wall."
+							% [span, col, row])
+				break
+
+	var clash := false
+	for dx in range(span):
+		for dy in range(span):
+			for other in map.markers_on_tile(tile_col() + dx, tile_row() + dy):
+				if other == self or clash:
+					continue
+				if map.is_solid_marker(other) or map.is_solid_marker(self):
+					out.append("Sharing tile %d,%d with %s, and one of them blocks the way."
+							% [tile_col() + dx, tile_row() + dy, other.name])
+					clash = true
 
 	return out
 
@@ -132,13 +156,21 @@ func _draw() -> void:
 	if not Engine.is_editor_hint():
 		return
 
+	var span: int = TILE * maxi(marker_tiles(), 1)
+
 	var tex: Texture2D = preview_texture()
 	if tex != null:
-		draw_texture_rect(tex, Rect2(0, 0, TILE, TILE), false)
-	draw_rect(Rect2(0, 0, TILE, TILE), marker_color(), false, 2.0)
+		draw_texture_rect(tex, Rect2(0, 0, span, span), false)
+	draw_rect(Rect2(0, 0, span, span), marker_color(), false, 2.0)
+
+	# A big thing also gets its own tile picked out, so it is obvious which
+	# square you actually placed it on.
+	if span > TILE:
+		draw_rect(Rect2(0, 0, TILE, TILE), marker_color() * Color(1, 1, 1, 0.45),
+				false, 1.0)
 
 	var label: String = marker_label()
 	if label != "":
 		var font: Font = ThemeDB.fallback_font
-		draw_string(font, Vector2(0, TILE + 14), label,
+		draw_string(font, Vector2(0, span + 14), label,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 12, marker_color())

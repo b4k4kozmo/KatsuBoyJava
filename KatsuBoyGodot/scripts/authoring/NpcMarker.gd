@@ -85,6 +85,10 @@ func preview_texture() -> Texture2D:
 	return null
 
 
+func marker_tiles() -> int:
+	return profile.sprite_scale if profile != null else 1
+
+
 func marker_color() -> Color:
 	return Color(0.4, 0.9, 1)
 

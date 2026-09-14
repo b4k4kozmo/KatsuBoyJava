@@ -125,6 +125,18 @@ var amount: int = 1
 var light_radius: int
 
 # TYPE
+## How many tiles across and down this entity's sprite is. 1 for almost
+## everything; 2 for a Kamijack, which is drawn 96x96.
+##
+## The tile the entity is placed on is its TOP-LEFT: a 2 covers that tile and
+## the one below-right of it. `solid_area` is measured inside the whole sprite,
+## not inside one tile, so a 2's box can be anywhere in that 96x96 square.
+##
+## Setting this is not decoration. It is what keeps a big entity from popping
+## out of existence at the edge of the screen, puts its health bar over its
+## whole body, and sorts it in front of what it is standing in front of.
+var size_in_tiles: int = 1
+
 var type: int  # 0 = player, 1 = npc, 2 = monster
 const TYPE_PLAYER := 0
 const TYPE_NPC := 1
@@ -150,6 +162,13 @@ static func new_dialogue_table() -> Array:
 		row.resize(20)
 		table.append(row)
 	return table
+
+
+## Where this entity's feet are, for the painter's-algorithm sort. A two-tile
+## monster's feet are a tile lower than its origin, so sorting on the origin
+## drew it behind things it was standing in front of.
+func sort_y() -> int:
+	return world_y + (size_in_tiles - 1) * gp.tile_size
 
 
 func get_left_x() -> int:
@@ -582,10 +601,15 @@ func draw(g2) -> void:
 	var screen_x: int = world_x - gp.player.world_x + gp.player.screen_x
 	var screen_y: int = world_y - gp.player.world_y + gp.player.screen_y
 
-	if (world_x + gp.tile_size > gp.player.world_x - gp.player.screen_x
-			and world_x - gp.tile_size < gp.player.world_x + gp.player.screen_x
-			and world_y + gp.tile_size > gp.player.world_y - gp.player.screen_y
-			and world_y - gp.tile_size < gp.player.world_y + gp.player.screen_y):
+	# How far off-screen an entity can be and still have some of itself showing.
+	# Using one tile for everything is what made a Kamijack blink out of
+	# existence while half of it was still on screen.
+	var reach: int = gp.tile_size * size_in_tiles
+
+	if (world_x + reach > gp.player.world_x - gp.player.screen_x
+			and world_x - reach < gp.player.world_x + gp.player.screen_x
+			and world_y + reach > gp.player.world_y - gp.player.screen_y
+			and world_y - reach < gp.player.world_y + gp.player.screen_y):
 
 		var temp_screen_x: int = screen_x
 		var temp_screen_y: int = screen_y
@@ -625,11 +649,14 @@ func draw(g2) -> void:
 		# Monster HP bar
 		if type == TYPE_MONSTER and hp_bar_on == true:
 
-			var one_scale: float = float(gp.tile_size) / max_life
+			# The bar spans the whole body, so a two-tile monster gets a
+			# two-tile bar rather than one floating over its left shoulder.
+			var bar_width: int = gp.tile_size * size_in_tiles
+			var one_scale: float = float(bar_width) / max_life
 			var hp_bar_value: float = one_scale * life
 
 			g2.set_color(gp.ui.kamiblack)
-			g2.fill_rect(screen_x - 1, screen_y - 16, gp.tile_size + 2, 12)
+			g2.fill_rect(screen_x - 1, screen_y - 16, bar_width + 2, 12)
 
 			g2.set_color(gp.ui.kamigreen)
 			g2.fill_rect(screen_x, screen_y - 15, int(hp_bar_value), 10)

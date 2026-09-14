@@ -1,4 +1,5 @@
 @icon("res://assets/objects/chest.png")
+@tool
 class_name ItemStats
 extends Resource
 ## One item, as a file rather than a script.
@@ -16,6 +17,10 @@ extends Resource
 ## What still wants a script: an item whose effect is a new rule rather than a
 ## new number - something that changes how a fight works, or opens a screen.
 ## See scripts/object/ for the ones that do.
+##
+## This is a @tool script because the markers that reference it are: an
+## ObjectMarker asking an ItemStats what it is, to draw its own label and
+## warning, has to be able to call into it while the editor is running.
 
 ## Stable key. Written into save files, so never rename one that exists.
 ## This is also what the item is called on screen.

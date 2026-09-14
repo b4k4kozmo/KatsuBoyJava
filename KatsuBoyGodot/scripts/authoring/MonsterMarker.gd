@@ -66,6 +66,17 @@ func preview_texture() -> Texture2D:
 	return null
 
 
+## How much floor this monster needs. Taken from its stat sheet where there is
+## one, and from the built-in monster otherwise - a Kamijack is two tiles across
+## whether or not anybody dropped a resource on it.
+func marker_tiles() -> int:
+	if stats != null:
+		return stats.sprite_scale
+	if monster == "Kamijack" or monster == "Boss":
+		return 2
+	return 1
+
+
 func marker_color() -> Color:
 	return Color(1, 0.35, 0.4)
 

@@ -461,8 +461,10 @@ func _draw() -> void:
 		if particle_list[i] != null:
 			entity_list.append(particle_list[i])
 
-	# SORT (painter's algorithm on world_y, same as the Java Comparator)
-	entity_list.sort_custom(func(e1, e2): return e1.world_y < e2.world_y)
+	# SORT (painter's algorithm, same as the Java Comparator - but on the feet
+	# rather than the top edge, so a two-tile monster layers by where it is
+	# standing instead of by where its head is)
+	entity_list.sort_custom(func(e1, e2): return e1.sort_y() < e2.sort_y())
 
 	# DRAW ENTITIES
 	for e in entity_list:

@@ -11,3 +11,4 @@ defense = 12
 exp_reward = 400
 speed = 4
 solid_area = Rect2i(20, 34, 56, 52)
+sprite_scale = 2

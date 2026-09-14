@@ -198,14 +198,22 @@ func _problems() -> PackedStringArray:
 		else:
 			seen[key] = m
 
-	# Anything standing in a wall.
+	# Anything standing in a wall, over its whole footprint - a two-tile monster
+	# with its head in the open and its body in a wall cannot move.
 	if layer != null:
 		for m in _all_markers():
 			if m is EventMarker:
 				continue    # a teleport under a wall is odd but legal
-			if tile_is_solid(m.tile_col(), m.tile_row()):
-				out.append("%s is on a solid tile (%d,%d) - nothing can reach it." % [
-					m.name, m.tile_col(), m.tile_row()])
+			var span: int = maxi(m.marker_tiles(), 1)
+			for dx in range(span):
+				for dy in range(span):
+					var col: int = m.tile_col() + dx
+					var row: int = m.tile_row() + dy
+					if tile_is_solid(col, row):
+						out.append("%s is on a solid tile (%d,%d) - nothing can reach it."
+								% [m.name, col, row])
+						dx = span
+						break
 
 	# A door with no key on the map, wherever the key is hiding.
 	var doors := 0

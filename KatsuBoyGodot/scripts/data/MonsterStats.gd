@@ -1,3 +1,4 @@
+@tool
 class_name MonsterStats
 extends Resource
 ## The numbers that define a monster, so balancing is Inspector work instead of
@@ -13,6 +14,10 @@ extends Resource
 ## Those scripts draw and act for themselves and ignore the Looks and Behaviour
 ## groups below; they read only the numbers. Nothing needs porting - both kinds
 ## work side by side.
+##
+## This is a @tool script because the markers that reference it are: an
+## ObjectMarker asking an ItemStats what it is, to draw its own label and
+## warning, has to be able to call into it while the editor is running.
 
 @export var display_name: String = ""
 
@@ -42,6 +47,11 @@ extends Resource
 @export var frames_left: Array[Texture2D] = []
 @export var frames_right: Array[Texture2D] = []
 ## 1 draws it one tile across, 2 draws it two - a Kamijack is a 2.
+##
+## This is not only how big it looks. It is how far off-screen it can be before
+## the game stops drawing it, how wide its health bar is, how it sorts against
+## the things it walks in front of, and how much floor a marker needs to have
+## under it. Set it to match the art.
 @export_range(1, 4) var sprite_scale: int = 1
 
 @export_group("Behaviour")
@@ -81,6 +91,7 @@ func apply_to(entity: Entity) -> void:
 
 	entity.type = Entity.TYPE_MONSTER
 	entity.name = display_name
+	entity.size_in_tiles = sprite_scale
 	entity.max_life = max_life
 	entity.life = max_life
 	entity.attack = attack

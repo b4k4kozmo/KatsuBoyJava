@@ -1,4 +1,5 @@
 @icon("res://assets/tiles/wunderboat1.png")
+@tool
 class_name DungeonInfo
 extends Resource
 ## One place the boat can take you.

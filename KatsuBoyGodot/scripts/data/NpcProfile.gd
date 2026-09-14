@@ -1,4 +1,5 @@
 @icon("res://assets/npc/oldman_down_01.png")
+@tool
 class_name NpcProfile
 extends Resource
 ## A character, as a file rather than a script.
@@ -14,6 +15,10 @@ extends Resource
 ## engine does not already know how to do. The merchant opens a shop, the
 ## collector takes tickets, the old man walks you to the boat. Those are rules,
 ## not lines, and they live in scripts/entity/.
+##
+## This is a @tool script because the markers that reference it are: an
+## ObjectMarker asking an ItemStats what it is, to draw its own label and
+## warning, has to be able to call into it while the editor is running.
 
 ## What the dialogue box calls them.
 @export var display_name: String = "New Character"
@@ -25,7 +30,9 @@ extends Resource
 @export var frames_up: Array[Texture2D] = []
 @export var frames_left: Array[Texture2D] = []
 @export var frames_right: Array[Texture2D] = []
-## 1 draws them one tile across, 2 draws them two.
+## 1 draws them one tile across, 2 draws them two. It also decides how far
+## off-screen they can be before the game stops drawing them, and how they sort
+## against what they walk in front of.
 @export_range(1, 4) var sprite_scale: int = 1
 
 @export_group("Body")

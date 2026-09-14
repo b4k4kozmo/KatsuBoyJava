@@ -2220,6 +2220,72 @@ func _physics_process(_d: float) -> void:
 					found_bun = true
 			check("a chest can hold a resource-only item", found_bun)
 
+		1089:
+			print("\n-- monsters bigger than one tile --")
+
+			var jack := MON_KamiJack.new(gp)
+			check("a Kamijack knows it is two tiles", jack.size_in_tiles == 2,
+				str(jack.size_in_tiles))
+			check("and its art is drawn at that size",
+				jack.down1 != null and jack.down1.get_width() == gp.tile_size * 2,
+				str(jack.down1.get_width()) if jack.down1 != null else "no art")
+			check("its hitbox fits inside its whole body, not one tile",
+				jack.solid_area.x + jack.solid_area.width <= gp.tile_size * 2
+					and jack.solid_area.width > gp.tile_size,
+				"%d+%d" % [jack.solid_area.x, jack.solid_area.width])
+
+			var slime := MON_Slime.new(gp)
+			check("an ordinary monster is still one tile", slime.size_in_tiles == 1)
+
+			# Sorting is by the feet, so a big monster standing in front of
+			# something draws in front of it. On the old rule - the top edge -
+			# the Kamijack's head sat a tile higher and it drew behind.
+			jack.world_y = 10 * gp.tile_size
+			slime.world_y = 11 * gp.tile_size
+			check("a two-tile monster sorts by its feet",
+				jack.sort_y() == 11 * gp.tile_size, str(jack.sort_y()))
+			check("so it draws in front of what it stands in front of",
+				jack.sort_y() >= slime.sort_y(),
+				"%d vs %d" % [jack.sort_y(), slime.sort_y()])
+			check("a one-tile monster is unaffected",
+				slime.sort_y() == slime.world_y)
+
+			# A sheet with a scale on it produces a big monster with no code.
+			var big := MonsterStats.new()
+			big.display_name = "Tall Thing"
+			big.max_life = 5
+			big.sprite_scale = 3
+			var built: Entity = gp.e_generator.get_monster("From Stats", big)
+			check("sprite scale on a sheet makes a big monster",
+				built.size_in_tiles == 3, str(built.size_in_tiles))
+
+			# The editor outlines and checks the whole footprint, so a marker
+			# whose body is in a wall is reported even when its corner is not.
+			var probe := MonsterMarker.new()
+			probe.monster = "Kamijack"
+			check("a Kamijack marker outlines two tiles", probe.marker_tiles() == 2,
+				str(probe.marker_tiles()))
+			probe.stats = big
+			check("and a sheet overrides that", probe.marker_tiles() == 3,
+				str(probe.marker_tiles()))
+			probe.free()
+
+			# Every big monster on the shipped maps has floor under all of it.
+			var cramped: Array[String] = []
+			for map_num in range(gp.map_node.size()):
+				var node = gp.map_node[map_num]
+				if not (node is DungeonMap):
+					continue
+				for m in gp.a_setter.markers(map_num, "Monsters"):
+					if not (m is MonsterMarker) or m.marker_tiles() < 2:
+						continue
+					for dx in range(m.marker_tiles()):
+						for dy in range(m.marker_tiles()):
+							if node.tile_is_solid(m.tile_col() + dx, m.tile_row() + dy):
+								cramped.append("%s on map %d" % [m.name, map_num])
+			check("every big monster has floor under all of it", cramped.is_empty(),
+				", ".join(cramped))
+
 		1090:
 			print("\n================================")
 			print("%d passed, %d failed" % [passed, failed.size()])

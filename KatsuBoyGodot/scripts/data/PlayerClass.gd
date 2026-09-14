@@ -1,4 +1,5 @@
 @icon("res://assets/player/boy_down_1.png")
+@tool
 class_name PlayerClass
 extends Resource
 ## One of the three people you can be.

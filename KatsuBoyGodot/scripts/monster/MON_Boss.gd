@@ -50,8 +50,10 @@ func apply_stats(stats: MonsterStats) -> void:
 	get_image()
 
 
+## Sized from whichever stat sheet this boss is using, so a boss given its own
+## one-tile art is drawn one tile rather than stretched to two.
 func get_image() -> void:
-	var s: int = gp.tile_size * 2
+	var s: int = gp.tile_size * size_in_tiles
 	up1 = setup("/monster/kamijack_down_1", s, s)
 	up2 = setup("/monster/kamijack_down_2", s, s)
 	down1 = up1

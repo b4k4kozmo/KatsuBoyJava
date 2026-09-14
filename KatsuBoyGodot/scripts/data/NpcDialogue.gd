@@ -1,4 +1,5 @@
 @icon("res://assets/npc/oldman_down_01.png")
+@tool
 class_name NpcDialogue
 extends Resource
 ## One conversation: the lines a character says in a single exchange, in order.

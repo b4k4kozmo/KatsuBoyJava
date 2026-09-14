@@ -21,15 +21,18 @@ func _init(gp) -> void:
 	get_image()
 
 
+## Sized from the stat sheet's Sprite Scale, so how big it is drawn and how big
+## the game thinks it is can never disagree.
 func get_image() -> void:
-	up1 = setup("/monster/kamijack_down_1", gp.tile_size * 2, gp.tile_size * 2)
-	up2 = setup("/monster/kamijack_down_2", gp.tile_size * 2, gp.tile_size * 2)
-	down1 = setup("/monster/kamijack_down_1", gp.tile_size * 2, gp.tile_size * 2)
-	down2 = setup("/monster/kamijack_down_2", gp.tile_size * 2, gp.tile_size * 2)
-	left1 = setup("/monster/kamijack_down_1", gp.tile_size * 2, gp.tile_size * 2)
-	left2 = setup("/monster/kamijack_down_2", gp.tile_size * 2, gp.tile_size * 2)
-	right1 = setup("/monster/kamijack_down_1", gp.tile_size * 2, gp.tile_size * 2)
-	right2 = setup("/monster/kamijack_down_2", gp.tile_size * 2, gp.tile_size * 2)
+	var s: int = gp.tile_size * size_in_tiles
+	up1 = setup("/monster/kamijack_down_1", s, s)
+	up2 = setup("/monster/kamijack_down_2", s, s)
+	down1 = setup("/monster/kamijack_down_1", s, s)
+	down2 = setup("/monster/kamijack_down_2", s, s)
+	left1 = setup("/monster/kamijack_down_1", s, s)
+	left2 = setup("/monster/kamijack_down_2", s, s)
+	right1 = setup("/monster/kamijack_down_1", s, s)
+	right2 = setup("/monster/kamijack_down_2", s, s)
 
 
 func set_action() -> void:

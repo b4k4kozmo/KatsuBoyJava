@@ -26,6 +26,7 @@ func _init(gp, npc_profile: NpcProfile) -> void:
 		return
 
 	name = profile.display_name
+	size_in_tiles = profile.sprite_scale
 	direction = "down"
 	speed = profile.walk_speed
 	default_speed = profile.walk_speed

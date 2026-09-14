@@ -1,4 +1,5 @@
 @icon("res://assets/objects/coin.png")
+@tool
 class_name MonsterDrop
 extends Resource
 ## One line of a monster's drop table.
