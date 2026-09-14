@@ -23,7 +23,23 @@ var required_direction: String = "any":
 		required_direction = value
 		refresh()
 
+## ChangeMap only: which map the door leads to. Drag the destination's .tscn
+## straight in from scenes/maps/ and the map number is worked out for you at
+## load time by looking it up in GamePanel's "Map Scenes" list.
+##
+## This is the whole reason Target Map below is usually left alone: counting
+## your way down a list in the Inspector to find out that Shadow Deep is map 2
+## is exactly the kind of bookkeeping that is wrong the moment someone inserts
+## a map above it.
+@export var target_scene: PackedScene:
+	set(value):
+		target_scene = value
+		refresh()
+
 ## Where the player ends up. Used by Teleport (same map) and ChangeMap.
+##
+## Filled in from Target Scene when one is set, so leave it alone unless you
+## are wiring a door by hand.
 @export var target_map: int = 0:
 	set(value):
 		target_map = value
@@ -60,16 +76,33 @@ func marker_color() -> Color:
 func marker_label() -> String:
 	match kind:
 		"Teleport": return "Teleport -> %d,%d" % [target_col, target_row]
-		"ChangeMap": return "ChangeMap -> map %d @ %d,%d" % [target_map, target_col, target_row]
+		"ChangeMap":
+			var where: String = ("map %d" % target_map if target_scene == null
+					else target_scene.resource_path.get_file().get_basename())
+			return "ChangeMap -> %s @ %d,%d" % [where, target_col, target_row]
 		"Speak": return "Speak"
 		"Boat": return "Boat dock" if dock_of.is_empty() else "Boat dock (%s)" % dock_of
 	return kind
 
 
 func _get_configuration_warnings() -> PackedStringArray:
-	var warnings := PackedStringArray()
+
+	var warnings := _placement_warnings()
+
 	if kind == "Speak" and speak_npc.is_empty():
 		warnings.append("Speak events need an NpcMarker in 'Speak Npc'.")
-	if kind == "ChangeMap":
-		warnings.append_array(PackedStringArray())
+
+	if kind == "ChangeMap" and target_scene == null:
+		warnings.append("No Target Scene, so this door uses map number %d - "
+				% target_map
+				+ "which points somewhere else the moment the map list changes. "
+				+ "Drag the destination .tscn in instead.")
+
+	if kind == "Boat" and dock_of.is_empty():
+		var map: DungeonMap = map_root()
+		if map != null and map.dungeon_info != null:
+			warnings.append("Dock Of is empty. This map is '%s' - put that here, "
+					% map.dungeon_info.id
+					+ "or the boat will offer to sail you where you already are.")
+
 	return warnings

@@ -57,6 +57,70 @@ func tile_row() -> int:
 	return int(round(map_position().y / TILE))
 
 
+## The DungeonMap this marker belongs to, if the map's root has the script on
+## it. Markers use it to ask questions about the map around them - is this tile
+## a wall, is something else already standing here.
+func map_root() -> DungeonMap:
+	var root: Node = owner if owner != null else get_parent()
+	while root != null:
+		if root is DungeonMap:
+			return root
+		root = root.get_parent()
+	return null
+
+
+## Is this marker sitting neatly on a tile, or a few pixels off it?
+##
+## Being off-grid is not fatal - tile_col() rounds - but it means what you see
+## in the editor is not quite where the thing lands, and two markers that look
+## like neighbours can turn out to share a tile. Turn on snapping (Godot's grid
+## snap, set to 48 px) and this never comes up.
+func is_on_grid() -> bool:
+	var pos: Vector2 = map_position()
+	return int(pos.x) % TILE == 0 and int(pos.y) % TILE == 0
+
+
+## Move to the middle of the tile this marker is nearest.
+func snap_to_grid() -> void:
+	var pos: Vector2 = map_position()
+	position += Vector2(tile_col() * TILE - pos.x, tile_row() * TILE - pos.y)
+	refresh()
+
+
+## The warnings every marker shares: off the grid, in a wall, or stacked on
+## something solid. Subclasses call this first and add their own.
+##
+## All three are things that load fine and then do not work, which is the worst
+## kind of mistake to make in a level editor: the map opens, the game runs, and
+## the chest is simply unreachable.
+func _placement_warnings() -> PackedStringArray:
+
+	var out := PackedStringArray()
+
+	if not is_on_grid():
+		out.append("Not on the 48 px grid - it will snap to tile %d,%d at run time. "
+				% [tile_col(), tile_row()]
+				+ "Use the map's 'Tidy up' button, or turn on grid snapping.")
+
+	var map: DungeonMap = map_root()
+	if map == null:
+		return out
+
+	if map.tile_is_solid(tile_col(), tile_row()):
+		out.append("Tile %d,%d is a wall. Nothing can reach this."
+				% [tile_col(), tile_row()])
+
+	for other in map.markers_on_tile(tile_col(), tile_row()):
+		if other == self:
+			continue
+		if map.is_solid_marker(other) or map.is_solid_marker(self):
+			out.append("Sharing tile %d,%d with %s, and one of them blocks the way."
+					% [tile_col(), tile_row(), other.name])
+			break
+
+	return out
+
+
 func refresh() -> void:
 	if not is_inside_tree():
 		return

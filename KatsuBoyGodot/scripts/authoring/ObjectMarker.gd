@@ -58,3 +58,21 @@ func marker_label() -> String:
 	if item == "Kami Coin" and coin_value > 1:
 		return "%s x%d" % [item, coin_value]
 	return item
+
+
+func _get_configuration_warnings() -> PackedStringArray:
+
+	var warnings := _placement_warnings()
+
+	# A locked door with no key anywhere on the map is a dead end that looks
+	# like content. Chests are the same story one step along.
+	if item == "Door":
+		var map: DungeonMap = map_root()
+		if map != null and not map.has_object("Key") and not map.has_chest_loot("Key"):
+			warnings.append("A locked door, and no Key anywhere on this map - "
+					+ "not in the open and not in a chest.")
+
+	if item == "Chest" and chest_loot == "Chest":
+		warnings.append("A chest containing a chest. Pick something else.")
+
+	return warnings

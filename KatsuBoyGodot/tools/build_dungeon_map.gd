@@ -43,7 +43,7 @@ const TILE := 48
 ##   file          where the scene goes
 ##   dungeon_id    the DungeonInfo id, so the dock knows where it is
 ##   reward_ticket what the boss hands over (a DungeonInfo ticket_id)
-##   boss_stats    path to the boss's MonsterStats .tres
+##   stats         path to the boss's MonsterStats .tres
 ##   cols/rows     how many rooms across and down
 ##   room_min/max  room size in tiles
 ##   cell          spacing between room origins, must exceed room_max
@@ -56,7 +56,7 @@ const DUNGEONS := [
 		"name": "MushroomCave",
 		"dungeon_id": "mushroom_cave",
 		"reward_ticket": "shadow_deep",
-		"boss_stats": "res://assets/data/monsters/boss_cave.tres",
+		"stats": "res://assets/data/monsters/boss_cave.tres",
 		"seed": 8801,
 		"cols": 3, "rows": 2,
 		"room_min": 6, "room_max": 10,
@@ -74,7 +74,7 @@ const DUNGEONS := [
 		"name": "ShadowDeep",
 		"dungeon_id": "shadow_deep",
 		"reward_ticket": "",
-		"boss_stats": "res://assets/data/monsters/boss_deep.tres",
+		"stats": "res://assets/data/monsters/boss_deep.tres",
 		"seed": 4407,
 		"cols": 5, "rows": 5,
 		"room_min": 8, "room_max": 14,
@@ -218,8 +218,8 @@ func _build(spec: Dictionary, tile_set: TileSet) -> void:
 	}
 	# Its own numbers, so the fight can be tuned against the level the player
 	# arrives at rather than being a Kamijack with six times the health.
-	if spec.has("boss_stats") and ResourceLoader.exists(spec["boss_stats"]):
-		boss_props["boss_stats"] = load(spec["boss_stats"])
+	if spec.has("stats") and ResourceLoader.exists(spec["stats"]):
+		boss_props["stats"] = load(spec["stats"])
 	var boss := _marker("monster", boss_props,
 			boss_room.position + Vector2i(boss_room.size.x / 2, boss_room.size.y / 2))
 	boss.name = "Boss"

@@ -21,13 +21,28 @@ func _init(gp) -> void:
 
 
 ## The marker nodes under one group of one map, e.g. markers(0, "Monsters").
+##
+## Looks all the way down, not just at the group's own children, so a big map
+## can sort its markers into sub-nodes - "Monsters/Upper Floor", "Objects/Room
+## 3" - the way you would sort anything else with a hundred items in it. Tree
+## order is preserved, which matters for Events: the first one the player is
+## touching wins.
 func markers(map_num: int, group_name: String) -> Array:
 	if map_num < 0 or map_num >= gp.map_node.size() or gp.map_node[map_num] == null:
 		return []
 	var group: Node = gp.map_node[map_num].get_node_or_null(group_name)
 	if group == null:
 		return []
-	return group.get_children()
+	var out: Array = []
+	_gather(group, out)
+	return out
+
+
+func _gather(node: Node, out: Array) -> void:
+	for child in node.get_children():
+		out.append(child)
+		if child.get_child_count() > 0:
+			_gather(child, out)
 
 
 ## Blank out the slots nothing was placed in, so a respawn or a restart does not
@@ -134,8 +149,9 @@ func set_npc() -> void:
 			# where he walks when you follow him. Both come from the marker.
 			if entity is NPC_OldMan:
 				entity.guide_dungeon_id = m.guide_dungeon_id
-				entity.guide_col = m.guide_col
-				entity.guide_row = m.guide_row
+				var goal: Vector2i = m.guide_tile()
+				entity.guide_col = goal.x
+				entity.guide_row = goal.y
 			gp.npc[map_num][i] = entity
 			npc_by_marker[m] = entity
 			i += 1
@@ -165,7 +181,7 @@ func set_monster_on(map_num: int) -> void:
 		if i >= gp.monster[map_num].size():
 			push_warning("Map %d has more monsters than slots (%d)." % [map_num, gp.monster[map_num].size()])
 			break
-		var entity: Entity = gp.e_generator.get_monster(m.monster)
+		var entity: Entity = gp.e_generator.get_monster(m.monster, m.stats)
 		if entity == null:
 			push_warning("Unknown monster '%s' on map %d." % [m.monster, map_num])
 			continue
@@ -175,8 +191,12 @@ func set_monster_on(map_num: int) -> void:
 		if entity is MON_Boss:
 			entity.dungeon_id = m.boss_dungeon_id
 			entity.reward_ticket = m.reward_ticket
-			if m.boss_stats != null:
-				entity.apply_stats(m.boss_stats)
+			if m.stats != null:
+				entity.apply_stats(m.stats)
+		elif m.stats != null and m.monster != "From Stats":
+			# An override on a named monster: keep its script and art, take the
+			# numbers off the sheet. One tougher Slime, no second Slime script.
+			m.stats.apply_to(entity)
 		gp.monster[map_num][i] = entity
 		i += 1
 	_clear_rest(gp.monster, map_num, i)

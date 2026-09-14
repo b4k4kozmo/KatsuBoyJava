@@ -18,3 +18,7 @@ func marker_color() -> Color:
 
 func marker_label() -> String:
 	return "Player start"
+
+
+func _get_configuration_warnings() -> PackedStringArray:
+	return _placement_warnings()

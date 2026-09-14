@@ -42,10 +42,7 @@ func collect_events() -> void:
 	for map_num in range(gp.max_map):
 		if map_num >= gp.map_node.size() or gp.map_node[map_num] == null:
 			continue
-		var group: Node = gp.map_node[map_num].get_node_or_null("Events")
-		if group == null:
-			continue
-		for m in group.get_children():
+		for m in gp.a_setter.markers(map_num, "Events"):
 			if m is EventMarker:
 				events.append({"marker": m, "map": map_num})
 

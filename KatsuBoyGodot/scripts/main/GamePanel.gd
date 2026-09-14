@@ -179,6 +179,8 @@ func _ready() -> void:
 		world.add_child(m)
 		map_node[i] = m
 
+	_wire_maps()
+
 	# --- Java: the GamePanel field initialisers, in the same order ---
 	tile_m = TileManager.new(self)
 	key_h = KeyHandler.new(self)
@@ -498,3 +500,64 @@ func play_se(i: int) -> void:
 
 func stop_se() -> void:
 	se.stop()
+
+
+## Fill in the numbers that used to be typed by hand, by reading them off the
+## map scenes themselves.
+##
+## Two of them: a DungeonInfo's map number and arrival tile, which come from the
+## map whose DungeonMap root points at it; and a ChangeMap door's target map,
+## which comes from the scene dragged into its Target Scene slot. Both used to
+## be an index into this node's Map Scenes list that a designer had to count
+## out and then keep in step forever. Doing it here means a map can be dropped
+## anywhere in the list and everything still points at it.
+##
+## Anything not covered - a DungeonInfo whose map has no DungeonMap root, a door
+## with no Target Scene - keeps whatever was typed in, so old maps still work.
+func _wire_maps() -> void:
+
+	# Which scene is which map number, by the resource path of the .tscn.
+	var index_of := {}
+	for i in range(map_scenes.size()):
+		if map_scenes[i] != null:
+			index_of[map_scenes[i].resource_path] = i
+
+	for i in range(map_node.size()):
+		var node = map_node[i]
+		if node == null:
+			continue
+
+		if node is DungeonMap and node.dungeon_info != null:
+			var info: DungeonInfo = node.dungeon_info
+			info.map_index = i
+			var landing: Vector2i = node.arrival_tile()
+			if landing.x >= 0:
+				info.arrive_col = landing.x
+				info.arrive_row = landing.y
+
+		for m in a_setter_markers(node, "Events"):
+			if m is EventMarker and m.target_scene != null:
+				var path: String = m.target_scene.resource_path
+				if index_of.has(path):
+					m.target_map = index_of[path]
+				else:
+					push_warning("%s points at %s, which is not in Map Scenes."
+							% [m.name, path.get_file()])
+
+
+## Markers under a group of an already-instantiated map, however deeply nested.
+## AssetSetter does the same thing, but it does not exist yet at this point in
+## _ready() - the maps have to be wired before anything reads them.
+func a_setter_markers(map_root: Node, group_name: String) -> Array:
+	var group: Node = map_root.get_node_or_null(group_name)
+	var out: Array = []
+	if group != null:
+		_gather_markers(group, out)
+	return out
+
+
+func _gather_markers(node: Node, out: Array) -> void:
+	for child in node.get_children():
+		out.append(child)
+		if child.get_child_count() > 0:
+			_gather_markers(child, out)

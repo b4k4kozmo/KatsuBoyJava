@@ -25,9 +25,20 @@ enum Scale {
 @export var display_name: String = "New Dungeon"
 
 ## Index into GamePanel's "Map Scenes" list.
+##
+## Normally you never touch this. Put a DungeonMap script on the destination
+## map's root node, drop THIS resource into its "Dungeon Info" slot, and the
+## number is filled in at load time from wherever that scene sits in the list.
+## Counting your way down a list of scenes to find that the cave is map 1 is
+## exactly the kind of bookkeeping that goes wrong the first time somebody
+## reorders it.
 @export var map_index: int = 0
 
 ## The tile the player steps off the boat onto.
+##
+## Also filled in for you: it is wherever that map's Boat marker is. Move the
+## dock in the editor and the boat follows it. These stay editable for a map
+## with no DungeonMap root, which is the only case that still needs them typed.
 @export var arrive_col: int = 50
 @export var arrive_row: int = 50
 

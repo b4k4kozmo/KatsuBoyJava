@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="MonsterStats" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/MonsterDrop.gd" id="1_0ruyx"]
+[ext_resource type="Texture2D" path="res://assets/monster/snome_down_1.png" id="2_4vrid"]
+[ext_resource type="Texture2D" path="res://assets/monster/snome_down_2.png" id="3_aqawe"]
+[ext_resource type="Script" path="res://scripts/data/MonsterStats.gd" id="4_cxgxp"]
+
+[sub_resource type="Resource" id="Resource_i3oq0"]
+script = ExtResource("1_0ruyx")
+weight = 55
+coin_min = 3
+coin_max = 8
+
+[sub_resource type="Resource" id="Resource_y4qi7"]
+script = ExtResource("1_0ruyx")
+weight = 15
+coin_min = 5
+coin_max = 5
+
+[sub_resource type="Resource" id="Resource_s1bju"]
+script = ExtResource("1_0ruyx")
+item = "Green Potion"
+weight = 15
+
+[sub_resource type="Resource" id="Resource_xg8g6"]
+script = ExtResource("1_0ruyx")
+item = "Nothing"
+weight = 15
+
+[resource]
+script = ExtResource("4_cxgxp")
+display_name = "Cave Mushroom"
+max_life = 8
+attack = 4
+defense = 1
+exp_reward = 6
+speed = 2
+knock_back_power = 2
+solid_area = Rect2i(10, 20, 28, 26)
+frames_down = Array[Texture2D]([ExtResource("2_4vrid"), ExtResource("3_aqawe")])
+behaviour = "Chaser"
+notice_distance = 6
+give_up_distance = 14
+drops = Array[ExtResource("1_0ruyx")]([SubResource("Resource_i3oq0"), SubResource("Resource_y4qi7"), SubResource("Resource_s1bju"), SubResource("Resource_xg8g6")])

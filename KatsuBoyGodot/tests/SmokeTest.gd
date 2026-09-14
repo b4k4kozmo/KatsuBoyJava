@@ -1882,6 +1882,210 @@ func _physics_process(_d: float) -> void:
 			gp.player.world_y = gp.tile_size * 94
 			gp.quest = QuestLog.new()
 
+		1087:
+			print("\n-- building a map without touching code --")
+
+			# Every map scene carries the root script, so every map gets the
+			# tool buttons and the warning triangle.
+			var rooted := 0
+			for node in gp.map_node:
+				if node is DungeonMap:
+					rooted += 1
+			check("every map has a DungeonMap root", rooted == gp.map_node.size(),
+				"%d of %d" % [rooted, gp.map_node.size()])
+
+			# And every one of them passes its own check. This is the button a
+			# designer presses; if the shipped maps cannot pass it, it is the
+			# check that is wrong.
+			for i in range(gp.map_node.size()):
+				var node = gp.map_node[i]
+				if not (node is DungeonMap):
+					continue
+				var problems: PackedStringArray = node._problems()
+				check("%s checks out" % node.name, problems.is_empty(),
+					"; ".join(problems))
+
+			# "Set up this map" on an empty map builds what AssetSetter looks
+			# for. This is the first button a new person presses, so it had
+			# better produce a map the rest of the engine recognises.
+			var blank := DungeonMap.new()
+			blank.name = "Blank"
+			add_child(blank)
+			blank._setup_map()
+			check("setting up a map makes the Tiles layer", blank.tiles_layer() != null)
+			check("with the shared tile set",
+				blank.tiles_layer() != null and blank.tiles_layer().tile_set != null)
+			var groups_made := 0
+			for g in DungeonMap.GROUPS:
+				if blank.get_node_or_null(g) != null:
+					groups_made += 1
+			check("and all five group nodes", groups_made == 5, str(groups_made))
+			check("and it says what is still missing",
+				blank._problems().size() > 0 and "painted" in " ".join(blank._problems()),
+				" ".join(blank._problems()))
+
+			# Pressing it twice does not make a second set of everything.
+			blank._setup_map()
+			check("setting up twice changes nothing",
+				blank.get_child_count() == 6, str(blank.get_child_count()))
+
+			# Paint a patch of floor, then let the border tool frame it.
+			for row in range(4, 8):
+				for col in range(4, 8):
+					blank.tiles_layer().set_cell(Vector2i(col, row), 0, Vector2i(0, 0))
+			blank.border_width = 2
+			blank._paint_border()
+			check("painting the border fills the edges",
+				blank.tiles_layer().get_used_rect().size == Vector2i(8, 8),
+				str(blank.tiles_layer().get_used_rect()))
+			blank.queue_free()
+
+			# The map number and the landing tile are READ off the scene, not
+			# typed into the resource. Scribble over both and re-wire: if they
+			# come back right, nothing is relying on what was typed.
+			var cave_info: DungeonInfo = BoatService.by_id(gp.dungeons, "mushroom_cave")
+			var was_index: int = cave_info.map_index
+			var was_col: int = cave_info.arrive_col
+			var was_row: int = cave_info.arrive_row
+			cave_info.map_index = 99
+			cave_info.arrive_col = -7
+			cave_info.arrive_row = -7
+			gp._wire_maps()
+			check("the map number comes back from the scene",
+				cave_info.map_index == was_index,
+				"%d, wanted %d" % [cave_info.map_index, was_index])
+			check("and so does the landing tile",
+				cave_info.arrive_col == was_col and cave_info.arrive_row == was_row,
+				"%d,%d wanted %d,%d" % [cave_info.arrive_col, cave_info.arrive_row,
+					was_col, was_row])
+
+			# The landing tile is the Boat marker's tile, so moving the dock in
+			# the editor moves where the boat puts you down.
+			var cave_map: DungeonMap = gp.map_node[cave_info.map_index]
+			var dock: EventMarker = cave_map.boat_dock()
+			check("the dock is where the boat lands you", dock != null
+				and dock.tile_col() == cave_info.arrive_col
+				and dock.tile_row() == cave_info.arrive_row)
+
+			# Markers sort into sub-groups without disappearing: a hundred
+			# monsters want folders, and folders used to silently drop them.
+			var folder := Node2D.new()
+			folder.name = "TestFolder"
+			var nested := MonsterMarker.new()
+			nested.name = "NestedSlime"
+			gp.map_node[0].get_node("Monsters").add_child(folder)
+			folder.add_child(nested)
+			var found := false
+			for m in gp.a_setter.markers(0, "Monsters"):
+				if m == nested:
+					found = true
+			check("a marker in a sub-folder is still found", found)
+			folder.queue_free()
+
+			# The cave ships two of them, so the whole path - .tres on disk, into
+			# a marker, out as a live monster - is exercised by a real map and
+			# not only by this test's hand-built one.
+			var cave_idx: int = BoatService.by_id(gp.dungeons, "mushroom_cave").map_index
+			var shipped := 0
+			for m in gp.monster[cave_idx]:
+				if m is MON_Custom:
+					shipped += 1
+					check("%s came off a resource with its art" % m.name,
+						m.name == "Cave Mushroom" and m.down1 != null and m.left1 != null,
+						m.name)
+			check("the cave ships two resource-only monsters", shipped == 2, str(shipped))
+
+			# A monster that is nothing but a resource.
+			var sheet := MonsterStats.new()
+			sheet.display_name = "Paper Tiger"
+			sheet.max_life = 12
+			sheet.attack = 3
+			sheet.defense = 1
+			sheet.speed = 2
+			sheet.exp_reward = 7
+			sheet.behaviour = "Chaser"
+			sheet.solid_area = Rect2i(8, 16, 32, 32)
+			var paper: Entity = gp.e_generator.get_monster("From Stats", sheet)
+			check("a monster can be built from a resource alone", paper is MON_Custom)
+			check("and it takes its numbers off the sheet",
+				paper.name == "Paper Tiger" and paper.max_life == 12
+					and paper.attack == 3 and paper.exp == 7,
+				"%s life %d atk %d exp %d" % [paper.name, paper.max_life,
+					paper.attack, paper.exp])
+			check("and its hitbox", paper.solid_area.x == 8 and paper.solid_area.width == 32)
+
+			# A drop table with one certain row pays out that row every time.
+			var coin_row := MonsterDrop.new()
+			coin_row.item = "Coin"
+			coin_row.weight = 10
+			coin_row.coin_min = 4
+			coin_row.coin_max = 4
+			sheet.drops = [coin_row]
+			var paid := 0
+			for i in range(20):
+				var loot: Entity = sheet.roll_drop(gp)
+				if loot is OBJ_Coin and loot.value == 4:
+					paid += 1
+			check("a drop table pays what it says", paid == 20, "%d of 20" % paid)
+
+			# And a "Nothing" row really does mean nothing, so the share of
+			# kills that pay out zero is something a designer can dial in.
+			var nothing_row := MonsterDrop.new()
+			nothing_row.item = "Nothing"
+			nothing_row.weight = 1
+			sheet.drops = [nothing_row]
+			check("a Nothing row drops nothing", sheet.roll_drop(gp) == null)
+
+			# Off-grid markers are reported rather than quietly rounded.
+			var stray := ObjectMarker.new()
+			stray.name = "Stray"
+			gp.map_node[0].get_node("Objects").add_child(stray)
+			stray.position = Vector2(94 * 48 + 11, 94 * 48)
+			check("an off-grid marker knows it", not stray.is_on_grid())
+			stray.snap_to_grid()
+			check("and tidying up puts it on a tile", stray.is_on_grid()
+				and stray.tile_col() == 94 and stray.tile_row() == 94,
+				"%d,%d" % [stray.tile_col(), stray.tile_row()])
+			stray.queue_free()
+
+			# Every marker the shipped maps carry is already square on the grid,
+			# so the editor is not crying wolf the moment anyone opens a map.
+			var crooked: Array[String] = []
+			for map_num in range(gp.map_node.size()):
+				for group in ["Objects", "NPCs", "Monsters", "InteractiveTiles", "Events"]:
+					for m in gp.a_setter.markers(map_num, group):
+						if m is PlacementMarker and not m.is_on_grid():
+							crooked.append("%s on map %d" % [m.name, map_num])
+			check("every shipped marker is on the grid", crooked.is_empty(),
+				", ".join(crooked))
+
+			# The doors on the world map point at scenes, not numbers, and the
+			# numbers they end up with are the right ones.
+			var doors_wired := 0
+			for m in gp.a_setter.markers(0, "Events"):
+				if m is EventMarker and m.kind == "ChangeMap":
+					doors_wired += 1
+					check("%s resolved to a real map" % m.name,
+						m.target_scene != null
+							and m.target_map > 0 and m.target_map < gp.max_map
+							and gp.map_scenes[m.target_map] == m.target_scene,
+						"map %d" % m.target_map)
+			check("the world map's doors are all wired this way", doors_wired == 2,
+				str(doors_wired))
+
+			# And the guide walks to wherever the dock marker is, rather than to
+			# a pair of numbers somebody typed once.
+			var dock_guide = null
+			for m in gp.a_setter.markers(0, "NPCs"):
+				if m is NpcMarker and not m.guide_dungeon_id.is_empty():
+					dock_guide = m
+			var home_dock: EventMarker = gp.map_node[0].boat_dock()
+			check("the guide takes his destination from the dock",
+				dock_guide != null and home_dock != null
+					and dock_guide.guide_tile() == Vector2i(
+						home_dock.tile_col(), home_dock.tile_row()),
+				str(dock_guide.guide_tile()) if dock_guide != null else "no guide")
+
 		1090:
 			print("\n================================")
 			print("%d passed, %d failed" % [passed, failed.size()])

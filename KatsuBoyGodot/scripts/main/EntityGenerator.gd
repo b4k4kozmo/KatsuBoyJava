@@ -9,6 +9,10 @@ extends RefCounted
 ## scripts/monster/ or scripts/entity/, add one line to the matching function
 ## below, then add its name to the @export_enum list in the matching marker
 ## script in scripts/authoring/. After that it is placeable in the editor.
+##
+## A MONSTER does not need any of that any more: make a MonsterStats resource,
+## set a MonsterMarker to "From Stats" and drag it in. Only something whose
+## behaviour the four built-in kinds cannot describe still wants a script.
 
 var gp
 
@@ -56,7 +60,9 @@ func get_object(item_name: String) -> Entity:
 	return obj
 
 
-func get_monster(monster_name: String) -> Entity:
+## Build a monster by name. "From Stats" builds one out of the resource alone,
+## which is how a monster gets added without any code: see MonsterStats.
+func get_monster(monster_name: String, stats: MonsterStats = null) -> Entity:
 
 	var monster: Entity = null
 
@@ -66,6 +72,7 @@ func get_monster(monster_name: String) -> Entity:
 		"Kamijack": monster = MON_KamiJack.new(gp)
 		"Shadow": monster = MON_ShadowKatsu.new(gp)
 		"Boss": monster = MON_Boss.new(gp)
+		"From Stats": monster = MON_Custom.new(gp, stats)
 
 	return monster
 
