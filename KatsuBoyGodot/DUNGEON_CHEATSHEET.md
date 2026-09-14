@@ -275,6 +275,71 @@ cleared, so adding one automatically makes the ending harder to reach.
 
 ---
 
+## Tiles a dungeon needs
+
+Right now a dungeon is made of **three tiles borrowed from the overworld**: the
+Mushroom Cave is `sand` for the floor (488 tiles), `wall` for the walls (233),
+and `tree` for everything out of bounds (959). The Shadow Deep is the same
+three. A forest tile is doing the job of a cave wall.
+
+This is what it would take to make one look like a dungeon.
+
+**Must have** — without these it is not a dungeon:
+
+| Tile | Count | For | Today |
+|---|---|---|---|
+| floor | 2–3 | the ground; more than one so a big room isn't wallpaper | borrowing `sand` |
+| wall | 9 | a 3×3 block: four edges, four corners, one middle | one flat tile |
+| wall inner corner | 4 | where two walls meet pointing *inwards* — the inside of an alcove | missing |
+| void | 1 | out of bounds, past the edge of the map | borrowing `tree` |
+
+**The game already does these — there's just no picture:**
+
+| Tile | Count | For |
+|---|---|---|
+| pit | 1–2 | `DamagePit` costs a life and works today. It has never had a tile. |
+| healing pool | 1–2 | `HealingPool` heals, respawns monsters and **saves the game**. Also invisible. |
+| doorway | 2 | an arch, open and closed, where one map leads to another |
+| pier | 2–3 | the boat dock. Every dungeon has one; every one is a patch of sand. |
+
+**Makes it look designed rather than generated:** cracked floor ×2, rubble ×2,
+stain or moss ×2, stairs up and down ×2.
+
+| Batch | Tiles | Enough for |
+|---|---|---|
+| Minimum | 16 | one dungeon that reads as a dungeon |
+| With the event art | 23 | pits, pools, doors and docks you can see |
+| Full set | 31 | a theme that looks designed |
+| Both dungeons | ~50 | the cave and the deep, sharing the fittings |
+
+### Why a wall is nine tiles
+
+The edge of a wall looks different depending on which way the wall runs, and the
+outside of a corner is a different drawing from the inside. Nine covers every
+case for a simple block — four edges, four corners, one middle — and four more
+inner corners cover where walls meet pointing into the room.
+
+```
+corner  edge   corner
+edge    middle edge
+corner  edge   corner
+```
+
+**Draw the block, not the tiles.** Draw a lump of wall nine tiles big in
+Aseprite, then cut it into the grid. Drawing them one at a time is how the seams
+end up not matching.
+
+> Godot can place these automatically with a *terrain set*, which this project
+> does not use yet. For now you place them by hand, which is fine at the size
+> these dungeons are.
+
+**Sheet room:** the sheet is 11 wide and full at 44 tiles, so a full cave theme
+is three more rows and both themes five. Width is free — the game reads it off
+the picture — but **never reorder what is already there**: a tile's position is
+its number, and the maps are painted against those numbers.
+
+---
+
 ## Adding an item, with no code
 
 1. Sprite into `assets/objects/`. One 48×48 PNG.

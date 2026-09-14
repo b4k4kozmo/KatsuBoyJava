@@ -105,6 +105,12 @@ Now it is authoring: open `MushroomCave.tscn`, repaint it into somewhere worth
 visiting, give the boss a script of its own, hide something behind a locked
 door. No new code. Then the same again for the Shadow Deep, bigger.
 
+**The blocker here is art, not code.** A dungeon is currently three tiles
+borrowed from the overworld — `sand`, `wall` and `tree` — so repainting one can
+only get so far. `DUNGEON_CHEATSHEET.md → Tiles a dungeon needs` is the list:
+16 tiles for something that reads as a dungeon, 31 for a theme that looks
+designed.
+
 ### 5. Day-gated content  (two days)
 
 The bits above that make the week matter.

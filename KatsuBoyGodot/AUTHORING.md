@@ -178,6 +178,9 @@ Godot has its own *Create tiles in non-transparent texture regions* button, and
 it works. The reason to use this one instead is the third column of that table:
 Godot's button rebuilds the tiles and you tick all the collision again.
 
+> **Which tiles does a dungeon need?** `DUNGEON_CHEATSHEET.md → Tiles a dungeon
+> needs` is the shopping list, and why a wall is nine tiles rather than one.
+
 ### Which tiles are walls, as text
 
 `assets/tiles/katsuboy_sheet.solid.txt` is a picture of the sheet in three
