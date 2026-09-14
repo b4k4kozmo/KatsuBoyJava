@@ -7,10 +7,14 @@ extends SceneTree
 ## because that is how the shipped sheet was made, and re-running it reproduces
 ## exactly the atlas the maps were painted against.
 ##
-## DO NOT USE IT FOR NEW TILES. Draw a sheet in Aseprite, drop it in
-## assets/tiles/, and press "Rebuild from sheet" on scenes/tools/TileSheet.tscn.
-## That path touches no code, keeps the collision you have already ticked, and
-## does not care how wide your sheet is. See AUTHORING.md.
+## DO NOT USE IT FOR NEW TILES. Draw into assets/tiles/katsuboy_sheet.png - the
+## 16x16 sheet - and press "Rebuild from sheet" on scenes/tools/TileSheet.tscn.
+## That path touches no code, keeps the collision you have already ticked, does
+## the x3 upscale for you, and does not care how wide your sheet is.
+## See AUTHORING.md.
+##
+## Note this script's TILE is 48: it upscales each 16x16 source PNG on the way
+## in, which is the same thing TileSheet now does from a sheet.
 ##
 ## Run:  godot --headless --path . --script res://tools/build_tileset.gd
 ## then: godot --headless --path . --import

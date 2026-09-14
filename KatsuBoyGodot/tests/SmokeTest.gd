@@ -2308,7 +2308,7 @@ func _physics_process(_d: float) -> void:
 			# The readable solid map and the tile set have to agree, or one of
 			# them is lying to whoever reads it.
 			var solid_txt: String = FileAccess.get_file_as_string(
-					"res://assets/tiles/katsuboy_atlas.solid.txt")
+					"res://assets/tiles/katsuboy_sheet.solid.txt")
 			# Classified by content, the same way the tool does it - a row whose
 			# left-hand tile is solid starts with a "#" and is not a comment.
 			var rows: Array[String] = []
@@ -2334,6 +2334,40 @@ func _physics_process(_d: float) -> void:
 			check("and every mark matches the tile set", disagree.is_empty(),
 				", ".join(disagree))
 
+			# The atlas is generated from the sheet by blowing every cell up by
+			# the same factor the game draws at. If those two ever drift, the
+			# tiles stop lining up with a world grid measured in 48s.
+			var art_sheet: Texture2D = load("res://assets/tiles/katsuboy_sheet.png")
+			check("the sheet is drawn at the art size",
+				art_sheet.get_width() % GamePanel.ORIGINAL_TILE_SIZE == 0
+					and art_sheet.get_height() % GamePanel.ORIGINAL_TILE_SIZE == 0,
+				"%d x %d" % [art_sheet.get_width(), art_sheet.get_height()])
+			check("and the atlas is exactly that, scaled up",
+				sheet_tex.get_width() == art_sheet.get_width() * GamePanel.SCALE
+					and sheet_tex.get_height() == art_sheet.get_height() * GamePanel.SCALE,
+				"%d x %d vs %d x %d" % [sheet_tex.get_width(), sheet_tex.get_height(),
+					art_sheet.get_width(), art_sheet.get_height()])
+			check("so a tile is the world grid step",
+				GamePanel.ORIGINAL_TILE_SIZE * GamePanel.SCALE == gp.tile_size,
+				str(gp.tile_size))
+
+			# Nearest-neighbour, so every drawn pixel is an exact block and the
+			# art never goes soft. Sample a few and check the block is flat.
+			var sheet_img: Image = art_sheet.get_image()
+			var atlas_img: Image = sheet_tex.get_image()
+			if sheet_img.is_compressed(): sheet_img.decompress()
+			if atlas_img.is_compressed(): atlas_img.decompress()
+			var blocky := true
+			for probe in [Vector2i(3, 3), Vector2i(20, 9), Vector2i(60, 40)]:
+				var want: Color = sheet_img.get_pixelv(probe)
+				for dx in range(GamePanel.SCALE):
+					for dy in range(GamePanel.SCALE):
+						var got: Color = atlas_img.get_pixelv(
+								probe * GamePanel.SCALE + Vector2i(dx, dy))
+						if not got.is_equal_approx(want):
+							blocky = false
+			check("upscaled with whole square pixels, not blurred", blocky)
+
 			# The tool itself: it has to see the same sheet the game does.
 			var sheet_tool = load("res://scenes/tools/TileSheet.tscn").instantiate()
 			add_child(sheet_tool)
@@ -2345,8 +2379,10 @@ func _physics_process(_d: float) -> void:
 					and sheet_tool._source().get_tiles_count() <= gp.tile_m.tile.size(),
 				str(sheet_tool._source().get_tiles_count()))
 			# An empty cell is not a tile, and a drawn one is.
-			var probe_img: Image = Image.create_empty(96, 48, false, Image.FORMAT_RGBA8)
-			probe_img.fill_rect(Rect2i(0, 0, 48, 48), Color(1, 0, 0, 1))
+			# Two cells at the ART size: the first drawn in, the second empty.
+			var art: int = GamePanel.ORIGINAL_TILE_SIZE
+			var probe_img: Image = Image.create_empty(art * 2, art, false, Image.FORMAT_RGBA8)
+			probe_img.fill_rect(Rect2i(0, 0, art, art), Color(1, 0, 0, 1))
 			check("a drawn cell counts as a tile",
 				sheet_tool._cell_has_art(probe_img, Vector2i(0, 0)))
 			check("an empty cell does not",

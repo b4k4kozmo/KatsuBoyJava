@@ -23,13 +23,25 @@ extends Node
 ##
 ## ASEPRITE SETTINGS THAT MATTER
 ##
-##   * Export as PNG, no scaling. The tiles are 48x48.
+##   * Tiles are **16x16**. That is what everything in this game is drawn at.
 ##   * Lay the sheet out in a grid with no padding and no gaps between tiles.
+##   * Export as PNG at 1x - do NOT upscale. This tool does the upscaling.
 ##   * Leave a cell completely empty to skip it. Anything with a single pixel
 ##     drawn in it becomes a tile.
 ##
-## Godot's import defaults are already right for this project: filtering is set
-## to Nearest project-wide, so pixel art stays sharp.
+## SIXTEEN IN, FORTY-EIGHT OUT
+##
+## The game runs at three times the art: GamePanel has ORIGINAL_TILE_SIZE 16 and
+## SCALE 3, so a tile is 48x48 on screen and the whole world grid is measured in
+## 48s. The tile set therefore needs 48x48 tiles.
+##
+## So there are two pictures. The SHEET is the one you draw, at 16. The ATLAS is
+## generated from it - every cell blown up three times with nearest-neighbour,
+## which is exactly the scaling the sprites get at load - and it is the atlas the
+## tile set points at. You never open the atlas; it is a build artefact.
+##
+## Nothing here upscales twice and nothing interpolates, so the pixels stay
+## square. The project's texture filter is Nearest as well.
 ##
 ## WHICH TILES ARE WALLS
 ##
@@ -39,12 +51,23 @@ extends Node
 ## something you can read in a diff and edit in any text editor rather than
 ## only by clicking.
 
-const TILE := 48
+## What the art is drawn at, and how much bigger the game draws it. Both come
+## from GamePanel so there is one place that decides.
+const ART := GamePanel.ORIGINAL_TILE_SIZE     # 16
+const SCALE := GamePanel.SCALE                # 3
+const TILE := ART * SCALE                     # 48, the size in the tile set
 
-## The sheet drawn in Aseprite.
-@export_file("*.png") var sheet: String = "res://assets/tiles/katsuboy_atlas.png":
+## The sheet you drew, with 16x16 cells.
+@export_file("*.png") var sheet: String = "res://assets/tiles/katsuboy_sheet.png":
 	set(value):
 		sheet = value
+		update_configuration_warnings()
+
+## Where to write the upscaled picture the tile set actually uses. Generated -
+## do not edit it, and do not draw in it.
+@export_file("*.png") var atlas: String = "res://assets/tiles/katsuboy_atlas.png":
+	set(value):
+		atlas = value
 		update_configuration_warnings()
 
 ## The tile set to build into. Every map's Tiles layer points at this same one.
@@ -83,7 +106,13 @@ func _rebuild() -> void:
 	var cols: int = _cols(image)
 	var rows: int = _rows(image)
 
-	source.texture = load(sheet)
+	# Blow the sheet up to the size the world grid is measured in. Nearest
+	# neighbour and a whole-number factor, so every drawn pixel becomes an
+	# exact 3x3 block and nothing is ever half a pixel wide.
+	if not _write_atlas(image, cols, rows):
+		return
+
+	source.texture = load(atlas)
 	source.texture_region_size = Vector2i(TILE, TILE)
 
 	var added := 0
@@ -116,8 +145,8 @@ func _rebuild() -> void:
 			source.remove_tile(at)
 			removed += 1
 
-	print("[%s] %d x %d cells: %d tile(s) added, %d removed, %d collision flag(s) kept."
-			% [name, cols, rows, added, removed, kept])
+	print("[%s] %d x %d cells of %d px, drawn at %d: %d tile(s) added, %d removed, %d collision flag(s) kept."
+			% [name, cols, rows, ART, TILE, added, removed, kept])
 	_save_tile_set()
 	update_configuration_warnings()
 
@@ -211,6 +240,41 @@ func _read_solid() -> void:
 	_save_tile_set()
 
 
+## Write the upscaled picture the tile set points at. Returns false if it could
+## not be written, in which case nothing else should touch the tile set.
+func _write_atlas(image: Image, cols: int, rows: int) -> bool:
+
+	if atlas == sheet:
+		push_error("[%s] the sheet and the atlas are the same file. The atlas is "
+				% name + "generated; point it somewhere else.")
+		return false
+
+	var big := Image.create_empty(cols * TILE, rows * TILE, false, Image.FORMAT_RGBA8)
+
+	for row in range(rows):
+		for col in range(cols):
+			var cell: Image = image.get_region(
+					Rect2i(col * ART, row * ART, ART, ART))
+			cell.convert(Image.FORMAT_RGBA8)
+			cell.resize(TILE, TILE, Image.INTERPOLATE_NEAREST)
+			big.blit_rect(cell, Rect2i(0, 0, TILE, TILE),
+					Vector2i(col * TILE, row * TILE))
+
+	var err: int = big.save_png(atlas)
+	if err != OK:
+		push_error("[%s] could not write %s (error %d)" % [name, atlas, err])
+		return false
+
+	# Godot will not see a file rewritten under its feet until it is reimported.
+	if Engine.is_editor_hint():
+		var fs := EditorInterface.get_resource_filesystem()
+		fs.update_file(atlas)
+		fs.reimport_files(PackedStringArray([atlas]))
+
+	print("[%s] wrote %s at %d x %d." % [name, atlas, big.get_width(), big.get_height()])
+	return true
+
+
 # ---------------------------------------------------------------- checking
 
 func _get_configuration_warnings() -> PackedStringArray:
@@ -235,15 +299,26 @@ func _problems() -> PackedStringArray:
 		out.append("Cannot read %s." % sheet)
 		return out
 
-	if image.get_width() % TILE != 0 or image.get_height() % TILE != 0:
+	if image.get_width() % ART != 0 or image.get_height() % ART != 0:
 		out.append("The sheet is %d x %d, which is not a whole number of %d px tiles. "
-				% [image.get_width(), image.get_height(), TILE]
-				+ "Export it from Aseprite with no padding between tiles.")
+				% [image.get_width(), image.get_height(), ART]
+				+ "Tiles are %d x %d - export from Aseprite at 1x with no padding."
+				% [ART, ART])
 
-	if source.texture == null or source.texture.resource_path != sheet:
-		out.append("The tile set is still pointing at %s. Press 'Rebuild from sheet'."
-				% ("nothing" if source.texture == null
-					else source.texture.resource_path.get_file()))
+	# A sheet already blown up by hand is the easy mistake to make, and it looks
+	# like a sheet with four times as many tiles in it.
+	if image.get_width() % TILE == 0 and image.get_height() % TILE == 0 \
+			and image.get_width() > ART * 4:
+		out.append("This looks like it may already be upscaled: %d x %d divides by %d. "
+				% [image.get_width(), image.get_height(), TILE]
+				+ "Draw at %d and let the tool do the rest." % ART)
+
+	if source.texture == null or source.texture.resource_path != atlas:
+		var points_at: String = "nothing"
+		if source.texture != null:
+			points_at = source.texture.resource_path.get_file()
+		out.append("The tile set is pointing at %s rather than %s. Press 'Rebuild from sheet'."
+				% [points_at, atlas.get_file()])
 		return out
 
 	var missing := 0
@@ -298,23 +373,24 @@ func _sheet_image(complain := true) -> Image:
 	return image
 
 
+## Measured on the SHEET, so in art pixels - 16 - not the 48 the tile set uses.
 func _cols(image: Image) -> int:
 	@warning_ignore("integer_division")
-	return maxi(image.get_width() / TILE, 1) if image != null else 0
+	return maxi(image.get_width() / ART, 1) if image != null else 0
 
 
 func _rows(image: Image) -> int:
 	@warning_ignore("integer_division")
-	return maxi(image.get_height() / TILE, 1) if image != null else 0
+	return maxi(image.get_height() / ART, 1) if image != null else 0
 
 
 ## Is anything drawn in this cell? A single opaque pixel is enough - the test is
 ## deliberately generous, because a tile that is mostly transparent by design
 ## (a bridge railing, say) is still a tile.
 func _cell_has_art(image: Image, at: Vector2i) -> bool:
-	for y in range(TILE):
-		for x in range(TILE):
-			var px := Vector2i(at.x * TILE + x, at.y * TILE + y)
+	for y in range(ART):
+		for x in range(ART):
+			var px := Vector2i(at.x * ART + x, at.y * ART + y)
 			if px.x >= image.get_width() or px.y >= image.get_height():
 				continue
 			if image.get_pixelv(px).a > 0.01:

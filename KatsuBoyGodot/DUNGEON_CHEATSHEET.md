@@ -51,7 +51,8 @@ does each marker that has one. Click the triangle to jump to the offender.
 ## Painting tiles
 
 **Turn on grid snap first:** magnet icon → **Configure Snap → Grid Step
-48 × 48** → tick **Use Grid Snap**. Everything in this game is 48 px.
+48 × 48** → tick **Use Grid Snap**. The world grid is measured in 48s
+(16 px of art at ×3), so that is the number the editor wants.
 
 Select the **Tiles** node, then the **TileMap** tab at the bottom.
 
@@ -86,18 +87,24 @@ there.
 
 ![The TileSheet tool in the Inspector, with its four buttons](docs/images/tile-sheet.png)
 
-1. **In Aseprite**: a grid of 48 × 48 tiles, **no padding, no gaps**. An empty
-   cell is skipped. Export PNG at 1×.
+1. **In Aseprite**: a grid of **16 × 16** tiles, **no padding, no gaps**. An
+   empty cell is skipped. Export PNG at **1× — do not upscale**.
 2. Save it into `assets/tiles/`.
 3. Open **`scenes/tools/TileSheet.tscn`**, point **Sheet** at it, press
    **Rebuild from sheet**.
 4. Tick **collision** on the walls.
 
-**Rebuild from sheet** keeps the collision you already ticked, which is the one
-thing Godot's own *Create tiles in non-transparent regions* button does not do.
+> **16 in, 48 out.** Everything is drawn at 16 × 16; the game runs at ×3, so a
+> tile is 48 × 48 on screen. `katsuboy_sheet.png` is the one you draw;
+> `katsuboy_atlas.png` is generated from it and is what the tile set points at.
+> Anywhere a doc says 48, it means on screen.
+
+**Rebuild from sheet** does the upscaling, and keeps the collision you already
+ticked — which is the one thing Godot's own *Create tiles in non-transparent
+regions* button does not do.
 
 **Write solid map** / **Read solid map** copy collision to and from
-`katsuboy_atlas.solid.txt`, a picture of the sheet in `#` and `.`:
+`katsuboy_sheet.solid.txt`, a picture of the sheet in `#` and `.`:
 
 ```
 ...........

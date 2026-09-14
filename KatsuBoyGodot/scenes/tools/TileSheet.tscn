@@ -5,5 +5,6 @@
 
 [node name="TileSheet" type="Node"]
 script = ExtResource("1_tsheet")
-sheet = "res://assets/tiles/katsuboy_atlas.png"
+sheet = "res://assets/tiles/katsuboy_sheet.png"
+atlas = "res://assets/tiles/katsuboy_atlas.png"
 tile_set = ExtResource("2_tset")

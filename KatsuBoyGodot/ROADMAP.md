@@ -479,13 +479,14 @@ scene, so there are no indices to keep in step.
 
 No code either, since the sheet is the source.
 
-1. Draw a sheet in Aseprite: a grid of 48 × 48 tiles, no padding, no gaps.
-   Empty cells are skipped. Export PNG at 1×.
+1. Draw a sheet in Aseprite: a grid of **16 × 16** tiles, no padding, no gaps.
+   Empty cells are skipped. Export PNG at 1× — the tool upscales it ×3 to the
+   48 px the world grid is measured in.
 2. Save it into `assets/tiles/`.
 3. Open `scenes/tools/TileSheet.tscn`, point **Sheet** at it, press
    **Rebuild from sheet**. Collision already ticked is kept.
 4. Tick collision on the new walls — in the TileSet editor, or by editing
-   `katsuboy_atlas.solid.txt` and pressing **Read solid map**.
+   `katsuboy_sheet.solid.txt` and pressing **Read solid map**.
 
 The number of columns is read off the sheet, so it can be any width. Nothing in
 the authoring tools names a tile by number.

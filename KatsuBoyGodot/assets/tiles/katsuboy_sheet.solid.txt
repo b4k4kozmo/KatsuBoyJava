@@ -1,4 +1,4 @@
-; Which tiles in katsuboy_atlas.png block movement.
+; Which tiles in katsuboy_sheet.png block movement.
 ;   #  solid      .  walkable      (space)  no tile here
 ; Edit this and press 'Read solid map' to apply it.
 ;

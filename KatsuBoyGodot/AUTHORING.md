@@ -38,8 +38,8 @@ to play.
 | whether a map is set up right | `scenes/maps/<Map>.tscn` → select the **root** → **Check this map** |
 | the terrain of a map | `scenes/maps/<Map>.tscn` → select **Tiles** |
 | what's on a map (items, monsters, NPCs, doors) | `scenes/maps/<Map>.tscn` → the group nodes |
-| which tiles block movement | `assets/tiles/katsuboy_tileset.tres`, or `assets/tiles/katsuboy_atlas.solid.txt` |
-| adding tiles from a sheet you drew | `scenes/tools/TileSheet.tscn` → **Rebuild from sheet** |
+| which tiles block movement | `assets/tiles/katsuboy_tileset.tres`, or `assets/tiles/katsuboy_sheet.solid.txt` |
+| adding tiles from a sheet you drew | `assets/tiles/katsuboy_sheet.png` (16 px), then `scenes/tools/TileSheet.tscn` → **Rebuild from sheet** |
 | monster stats, art, behaviour and drops | `assets/data/monsters/*.tres` |
 | adding a whole new monster | copy `assets/data/monsters/example_custom.tres` |
 | adding a whole new item | copy `assets/data/items/example_weapon.tres` |
@@ -132,27 +132,44 @@ once.
 That one flag is read by both the collision checker and the pathfinder, so
 monsters immediately stop trying to walk through anything you mark solid.
 
+### Sixteen in, forty-eight out
+
+**Everything in this game is drawn at 16 × 16.** The game runs at three times
+that — `GamePanel` has `ORIGINAL_TILE_SIZE = 16` and `SCALE = 3`, so a tile is
+**48 × 48 on screen** and the whole world grid is measured in 48s. Sprites are
+upscaled the same way when they load.
+
+So when a document says a tile is 48, it means on screen. You draw 16.
+
+That is why there are two pictures in `assets/tiles/`:
+
+| | |
+|---|---|
+| `katsuboy_sheet.png` | **the one you draw.** 16 × 16 cells. |
+| `katsuboy_atlas.png` | **generated.** Every cell blown up ×3 with nearest-neighbour. The tile set points at this. Don't edit it. |
+
 ### Adding tiles from a sheet
 
 Draw a sheet in Aseprite, drop it in, press a button. No code, no list of file
-names, no rebuilding anything by hand.
+names, no upscaling by hand.
 
 ![The TileSheet tool in the Inspector, with its four buttons](docs/images/tile-sheet.png)
 
-1. **In Aseprite**, lay the tiles out in a grid at **48 × 48**, with **no
+1. **In Aseprite**, lay the tiles out in a grid at **16 × 16**, with **no
    padding and no gaps**. Leave a cell completely empty to skip it. Export as
-   PNG at 1× — no scaling.
+   PNG at **1× — do not upscale**; the tool does that.
 2. Save it into `assets/tiles/` and let Godot import it. The project's texture
    filter is already **Nearest**, so pixel art stays sharp; you do not have to
    change any import setting.
 3. Open **`scenes/tools/TileSheet.tscn`**, point **Sheet** at your PNG, and
-   press **Rebuild from sheet**.
+   press **Rebuild from sheet**. It writes the upscaled `katsuboy_atlas.png`
+   and rebuilds the tile set from it.
 4. Tick **collision** on the tiles that should be walls — select the tile in the
    TileSet editor and tick it there, or see the solid map below.
 
 | Button | Does |
 |---|---|
-| **Rebuild from sheet** | a tile for every drawn cell; drops tiles whose cell went empty; **keeps the collision you already ticked**, matched up by position |
+| **Rebuild from sheet** | upscales the sheet ×3 into the atlas; a tile for every drawn cell; drops tiles whose cell went empty; **keeps the collision you already ticked**, matched up by position |
 | **Check the sheet** | reports what the sheet and the tile set disagree about, in the **Output** panel and as a warning triangle |
 | **Write solid map** | writes which tiles are walls to a text file beside the sheet |
 | **Read solid map** | applies edits to that file back onto the tile set |
@@ -163,7 +180,7 @@ Godot's button rebuilds the tiles and you tick all the collision again.
 
 ### Which tiles are walls, as text
 
-`assets/tiles/katsuboy_atlas.solid.txt` is a picture of the sheet in three
+`assets/tiles/katsuboy_sheet.solid.txt` is a picture of the sheet in three
 characters — `#` solid, `.` walkable, a space where there is no tile:
 
 ```
@@ -185,7 +202,8 @@ what they contain rather than by their first character.
 ### Tile numbers
 
 A tile's id is its position in the sheet: `id = row × columns + column`. Grass is
-0, the tree 16, the wall 17, water 18–30.
+0, the tree 16, the wall 17, water 18–30. (Tile *16* and the *16 px* art size are
+an unhappy coincidence — they are unrelated.)
 
 **The number of columns is read off the sheet**, not written down anywhere. That
 matters: maps store atlas *coordinates*, so a wider sheet would renumber every
@@ -252,7 +270,8 @@ matters for Events: the first one the player is touching wins.
 
 **Turn on grid snapping** so things land on tiles: the magnet icon in the
 toolbar, then **Configure Snap → Grid Step 48 × 48**, and enable **Use Grid
-Snap**. A marker that's off-grid still rounds to the nearest tile at run time,
+Snap**. (48 because the world grid is in screen pixels — the art itself is 16;
+see *Sixteen in, forty-eight out* above.) A marker that's off-grid still rounds to the nearest tile at run time,
 but then what you see is not quite what the game builds, and two markers that
 look like neighbours can turn out to share a tile — so an off-grid marker
 raises a warning, and **Tidy up the markers** fixes them all at once.
