@@ -1,0 +1,10 @@
+; Which tiles in katsuboy_atlas.png block movement.
+;   #  solid      .  walkable      (space)  no tile here
+; Edit this and press 'Read solid map' to apply it.
+;
+; A row of the sheet is a line of nothing but those three
+; characters. Anything else is a note like this one.
+...........
+.....######
+#########.#
+##.########

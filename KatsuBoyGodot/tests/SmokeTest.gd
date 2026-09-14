@@ -2286,7 +2286,74 @@ func _physics_process(_d: float) -> void:
 			check("every big monster has floor under all of it", cramped.is_empty(),
 				", ".join(cramped))
 
-		1090:
+		1091:
+			print("\n-- the tile sheet --")
+
+			# The sheet's width is read off the picture. It used to be a
+			# constant, which meant a wider sheet renumbered every tile at run
+			# time while the painted maps, which store coordinates, stayed put.
+			var sheet_tex: Texture2D = load("res://assets/tiles/katsuboy_atlas.png")
+			@warning_ignore("integer_division")
+			var real_cols: int = sheet_tex.get_width() / gp.tile_size
+			check("the atlas width comes from the sheet",
+				gp.tile_m.atlas_cols == real_cols,
+				"%d vs %d" % [gp.tile_m.atlas_cols, real_cols])
+
+			# The ids the maps were painted against still mean what they meant.
+			check("grass is still tile 0", not gp.tile_m.tile[0].collision)
+			check("the tree still blocks", gp.tile_m.tile[16].collision)
+			check("the wall still blocks", gp.tile_m.tile[17].collision)
+			check("water still blocks", gp.tile_m.tile[18].collision)
+
+			# The readable solid map and the tile set have to agree, or one of
+			# them is lying to whoever reads it.
+			var solid_txt: String = FileAccess.get_file_as_string(
+					"res://assets/tiles/katsuboy_atlas.solid.txt")
+			# Classified by content, the same way the tool does it - a row whose
+			# left-hand tile is solid starts with a "#" and is not a comment.
+			var rows: Array[String] = []
+			for line in solid_txt.split("\n"):
+				if TileSheet.is_grid_row(line):
+					rows.append(line)
+			check("the solid map has a row per row of the sheet",
+				rows.size() == int(sheet_tex.get_height() / gp.tile_size),
+				"%d rows" % rows.size())
+
+			var disagree: Array[String] = []
+			for row in range(rows.size()):
+				for col in range(rows[row].length()):
+					var mark: String = rows[row][col]
+					if mark == " ":
+						continue
+					var id: int = row * gp.tile_m.atlas_cols + col
+					if id >= gp.tile_m.tile.size():
+						continue
+					var want: bool = mark == "#"
+					if gp.tile_m.tile[id].collision != want:
+						disagree.append("%d,%d" % [col, row])
+			check("and every mark matches the tile set", disagree.is_empty(),
+				", ".join(disagree))
+
+			# The tool itself: it has to see the same sheet the game does.
+			var sheet_tool = load("res://scenes/tools/TileSheet.tscn").instantiate()
+			add_child(sheet_tool)
+			check("the tile sheet tool is happy with the shipped sheet",
+				sheet_tool._problems().is_empty(),
+				" / ".join(sheet_tool._problems()))
+			check("it counts the same tiles the game loaded",
+				sheet_tool._source().get_tiles_count() > 0
+					and sheet_tool._source().get_tiles_count() <= gp.tile_m.tile.size(),
+				str(sheet_tool._source().get_tiles_count()))
+			# An empty cell is not a tile, and a drawn one is.
+			var probe_img: Image = Image.create_empty(96, 48, false, Image.FORMAT_RGBA8)
+			probe_img.fill_rect(Rect2i(0, 0, 48, 48), Color(1, 0, 0, 1))
+			check("a drawn cell counts as a tile",
+				sheet_tool._cell_has_art(probe_img, Vector2i(0, 0)))
+			check("an empty cell does not",
+				not sheet_tool._cell_has_art(probe_img, Vector2i(1, 0)))
+			sheet_tool.queue_free()
+
+		1092:
 			print("\n================================")
 			print("%d passed, %d failed" % [passed, failed.size()])
 			for f in failed:

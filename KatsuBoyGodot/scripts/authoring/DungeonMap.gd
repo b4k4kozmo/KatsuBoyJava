@@ -54,10 +54,19 @@ const GROUPS := ["Objects", "NPCs", "Monsters", "InteractiveTiles", "Events"]
 @export_group("Border painting")
 ## How many tiles of border to paint outside the map's own edges.
 @export_range(1, 12) var border_width: int = 6
-## Atlas id of the tile to use for a water border.
-@export var border_water_id: int = 18
-## Atlas id of the tile to use for a land border.
-@export var border_land_id: int = 16
+## What to frame the map with.
+##
+##   Match the edge  repeats whichever tile is already at the nearest edge, so
+##                   water runs out to sea and a forest keeps being forest.
+##   One tile        uses Border Tile below for the whole frame.
+@export_enum("Match the edge", "One tile")
+var border_style: String = "Match the edge"
+
+## The tile to frame with when Border Style is "One tile", as a column and row
+## in the sheet. Coordinates rather than a tile number, because a number means
+## something different the moment the sheet changes width - and a sheet is a
+## picture somebody redraws.
+@export var border_tile: Vector2i = Vector2i(7, 1)
 
 
 # ---------------------------------------------------------------- the tools
@@ -118,21 +127,33 @@ func _paint_border() -> void:
 		print("[%s] nothing painted yet - paint some floor first." % name)
 		return
 
+	var source_id: int = layer.get_cell_source_id(used.position)
+	if source_id == -1:
+		source_id = 0
+
 	var painted := 0
 	for row in range(used.position.y - border_width, used.end.y + border_width):
 		for col in range(used.position.x - border_width, used.end.x + border_width):
 			if layer.get_cell_source_id(Vector2i(col, row)) != -1:
 				continue
-			# Water if the nearest edge tile inside the map is water, else land.
-			var near := Vector2i(clampi(col, used.position.x, used.end.x - 1),
-					clampi(row, used.position.y, used.end.y - 1))
-			var id: int = _atlas_id(layer.get_cell_atlas_coords(near))
-			var use_water: bool = id >= 18 and id <= 30
-			layer.set_cell(Vector2i(col, row), 0,
-					_atlas_coords(border_water_id if use_water else border_land_id))
+
+			var tile_coords: Vector2i = border_tile
+			if border_style == "Match the edge":
+				# Whatever is painted at the nearest point inside the map. No
+				# list of which tile numbers count as water: the map already
+				# knows what its own edge looks like.
+				var near := Vector2i(clampi(col, used.position.x, used.end.x - 1),
+						clampi(row, used.position.y, used.end.y - 1))
+				var found: Vector2i = layer.get_cell_atlas_coords(near)
+				if found != Vector2i(-1, -1):
+					tile_coords = found
+
+			layer.set_cell(Vector2i(col, row), source_id, tile_coords)
 			painted += 1
 
-	print("[%s] painted %d border tiles." % [name, painted])
+	print("[%s] painted %d border tiles, %s." % [name, painted,
+			"matching the edge" if border_style == "Match the edge"
+			else "all %s" % str(border_tile)])
 
 
 ## Snap every marker to the tile it is nearest, so what the editor shows is
@@ -358,17 +379,6 @@ func is_solid_marker(m) -> bool:
 	if m is ObjectMarker:
 		return m.item == "Door" or m.item == "Chest"
 	return false
-
-
-func _atlas_id(coords: Vector2i) -> int:
-	if coords == Vector2i(-1, -1):
-		return -1
-	return coords.y * 11 + coords.x
-
-
-func _atlas_coords(id: int) -> Vector2i:
-	@warning_ignore("integer_division")
-	return Vector2i(id % 11, id / 11)
 
 
 ## Nodes added by a tool button have to belong to the scene being edited, or

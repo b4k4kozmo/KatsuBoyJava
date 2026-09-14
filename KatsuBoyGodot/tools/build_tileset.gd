@@ -1,13 +1,19 @@
 @tool
 extends SceneTree
-## Build step 1 of 2: packs the individual tile PNGs into one atlas image.
+## LEGACY. Packs the loose per-tile PNGs in assets/tiles/ into one sheet.
+##
+## This is how the sheet was built when every tile was its own file and adding
+## one meant editing the list below - a code change to add a picture. It is kept
+## because that is how the shipped sheet was made, and re-running it reproduces
+## exactly the atlas the maps were painted against.
+##
+## DO NOT USE IT FOR NEW TILES. Draw a sheet in Aseprite, drop it in
+## assets/tiles/, and press "Rebuild from sheet" on scenes/tools/TileSheet.tscn.
+## That path touches no code, keeps the collision you have already ticked, and
+## does not care how wide your sheet is. See AUTHORING.md.
 ##
 ## Run:  godot --headless --path . --script res://tools/build_tileset.gd
 ## then: godot --headless --path . --import
-## then: godot --headless --path . --script res://tools/build_maps.gd
-##
-## You only need to re-run this if you ADD a new tile PNG. Everything else
-## (which tiles collide, what the maps look like) is edited in the Godot editor.
 
 ## Tile order defines the tile ID used in map data and in the old res/maps
 ## text files. NEVER reorder these - append new tiles to the end.

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/authoring/TileSheet.gd" id="1_tsheet"]
+[ext_resource type="TileSet" path="res://assets/tiles/katsuboy_tileset.tres" id="2_tset"]
+
+[node name="TileSheet" type="Node"]
+script = ExtResource("1_tsheet")
+sheet = "res://assets/tiles/katsuboy_atlas.png"
+tile_set = ExtResource("2_tset")

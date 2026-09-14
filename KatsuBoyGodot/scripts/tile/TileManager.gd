@@ -10,11 +10,17 @@ extends RefCounted
 ##   tile[id].collision  whether it blocks movement (CollisionChecker, PathFinder)
 ##   map_tile_num[map][col][row]   the tile id at a grid position
 ##
-## A tile's id is its position in the atlas: id = atlas_y * ATLAS_COLS + atlas_x.
+## A tile's id is its position in the atlas: id = atlas_y * atlas_cols + atlas_x.
 ## That is the same numbering the old assets/maps/*.txt files used.
+##
+## The width is READ OFF THE SHEET rather than written down here. A hard-coded
+## 11 meant that dropping in a wider sheet renumbered every tile at run time
+## while the painted maps, which store atlas coordinates, stayed put - so the
+## game would load, and the grass would be water. Now the numbering follows
+## whatever sheet is actually in the tile set.
 
-## Tiles per row in assets/tiles/katsuboy_atlas.png.
-const ATLAS_COLS := 11
+## Tiles per row, worked out from the sheet in get_tile_image().
+var atlas_cols: int = 11
 
 var gp
 var tile: Array = []           # Tile, indexed by tile id
@@ -74,11 +80,13 @@ func get_tile_image() -> void:
 
 	@warning_ignore("integer_division")
 	var atlas_rows: int = atlas.get_height() / gp.tile_size
-	tile.resize(ATLAS_COLS * atlas_rows)
+	@warning_ignore("integer_division")
+	atlas_cols = maxi(atlas.get_width() / gp.tile_size, 1)
+	tile.resize(atlas_cols * atlas_rows)
 
 	for i in range(source.get_tiles_count()):
 		var coords: Vector2i = source.get_tile_id(i)
-		var id: int = coords.y * ATLAS_COLS + coords.x
+		var id: int = coords.y * atlas_cols + coords.x
 		if id < 0 or id >= tile.size():
 			continue
 
@@ -112,7 +120,7 @@ func load_map(map: int) -> void:
 			if coords == Vector2i(-1, -1):
 				map_tile_num[map][col][row] = 0
 			else:
-				map_tile_num[map][col][row] = coords.y * ATLAS_COLS + coords.x
+				map_tile_num[map][col][row] = coords.y * atlas_cols + coords.x
 
 
 ## The tiles draw themselves now (the TileMapLayer nodes under GamePanel/World),
