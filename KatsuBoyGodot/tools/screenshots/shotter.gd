@@ -153,6 +153,13 @@ func _shots() -> Array:
 	out.append(_node_shot("guide-npc", "res://scenes/maps/WorldMap.tscn",
 			"NPCs/DockGuide", "inspector"))
 
+	# The tile sheet tool, which is where a new sheet gets turned into tiles.
+	out.append(_node_shot("tile-sheet", "res://scenes/tools/TileSheet.tscn", ".",
+			"inspector"))
+	# A monster that takes up more than one tile.
+	out.append(_node_shot("big-monster", "res://scenes/maps/WorldMap.tscn",
+			"Monsters/Kamijack", "inspector"))
+
 	# The three resources, opened in the inspector on their own.
 	out.append(_res_shot("sheet-monster", "res://assets/data/monsters/example_custom.tres"))
 	out.append(_res_shot("sheet-monster-2", "res://assets/data/monsters/example_custom.tres", 620))

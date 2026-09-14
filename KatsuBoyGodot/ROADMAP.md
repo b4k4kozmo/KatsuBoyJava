@@ -407,7 +407,9 @@ Cheapest content in the game, and no longer code at all.
 2. Copy `assets/data/monsters/example_custom.tres` and open it in the Inspector.
    Set life, speed, attack, defence and exp reward; drag two PNGs into **Frames
    Down** (and the other three directions if you have them); pick a
-   **Behaviour**; write a **Drops** table.
+   **Behaviour**; write a **Drops** table. For something bigger than one tile,
+   set **Sprite Scale** — it drives the art, the culling, the health bar, the
+   draw order and how much floor the editor wants under it, all from one field.
 3. In a map scene, add a `MonsterMarker`, set **Monster** to `From Stats`, drag
    your resource into **Stats**, and put it where you want it.
 
@@ -472,6 +474,21 @@ pier with Dock Of = the dungeon's id, and add the resource to
 scene, so there are no indices to keep in step.
 
 `DUNGEON_CHEATSHEET.md` is the one-page version of all of this.
+
+### Add tiles
+
+No code either, since the sheet is the source.
+
+1. Draw a sheet in Aseprite: a grid of 48 × 48 tiles, no padding, no gaps.
+   Empty cells are skipped. Export PNG at 1×.
+2. Save it into `assets/tiles/`.
+3. Open `scenes/tools/TileSheet.tscn`, point **Sheet** at it, press
+   **Rebuild from sheet**. Collision already ticked is kept.
+4. Tick collision on the new walls — in the TileSet editor, or by editing
+   `katsuboy_atlas.solid.txt` and pressing **Read solid map**.
+
+The number of columns is read off the sheet, so it can be any width. Nothing in
+the authoring tools names a tile by number.
 
 ### Add an item
 

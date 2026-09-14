@@ -82,12 +82,32 @@ look at **Custom Data → collision** in the Inspector.
 **Paint the border** is decoration rather than a wall — the wall is already
 there.
 
-### Adding a new tile to the palette
+### Adding tiles from a sheet you drew
 
-1. Put the 48×48 art into `assets/tiles/`.
-2. Open `assets/tiles/katsuboy_tileset.tres`, select the atlas source, and
-   either extend the region or add a new source.
-3. Tick **collision** on it if it should block.
+![The TileSheet tool in the Inspector, with its four buttons](docs/images/tile-sheet.png)
+
+1. **In Aseprite**: a grid of 48 × 48 tiles, **no padding, no gaps**. An empty
+   cell is skipped. Export PNG at 1×.
+2. Save it into `assets/tiles/`.
+3. Open **`scenes/tools/TileSheet.tscn`**, point **Sheet** at it, press
+   **Rebuild from sheet**.
+4. Tick **collision** on the walls.
+
+**Rebuild from sheet** keeps the collision you already ticked, which is the one
+thing Godot's own *Create tiles in non-transparent regions* button does not do.
+
+**Write solid map** / **Read solid map** copy collision to and from
+`katsuboy_atlas.solid.txt`, a picture of the sheet in `#` and `.`:
+
+```
+...........
+.....######
+#########.#
+##.########
+```
+
+Readable in a diff, editable in any text editor, and checked against the tile
+set by the test suite.
 
 ---
 
@@ -148,6 +168,11 @@ Going over is not an error, it is silently ignored — which is why
 | **Reward Ticket** | `Boss` only — the route its death opens |
 
 ![A MonsterMarker with Monster set to From Stats](docs/images/monster-marker.png)
+
+**A monster bigger than one tile** — a Kamijack — is marked by its stat sheet's
+**Sprite Scale**. The marker outlines the whole footprint with the tile it sits
+on picked out, and every tile under it has to be floor. The tile you place it on
+is its top-left.
 
 Monsters respawn from their markers whenever the map resets: on death, on
 restart, and when the player rests at a healing pool. Leaving a map and coming
@@ -314,7 +339,7 @@ in order. Confirm moves to the next. Lines wrap for you; `\n` forces a break.
    |---|---|
    | **Stats** | Max Life, Attack, Defense, Exp Reward, Speed, Knock Back Power |
    | **Hitbox** | **Solid Area** — smaller than the sprite. The player's is 24×24 inside a 48×48 tile; matching that is a good default. |
-   | **Looks** | two PNGs into **Frames Down**; the other three directions fall back to Down if empty. **Sprite Scale** 2 for something two tiles across. |
+   | **Looks** | two PNGs into **Frames Down**; the other three directions fall back to Down if empty. **Sprite Scale** is how many tiles across it is — 2 for a Kamijack. It drives culling, the health bar, draw order and how much floor the editor wants under it, so make it match the art. |
    | **Behaviour** | `Wander` drifts and hurts on contact · `Chaser` paths to you · `Fighter` chases and swings · `Shooter` chases, swings and throws |
    | **Drops** | weighted rows — see below |
    | **Melee attack** | only for Fighter/Shooter: **Attack Area** is the reach, **Motion 1/2 Duration** the wind-up and the swing |

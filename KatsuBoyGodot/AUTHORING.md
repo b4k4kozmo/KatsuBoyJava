@@ -38,7 +38,8 @@ to play.
 | whether a map is set up right | `scenes/maps/<Map>.tscn` → select the **root** → **Check this map** |
 | the terrain of a map | `scenes/maps/<Map>.tscn` → select **Tiles** |
 | what's on a map (items, monsters, NPCs, doors) | `scenes/maps/<Map>.tscn` → the group nodes |
-| which tiles block movement | `assets/tiles/katsuboy_tileset.tres` |
+| which tiles block movement | `assets/tiles/katsuboy_tileset.tres`, or `assets/tiles/katsuboy_atlas.solid.txt` |
+| adding tiles from a sheet you drew | `scenes/tools/TileSheet.tscn` → **Rebuild from sheet** |
 | monster stats, art, behaviour and drops | `assets/data/monsters/*.tres` |
 | adding a whole new monster | copy `assets/data/monsters/example_custom.tres` |
 | adding a whole new item | copy `assets/data/items/example_weapon.tres` |
@@ -131,21 +132,70 @@ once.
 That one flag is read by both the collision checker and the pathfinder, so
 monsters immediately stop trying to walk through anything you mark solid.
 
-### Adding a new tile
+### Adding tiles from a sheet
 
-All tiles live in one atlas image, because that's what the TileSet paints from.
+Draw a sheet in Aseprite, drop it in, press a button. No code, no list of file
+names, no rebuilding anything by hand.
 
-1. Put your 16×16 PNG in `assets/tiles/`.
-2. Add its filename to the **end** of `TILE_NAMES` in `tools/build_tileset.gd`.
-   **Never reorder that list** — a tile's position in it is its ID, and every
-   map already refers to those IDs.
-3. Run, from the project folder:
-   ```
-   godot --headless --path . --script res://tools/build_tileset.gd
-   godot --headless --path . --import
-   ```
-4. Open the TileSet, select the atlas source, and click the new square (or use
-   **Setup → auto-create tiles**) so Godot knows it exists. Set its `collision`.
+![The TileSheet tool in the Inspector, with its four buttons](docs/images/tile-sheet.png)
+
+1. **In Aseprite**, lay the tiles out in a grid at **48 × 48**, with **no
+   padding and no gaps**. Leave a cell completely empty to skip it. Export as
+   PNG at 1× — no scaling.
+2. Save it into `assets/tiles/` and let Godot import it. The project's texture
+   filter is already **Nearest**, so pixel art stays sharp; you do not have to
+   change any import setting.
+3. Open **`scenes/tools/TileSheet.tscn`**, point **Sheet** at your PNG, and
+   press **Rebuild from sheet**.
+4. Tick **collision** on the tiles that should be walls — select the tile in the
+   TileSet editor and tick it there, or see the solid map below.
+
+| Button | Does |
+|---|---|
+| **Rebuild from sheet** | a tile for every drawn cell; drops tiles whose cell went empty; **keeps the collision you already ticked**, matched up by position |
+| **Check the sheet** | reports what the sheet and the tile set disagree about, in the **Output** panel and as a warning triangle |
+| **Write solid map** | writes which tiles are walls to a text file beside the sheet |
+| **Read solid map** | applies edits to that file back onto the tile set |
+
+Godot has its own *Create tiles in non-transparent texture regions* button, and
+it works. The reason to use this one instead is the third column of that table:
+Godot's button rebuilds the tiles and you tick all the collision again.
+
+### Which tiles are walls, as text
+
+`assets/tiles/katsuboy_atlas.solid.txt` is a picture of the sheet in three
+characters — `#` solid, `.` walkable, a space where there is no tile:
+
+```
+...........
+.....######
+#########.#
+##.########
+```
+
+It is written by **Write solid map** and applied by **Read solid map**, so
+collision is something you can read in a diff and edit in any text editor
+rather than only by clicking. A test checks that the file and the tile set still
+agree, so neither can drift without something failing.
+
+Lines that are anything other than those three characters are notes. A row whose
+left-hand tile is solid starts with a `#`, which is why rows are recognised by
+what they contain rather than by their first character.
+
+### Tile numbers
+
+A tile's id is its position in the sheet: `id = row × columns + column`. Grass is
+0, the tree 16, the wall 17, water 18–30.
+
+**The number of columns is read off the sheet**, not written down anywhere. That
+matters: maps store atlas *coordinates*, so a wider sheet would renumber every
+tile at run time while the painted maps stayed put — the game would load, and
+the grass would be water.
+
+For the same reason, nothing in the authoring tools names a tile by number any
+more. `DungeonMap`'s **Paint the border** repeats whatever is already at the
+nearest edge, so water runs out to sea and forest stays forest, with no list of
+which numbers count as water.
 
 ---
 
@@ -549,7 +599,7 @@ numbers, applied to every monster of that type everywhere. For a marker set to
 | (top) | **Display Name** — what the damage numbers and the boss bar call it |
 | **Stats** | Max Life, Attack, Defense, Exp Reward, Speed, Knock Back Power |
 | **Hitbox** | **Solid Area** — the collision box inside the 48×48 tile, as `Rect2i(x, y, w, h)`. Smaller than the sprite is usually right; the player's is 24×24. |
-| **Looks** | **Frames Down / Up / Left / Right** — two PNGs each, the walk cycle. Leave Up, Left and Right empty and it faces every way with its Down pair, which is what the Slime does. **Sprite Scale** 1 draws it one tile across, 2 draws it two (a Kamijack is a 2). |
+| **Looks** | **Frames Down / Up / Left / Right** — two PNGs each, the walk cycle. Leave Up, Left and Right empty and it faces every way with its Down pair, which is what the Slime does. **Sprite Scale** is how many tiles across and down it is — see *Monsters bigger than one tile* below. |
 | **Behaviour** | **Behaviour**: `Wander` drifts and hurts on contact; `Chaser` takes the shortest path to you once you are close; `Fighter` chases and swings; `Shooter` chases, swings and throws. Plus **Notice Distance** and **Give Up Distance** in tiles, **Shot Interval** and **Projectile** for a Shooter, **Swing Interval** for a Fighter. |
 | **Drops** | a list of `MonsterDrop` rows — see below |
 | **Melee attack** | **Attack Area** (reach of a swing; leave at zero for something that only touches or shoots) and **Motion 1 / 2 Duration** (frames of wind-up, then frames until the swing ends) |
@@ -567,6 +617,31 @@ weights short.
 
 `example_custom.tres` is a worked example: a Chaser with one pair of frames, a
 55/15/15/15 drop table, and no script anywhere.
+
+### Monsters bigger than one tile
+
+![A MonsterMarker for a Kamijack, two tiles across](docs/images/big-monster.png)
+
+**Sprite Scale** on a `MonsterStats` is not just how big it looks. It is:
+
+- how far off-screen it can get before the game stops drawing it — too small and
+  a big monster blinks out while half of it is still visible;
+- how wide its health bar is;
+- **where it sorts in the draw order.** A tall monster's feet are a tile below
+  its origin, so it is sorted by its feet. Sorting on the top edge drew it
+  *behind* whatever it was standing in front of;
+- how much floor the editor insists it has under it.
+
+The tile you place it on is its **top-left**: a 2 covers that tile and the one
+below-right. Its **Solid Area** is measured inside the whole sprite, not inside
+one tile, so a 2's hitbox can be anywhere in that 96 × 96 square — the Kamijack's
+is `(20, 34, 56, 52)`.
+
+In the editor the marker outlines its whole footprint with the tile it actually
+sits on picked out, and the warnings walk every tile under it. A two-tile monster
+with its head in open floor and its body in a wall looks fine and cannot move.
+
+The same field exists on an `NpcProfile`, and means the same thing.
 
 ### `assets/data/items/*.tres`
 
