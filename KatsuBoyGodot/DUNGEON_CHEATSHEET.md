@@ -40,7 +40,7 @@ there, the root has no `DungeonMap` script on it yet.*
 |---|---|---|
 | **Set up this map** | makes `Tiles` (with the tile set already in it) and the five group nodes | first thing, on a new map. Safe to press again. |
 | **Check this map** | lists every problem in the **Output** panel | constantly |
-| **Paint the border** | frames the map so the camera never shows the void | after painting, and again if you extend the map |
+| **Paint the border** | frames the map by repeating whatever is at the nearest edge, so the camera never shows the void | after painting, and again if you extend the map |
 | **Tidy up the markers** | snaps every marker to the nearest tile | if you forgot grid snap |
 
 The root also carries a **warning triangle** listing the same problems, and so

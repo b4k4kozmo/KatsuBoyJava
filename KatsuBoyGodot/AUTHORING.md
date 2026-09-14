@@ -223,7 +223,7 @@ the `DungeonMap` script, which puts four buttons at the top of the Inspector:
 |---|---|
 | **Set up this map** | creates the `Tiles` layer with the tile set already in it, plus any of the five group nodes that are missing. Safe to press twice. |
 | **Check this map** | walks the whole map and lists what's wrong in the **Output** panel. |
-| **Paint the border** | fills the edges outside the painted area so the camera never shows the void. Water where the map's edge is water, trees otherwise. |
+| **Paint the border** | fills the edges outside the painted area so the camera never shows the void. Repeats whatever is already at the nearest edge, so water runs out to sea and forest stays forest. |
 | **Tidy up the markers** | snaps every marker to the nearest tile. |
 
 ![The Godot Inspector with the DungeonMap script selected, showing four buttons](docs/images/map-root.png)

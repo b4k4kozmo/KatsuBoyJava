@@ -45,8 +45,8 @@ const GROUPS := ["Objects", "NPCs", "Monsters", "InteractiveTiles", "Events"]
 @export_tool_button("Set up this map", "Add") var setup_action = _setup_map
 ## Reports everything wrong with this map in the Output panel.
 @export_tool_button("Check this map", "Search") var check_action = _report
-## Fills the outside edges so the camera never shows empty space. Water where
-## the map already has water at the edge, trees otherwise.
+## Fills the outside edges so the camera never shows empty space, repeating
+## whatever is already at the nearest edge.
 @export_tool_button("Paint the border", "TileMap") var border_action = _paint_border
 ## Snaps every marker on the map to the nearest tile.
 @export_tool_button("Tidy up the markers", "Snap") var tidy_action = _tidy_up
