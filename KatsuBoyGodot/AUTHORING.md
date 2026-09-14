@@ -41,13 +41,15 @@ to play.
 | which tiles block movement | `assets/tiles/katsuboy_tileset.tres` |
 | monster stats, art, behaviour and drops | `assets/data/monsters/*.tres` |
 | adding a whole new monster | copy `assets/data/monsters/example_custom.tres` |
+| adding a whole new item | copy `assets/data/items/example_weapon.tres` |
+| adding a whole new character | copy `assets/data/npcs/example_villager.tres` |
+| what a character says | their `NpcDialogue` conversations, or `scripts/entity/NPC_*.gd` for the four with scripts |
 | the player's starting stats and speeds | `assets/data/player.tres` |
 | the exp curve and what a level gives you | `assets/data/player.tres` → Levelling |
 | what the three classes are good at | `assets/data/classes/*.tres` |
 | sounds and music | `assets/data/sound_bank.tres` |
 | the list of maps, colours, day/night length | `main.tscn` → select **GamePanel** |
 | key bindings | Project Settings → Input Map |
-| dialogue | `scripts/entity/NPC_*.gd` (code) |
 | where the boat goes, and when | `assets/data/dungeons/*.tres` |
 | how much money things are worth | `Drops` in `assets/data/monsters/*.tres`, the tables in `scripts/monster/MON_*.gd`, `Coin Value` on markers |
 
@@ -249,14 +251,26 @@ Under **NPCs**. Spawns a character you can talk to.
 
 | Property | What it does |
 |---|---|
-| **Npc** | OldMan / NanaMan / Merchant / TicketMan |
+| **Npc** | OldMan / NanaMan / Merchant / TicketMan / **From Stats** |
+| **Profile** | the character itself, when Npc is `From Stats`. Drag one in from `assets/data/npcs/`. |
+| **Shop Stock** | `Merchant` only — a list of `ItemStats` to put on the shelf. Empty keeps the built-in stock. Boat tickets are added on top either way. |
 | **Guide Dungeon Id** | `OldMan` only. Fill this in and he becomes a signpost: he tells you about that dungeon, makes it your objective, then walks off towards the dock. Empty = ordinary small talk. |
 | **Guide Target** | drag the marker he walks to — the Boat dock's `EventMarker`, usually. Move the dock and he follows it. |
 | **Guide Col / Row** | the same thing typed out by hand, for a destination with no marker of its own. Ignored when Guide Target is set. `-1` means he stays put and wanders. |
 
-The Merchant opens the shop. Dialogue is in that NPC's script — except a guide's,
-which is written from the dungeon's `hint`, price and timetable so it can never
-contradict the boat.
+**A new character does not need a script.** Set Npc to `From Stats` and drag in
+an `NpcProfile`: their art, how restless they are, and their conversations as a
+list. Talking moves forward one conversation each time and then stays on the
+last, which is what makes a villager read as written rather than recorded. A
+profile can also carry a **gift** — an item handed over the first time you talk
+to them, once per run. `assets/data/npcs/example_villager.tres` — Driftwood Nan,
+west of the port — is a worked example.
+
+The four named characters have scripts because each of them *does* something:
+the Merchant opens the shop, the collector takes tickets, the old man walks you
+to the boat. Those are rules, not lines. Their dialogue is in their scripts —
+except a guide's, which is written from the dungeon's `hint`, price and
+timetable so it can never contradict the boat.
 
 **TicketMan** is the ticket collector. Stand him at a boat dock: he takes a
 paper ticket out of the player's bag and stamps one trip on the boat. Tickets do
@@ -273,13 +287,21 @@ Under **Objects**. An item, chest or door.
 
 | Property | What it does |
 |---|---|
-| **Item** | which item — coins, keys, weapons, Boots, Chest, Door… |
-| **Chest Loot** | only used when Item is `Chest`: what's inside |
+| **Item** | which item — coins, keys, weapons, Boots, Chest, Door… or **From Stats** |
+| **Item Stats** | the item itself, when Item is `From Stats`. Drag one in from `assets/data/items/`. |
+| **Chest Loot** | only used when Item is `Chest`: what's inside. `From Stats` here too. |
+| **Chest Loot Stats** | what's in the chest, when Chest Loot is `From Stats` |
 | **Coin Value** | only used when the item (or the chest's loot) is a Kami Coin: how much it is worth. 1 is loose change, 5 a purse, 20 a real find. Bigger coins are drawn bigger. |
 
 Pickup-only items (coins, hearts, mana, Boots) are used the moment you walk over
 them. Weapons, shields, keys and potions go into the inventory. `Door` and
 `Chest` are obstacles you interact with using the Confirm key.
+
+**A new item does not need a script.** Set Item to `From Stats` and drag in an
+`ItemStats` resource that carries its sprite, its price, its numbers and what
+using it does. `assets/data/items/example_weapon.tres` and
+`example_consumable.tres` are worked examples — copy one. See
+[`assets/data/items/*.tres`](#assetsdataitemstres) below for every field.
 
 ### `InteractiveTileMarker`
 Under **InteractiveTiles**. Scenery you can destroy.
@@ -390,6 +412,9 @@ cover it.
 | Group | Property | What it does |
 |---|---|---|
 | | **Map Scenes** | the maps, in order. Index = map number |
+| | **Dungeons** | every place the boat sails to, as `DungeonInfo` resources |
+| | **Player Classes** | the classes on the title screen, as `PlayerClass` resources |
+| | **Items** | every item that is a resource rather than a script. A saved bag holds names, and this is where they are looked up. |
 | | **Sound Bank** | which audio set to use |
 | | **Debug Start Map** | boot straight into this map. -1 = off |
 | Time of day | **Frames Per Time Step** | game frames between clock ticks. 60 = one tick a second |
@@ -531,6 +556,41 @@ weights short.
 `example_custom.tres` is a worked example: a Chaser with one pair of frames, a
 55/15/15/15 drop table, and no script anywhere.
 
+### `assets/data/items/*.tres`
+
+An `ItemStats` resource. Everything a hand-written item in `scripts/object/`
+does, minus the code.
+
+| Group | Fields |
+|---|---|
+| (top) | **Display Name** — also what it is called on screen, and **the stable key**: saved bags hold names, so never rename one that exists. **Sprite** — one 48×48 PNG. **Description** — shown in the inventory; the box is about 30 characters wide and `\n` breaks a line. **Price** — what Kami Mart charges; the shop buys back at half. |
+| **Kind** | `Sword` / `Axe` (a weapon; an Axe also fells dry trees, which is the only difference) · `Shield` · `Light` · `Consumable` (used from the bag) · `Pickup` (used the instant you walk over it, never carried) |
+| **Weapon** | **Attack Value** added to your strength, **Attack Area** the reach in pixels, **Knock Back Power**, and **Motion 1 / 2 Duration** — the wind-up and the swing. Those last two are the biggest lever on a weapon: the axe hits twice as hard as the bokken and still loses on damage per second. |
+| **Shield** | **Defense Value**, subtracted from incoming damage |
+| **Light** | **Light Radius** in pixels. The candle is 250. |
+| **Effect** | **Effects** — tick any of *heal life*, *restore mana*, *cure the curse*, *rest until sunrise*, *unlock running*; a tent is four of them at once. Then **Heal Amount** (flat) and **Heal Share** (a percentage of your maximum, so a potion is still worth buying at level 15), the same pair for mana, and a **Use Message**. |
+| **Inventory** | **Stackable** (several share one slot, like potions) and **Use Sound** |
+
+**Register it** in `main.tscn → GamePanel → Items`, and in `tests/SmokeTest.tscn`.
+Anything in `assets/data/items/` is found by name even if you forget, but the
+list is the documented place and the one the tests read.
+
+### `assets/data/npcs/*.tres`
+
+An `NpcProfile` resource: a character with no script.
+
+| Group | Fields |
+|---|---|
+| (top) | **Display Name** — what the dialogue box calls them |
+| **Looks** | **Frames Down / Up / Left / Right** (two PNGs each; Up, Left and Right fall back to Down) and **Sprite Scale** |
+| **Body** | **Solid Area** — `(12, 20, 24, 26)` is what the stock NPCs use, small enough for the player to squeeze past in a doorway. **Walk Speed** — 0 for someone who has stood in one spot for thirty years, 2 for a slow amble; the player walks at 4. **Restlessness** — frames between changes of direction. |
+| **Talking** | **Conversations** — a list of `NpcDialogue` resources, each one exchange. Talking again moves to the next and the last repeats forever. **Voice** — a sound bank number. |
+| **Gift** | an `ItemStats` handed over the first time you talk to them, once per run, and the **Gift Message** that goes with it |
+
+An `NpcDialogue` is a **Label** (a note to yourself, never shown) and **Lines**,
+in order. One press of Confirm moves to the next. Lines are wrapped for you, so
+you do not have to count characters, but `\n` still forces a break.
+
 ### `assets/data/sound_bank.tres`
 
 A list of audio streams. Drag a different `.wav` into a slot to change that
@@ -652,15 +712,14 @@ Deleting the `EffectsLayer` node is safe — every call site checks for it.
 
 Honest limits of the current design. Each is small and contained.
 
-**A new item** — three steps:
-1. Copy a script in `scripts/object/`; change `OBJ_NAME`, the sprite path and
-   the numbers.
-2. Add one line to `scripts/main/EntityGenerator.gd`.
-3. Add the name to the `@export_enum(...)` list in
-   `scripts/authoring/ObjectMarker.gd`, and a preview sprite to `PREVIEWS`.
-
-Then it's placeable from the editor like anything else. **Skipping step 2 is the
-one mistake that crashes the game** — it's what broke the Carbuncle in the Java
+**A new item** — usually *not* code. An `ItemStats` `.tres` is a sword, a shield,
+a lamp, a potion or a pickup, and an `ObjectMarker` set to **From Stats** puts it
+on a map. Only an item whose effect is a new *rule* — one that changes how a
+fight works, or opens a screen of its own — needs the old three steps: a script
+in `scripts/object/`, one line in `scripts/main/EntityGenerator.gd`, and its name
+in the `@export_enum(...)` list in `scripts/authoring/ObjectMarker.gd` with a
+preview sprite in `PREVIEWS`. **Skipping the EntityGenerator line is the one
+mistake that crashes the game** — it's what broke the Carbuncle in the Java
 version.
 
 **A new monster** — usually *not* code any more. A `MonsterStats` `.tres` with
@@ -670,7 +729,13 @@ four behaviours cannot describe — a boss with phases, something that splits wh
 it dies — still wants a script in `scripts/monster/`, a line in
 `EntityGenerator.get_monster()` and an entry in `MonsterMarker.gd`.
 
-**Dialogue** — in each character's `set_dialogue()`:
+**A new character** — usually *not* code either. An `NpcProfile` `.tres` carries
+their art, their wandering and every line they say. Only a character whose
+talking *does* something — opens a shop, takes a ticket, leads you somewhere —
+needs a script in `scripts/entity/`, a line in `EntityGenerator.get_npc()` and an
+entry in `NpcMarker.gd`.
+
+**Dialogue** for those four is in each character's `set_dialogue()`:
 
 ```gdscript
 dialogues[0][0] = "Hello, Katsu boy!\nAre you ready for your adventure?"
@@ -678,7 +743,8 @@ dialogues[0][1] = "There's something useful in the\nforest."
 ```
 
 First index is the conversation set, second is the line, `\n` breaks a line. The
-old man cycles sets 0 → 1 → 2 on repeat talks. The merchant's sets have fixed
+old man cycles sets 0 → 1 → 2 on repeat talks. In a profile those sets are the
+**Conversations** list instead. The merchant's sets have fixed
 meanings: 0 greeting, 1 goodbye, 2 too expensive, 3 purchase, 4 pockets full,
 5 can't sell equipped, 6 night price, 7 day price, 8 refuses a cursed player.
 Event dialogue is in `EventHandler.set_dialogue()`.

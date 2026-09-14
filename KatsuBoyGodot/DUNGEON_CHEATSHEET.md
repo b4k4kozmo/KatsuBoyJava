@@ -3,6 +3,9 @@
 Everything you need to build a dungeon in Katsu Boy, on one page. **No code.**
 If a step here asks you to open a `.gd` file, it is a bug in this document.
 
+Monsters, items and characters are all files now too — the three sections near
+the bottom cover them.
+
 Longer versions: `AUTHORING.md` (every property of every node),
 `ROADMAP.md` (why the boat and the tickets work the way they do).
 
@@ -115,8 +118,10 @@ Going over is not an error, it is silently ignored — which is why
 
 | Field | Notes |
 |---|---|
-| **Item** | coins, keys, weapons, potions, Boots, `Chest`, `Door` |
-| **Chest Loot** | `Chest` only — what is inside |
+| **Item** | coins, keys, weapons, potions, Boots, `Chest`, `Door`, or **From Stats** |
+| **Item Stats** | the item itself, for `From Stats`. Drag one in from `assets/data/items/`. |
+| **Chest Loot** | `Chest` only — what is inside. `From Stats` works here too. |
+| **Chest Loot Stats** | what is in the chest, for `From Stats` |
 | **Coin Value** | `Kami Coin` only — 1 loose change, 5 a purse, 20 a find. Drawn bigger when it is worth more. |
 
 `Chest` and `Door` block the tile they stand on. Everything else is walked over.
@@ -139,7 +144,9 @@ make a sweep worth doing.
 
 | Field | Notes |
 |---|---|
-| **Npc** | OldMan / NanaMan / Merchant / TicketMan |
+| **Npc** | OldMan / NanaMan / Merchant / TicketMan / **From Stats** |
+| **Profile** | the character itself, for `From Stats`. Drag one in from `assets/data/npcs/`. |
+| **Shop Stock** | `Merchant` only — `ItemStats` to put on the shelf. Empty keeps the built-in stock. |
 | **Guide Dungeon Id** | `OldMan` only. Makes him a signpost for that dungeon. |
 | **Guide Target** | drag the marker he walks to after talking — usually the Boat dock |
 
@@ -216,6 +223,59 @@ respawns after dying.
 
 The ending needs no updating. It fires when every dungeon in that list is
 cleared, so adding one automatically makes the ending harder to reach.
+
+---
+
+## Adding an item, with no code
+
+1. Sprite into `assets/objects/`. One 48×48 PNG.
+2. Copy `assets/data/items/example_weapon.tres` or `example_consumable.tres`.
+3. Fill it in:
+
+   | Group | What to set |
+   |---|---|
+   | (top) | **Display Name** (also the save key — never rename one that exists), **Sprite**, **Description**, **Price** |
+   | **Kind** | `Sword` / `Axe` / `Shield` / `Light` / `Consumable` / `Pickup` |
+   | **Weapon** | **Attack Value**, **Attack Area** (reach in pixels), **Knock Back Power**, **Motion 1 / 2 Duration** (wind-up, then swing — the biggest lever on a weapon) |
+   | **Shield** | **Defense Value** |
+   | **Light** | **Light Radius** in pixels. The candle is 250. |
+   | **Effect** | tick any of *heal life*, *restore mana*, *cure the curse*, *rest until sunrise*, *unlock running*. Then **Heal Amount** (flat) and **Heal Share** (percentage of your maximum, so it stays worth buying at level 15), the same pair for mana, and a **Use Message**. |
+   | **Inventory** | **Stackable**, **Use Sound** |
+
+4. Add it to `main.tscn → GamePanel → Items` **and** `tests/SmokeTest.tscn`.
+5. `ObjectMarker` → **Item** = `From Stats` → drag the resource into
+   **Item Stats**.
+
+> Step 4 matters because a saved bag holds item *names*. Anything in
+> `assets/data/items/` is found by name even if you forget, but the list is the
+> documented place and the one the tests read.
+
+---
+
+## Adding a character, with no code
+
+1. Sprites into `assets/npc/`. Two frames per direction; Down alone is enough
+   to start — the other three fall back to it.
+2. Copy `assets/data/npcs/example_villager.tres`.
+3. Fill it in:
+
+   | Group | What to set |
+   |---|---|
+   | (top) | **Display Name** — what the dialogue box calls them |
+   | **Looks** | **Frames Down / Up / Left / Right**, **Sprite Scale** |
+   | **Body** | **Solid Area** — `(12, 20, 24, 26)` is what the stock NPCs use. **Walk Speed** — 0 stands still, 2 is a slow amble, the player walks at 4. **Restlessness** — frames between turns. |
+   | **Talking** | **Conversations** — a list of `NpcDialogue`, one per exchange. **Voice** — a sound bank number. |
+   | **Gift** | an `ItemStats` handed over the first time you talk, once per run, plus its **Gift Message** |
+
+4. `NpcMarker` → **Npc** = `From Stats` → drag the resource into **Profile**.
+
+**Conversations move forward.** Talking again goes to the next one and the last
+repeats forever. Three conversations is a character who has something new to say
+twice and then settles — which is what makes a village feel written rather than
+recorded. One conversation is a signpost, which is also fine.
+
+An `NpcDialogue` is a **Label** (a note to yourself, never shown) and **Lines**
+in order. Confirm moves to the next. Lines wrap for you; `\n` forces a break.
 
 ---
 

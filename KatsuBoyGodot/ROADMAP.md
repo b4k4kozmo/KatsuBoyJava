@@ -475,10 +475,38 @@ scene, so there are no indices to keep in step.
 
 ### Add an item
 
+No code, the same way a monster is no code.
+
 1. Sprite into `assets/objects/`.
-2. Copy the closest `scripts/object/OBJ_*.gd`. Weapons and shields set attack
-   or defence values; consumables override `use()`.
-3. Place it with an `ObjectMarker`, or have a monster drop it.
+2. Copy `assets/data/items/example_weapon.tres` (or `example_consumable.tres`)
+   and open it in the Inspector. Set the name, the price, the description, and
+   either the weapon/shield numbers or the effect flags — heal, restore mana,
+   cure the curse, rest, unlock running. Healing takes a flat amount *and* a
+   share of your maximum, so a potion does not become worthless at level 15.
+3. Add it to `main.tscn → GamePanel → Items` and to `tests/SmokeTest.tscn`, so
+   a saved bag can find it again by name.
+4. Place it with an `ObjectMarker` set to **From Stats**, put it in a chest, put
+   it on the shop's shelf, or have an NPC hand it over.
+
+Only an item whose effect is a new *rule* rather than a new number still wants a
+script: copy the closest `scripts/object/OBJ_*.gd`, add a line to
+`EntityGenerator.get_object()` and an entry to `ObjectMarker`'s list.
+
+### Add a character
+
+1. Sprites into `assets/npc/`. Two frames per direction; one direction is
+   enough to start.
+2. Copy `assets/data/npcs/example_villager.tres`. Set the name, the walk speed
+   and how restless they are, then write the **Conversations** — one
+   `NpcDialogue` per exchange. Talking moves forward one each time and stops on
+   the last, so three conversations is a character who has something new to say
+   twice and then settles.
+3. Optionally give them a **Gift**: an `ItemStats` handed over the first time
+   you talk to them.
+4. Place them with an `NpcMarker` set to **From Stats**.
+
+Only a character whose talking *does* something — opens a shop, takes a ticket,
+leads you somewhere — still wants a script in `scripts/entity/`.
 
 ### Add a key item and a locked door
 
